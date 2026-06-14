@@ -1,0 +1,59 @@
+{
+  "pages": [
+    {
+      "path": "pages/dashboard/dashboard",
+      "style": {
+        "navigationBarTitleText": "数据展示"
+      }
+    },
+    {
+      "path": "pages/threshold/threshold",
+      "style": {
+        "navigationBarTitleText": "阈值设置"
+      }
+    },
+    {
+      "path": "pages/history/history",
+      "style": {
+        "navigationBarTitleText": "历史数据"
+      }
+    },
+    {
+      "path": "pages/settings/settings",
+      "style": {
+        "navigationBarTitleText": "后台配置"
+      }
+    }
+  ],
+  "tabBar": {
+    "custom": true,
+    "color": "#728091",
+    "selectedColor": "#0f6b67",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/dashboard/dashboard",
+        "text": "数据展示"
+      },
+      {
+        "pagePath": "pages/threshold/threshold",
+        "text": "阈值设置"
+      },
+      {
+        "pagePath": "pages/history/history",
+        "text": "历史数据"
+      },
+      {
+        "pagePath": "pages/settings/settings",
+        "text": "后台配置"
+      }
+    ]
+  },
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "云平台数据通信",
+    "navigationBarBackgroundColor": "#ffffff",
+    "backgroundColor": "#edf2f6"
+  }
+}

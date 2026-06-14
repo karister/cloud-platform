@@ -1,0 +1,525 @@
+<script>
+import { getConfig } from './utils/storage'
+import { getThemeById, applyThemeToDOM, DEFAULT_THEME_ID } from './utils/themes'
+
+export default {
+  globalData: {
+    themeId: DEFAULT_THEME_ID
+  },
+  onLaunch() {
+    console.log('Cloud platform communication app launched')
+    this.applyTheme()
+  },
+  onShow() {
+    this.applyTheme()
+  },
+  methods: {
+    applyTheme() {
+      try {
+        const config = getConfig()
+        const themeId = config.themeId || DEFAULT_THEME_ID
+        this.globalData.themeId = themeId
+        applyThemeToDOM(themeId)
+      } catch (e) {
+        console.warn('Failed to apply theme', e)
+      }
+    },
+    setTheme(themeId) {
+      this.globalData.themeId = themeId
+      applyThemeToDOM(themeId)
+    }
+  }
+}
+</script>
+
+<style>
+/* ===================================================================
+   Theme System v2 - Complete Visual Schemes
+   data-theme="id"         -> colors, backgrounds, shadows
+   data-theme-layout="id"  -> structural CSS (radii, spacing, tab shape)
+   =================================================================== */
+
+/* ── DEFAULT: Teal (Industrial IoT Command Center) ── */
+:root {
+  /* Accent */
+  --theme-accent: #0dc9b0;
+  --theme-accent-light: #0a3035;
+  --theme-accent-dark: #0ab898;
+  --theme-accent-contrast: #ffffff;
+  /* Background */
+  --theme-bg: #0d2829;
+  --theme-bg-image: url('/static/theme/bg-teal.svg');
+  --theme-bg-image-opacity: 0.55;
+  --theme-bg-gradient-start: #0e3032;
+  --theme-bg-gradient-end: #0d2829;
+  --theme-bg-gradient-settings-start: #0f3235;
+  --theme-bg-gradient-settings-end: #0d2829;
+  /* Surface */
+  --theme-surface: #122f31;
+  --theme-surface-alt: #16383a;
+  --theme-surface-alt-2: #143436;
+  --theme-surface-hover: #1a4042;
+  --theme-surface-border: rgba(13, 201, 176, 0.14);
+  --theme-surface-border-light: rgba(13, 201, 176, 0.08);
+  --theme-surface-border-accent: rgba(13, 201, 176, 0.25);
+  /* Text */
+  --theme-text-primary: #d8ecea;
+  --theme-text-secondary: #7aa8a4;
+  --theme-text-tertiary: #5a8a85;
+  --theme-text-heading: #e0f2f0;
+  /* Hero */
+  --theme-hero-bg-start: #0f3a3c;
+  --theme-hero-bg-end: #0a2021;
+  --theme-hero-border: rgba(13, 201, 176, 0.2);
+  --theme-hero-text: #e0f2f0;
+  --theme-hero-text-muted: rgba(200, 230, 225, 0.7);
+  --theme-hero-btn-bg: rgba(13, 201, 176, 0.12);
+  --theme-hero-btn-border: rgba(13, 201, 176, 0.22);
+  --theme-hero-overlay: none;
+  /* Inputs */
+  --theme-input-bg: #16383a;
+  --theme-input-border: #1a4840;
+  --theme-input-border-focus: #0dc9b0;
+  --theme-input-style: 10rpx;
+  /* Dividers */
+  --theme-divider: #16383a;
+  --theme-divider-light: #1a4042;
+  /* Shadows */
+  --theme-shadow-sm: rgba(0, 0, 0, 0.25);
+  --theme-shadow-md: rgba(0, 0, 0, 0.35);
+  --theme-shadow-lg: rgba(0, 0, 0, 0.5);
+  --theme-shadow-accent: rgba(13, 201, 176, 0.18);
+  /* Semantic */
+  --theme-danger: #f06070;
+  --theme-danger-bg: #2a1820;
+  --theme-danger-border: #f06070;
+  --theme-success: #0dc9b0;
+  --theme-warning: #e0b040;
+  /* Radii */
+  --theme-radius-sm: 8rpx;
+  --theme-radius-md: 12rpx;
+  --theme-radius-lg: 16rpx;
+  --theme-radius-pill: 999rpx;
+  --theme-radius-input: 8rpx;
+  /* Card morphology */
+  --theme-card-border-width: 1.5px;
+  --theme-card-border-style: solid;
+  --theme-card-bg-opacity: 1;
+  /* Layout */
+  --theme-layout-gap: 14rpx;
+  --theme-layout-section-gap: 20rpx;
+  /* Tab bar */
+  --theme-tab-active-bg: #0a3035;
+  --theme-tab-height: 96rpx;
+  --theme-tab-border-radius: 28rpx;
+  --theme-tab-wrapper-bg: rgba(18, 47, 49, 0.96);
+  --theme-tab-wrapper-border: rgba(13, 201, 176, 0.12);
+  --theme-tab-wrapper-shadow: rgba(0, 0, 0, 0.35);
+  --theme-tab-wrapper-padding: 8rpx;
+  --theme-tab-text: #7aa8a4;
+  --theme-tab-active-text: #0dc9b0;
+  --theme-tab-shadow-inset: rgba(13, 201, 176, 0.08);
+  --theme-tab-border: rgba(13, 201, 176, 0.14);
+  --theme-tab-bg: rgba(18, 47, 49, 0.96);
+  --theme-tab-shadow: rgba(0, 0, 0, 0.4);
+  /* Misc */
+  --theme-metric-fill-end: #0df0d0;
+  --theme-card-accent-bg-start: #122f31;
+  --theme-card-accent-bg-end: #163d3f;
+  --theme-card-accent-shadow: rgba(13, 201, 176, 0.13);
+  --theme-card-accent-border: rgba(13, 201, 176, 0.28);
+  --theme-badge-bg: #0a3035;
+  --theme-badge-text: #0dc9b0;
+  /* Chart */
+  --theme-chart-bg: #16383a;
+  --theme-chart-grid: #1a4840;
+  --theme-chart-color-0: #0dc9b0;
+  --theme-chart-color-1: #0df0d0;
+  --theme-chart-color-2: #e0b040;
+  --theme-chart-color-3: #f06070;
+  --theme-chart-color-4: #60a0f0;
+  --theme-chart-line-width: 3;
+  --theme-chart-dot-radius: 4.5;
+  /* Modal */
+  --theme-modal-overlay: rgba(0, 0, 0, 0.6);
+  --theme-btn-secondary-bg: #16383a;
+  --theme-btn-secondary-border: #0dc9b0;
+  --theme-btn-secondary-text: #0dc9b0;
+  --theme-btn-style: 8rpx;
+  /* Settings */
+  --theme-summary-chip-bg: #0a3035;
+  --theme-summary-chip-text: #0dc9b0;
+  --theme-value-badge-bg: #16383a;
+  --theme-value-badge-text: #0dc9b0;
+  --theme-value-badge-unit: #7aa8a4;
+  --theme-empty-border: #1a4042;
+  --theme-category-tabs-bg: #16383a;
+  --theme-category-tab-active-bg: #1a4042;
+  --theme-category-tab-active-shadow: rgba(0, 0, 0, 0.3);
+  --theme-quick-chip-border: #1a4840;
+  --theme-menu-accent-bg: rgba(13, 201, 176, 0.07);
+}
+
+/* ── NIGHT (Dark Tech Console) ── */
+[data-theme="night"] {
+  --theme-accent: #7b9cff;
+  --theme-accent-light: #1a2448;
+  --theme-accent-dark: #6a8af0;
+  --theme-accent-contrast: #ffffff;
+  --theme-bg: #060b14;
+  --theme-bg-image: url('/static/theme/bg-night.svg');
+  --theme-bg-image-opacity: 0.45;
+  --theme-bg-gradient-start: #080e1a;
+  --theme-bg-gradient-end: #060b14;
+  --theme-bg-gradient-settings-start: #090f1c;
+  --theme-bg-gradient-settings-end: #060b14;
+  --theme-surface: rgba(18, 22, 40, 0.75);
+  --theme-surface-alt: rgba(22, 28, 50, 0.7);
+  --theme-surface-alt-2: rgba(20, 25, 45, 0.72);
+  --theme-surface-hover: rgba(26, 34, 58, 0.8);
+  --theme-surface-border: rgba(123, 156, 255, 0.12);
+  --theme-surface-border-light: rgba(123, 156, 255, 0.06);
+  --theme-surface-border-accent: rgba(123, 156, 255, 0.25);
+  --theme-text-primary: #dce0f0;
+  --theme-text-secondary: #8890b8;
+  --theme-text-tertiary: #6670a0;
+  --theme-text-heading: #e4eaf8;
+  --theme-hero-bg-start: #0f1830;
+  --theme-hero-bg-end: #080e1c;
+  --theme-hero-border: rgba(123, 156, 255, 0.18);
+  --theme-hero-text: #e4eaf8;
+  --theme-hero-text-muted: rgba(200, 210, 240, 0.65);
+  --theme-hero-btn-bg: rgba(123, 156, 255, 0.1);
+  --theme-hero-btn-border: rgba(123, 156, 255, 0.2);
+  --theme-hero-overlay: none;
+  --theme-input-bg: rgba(22, 28, 50, 0.7);
+  --theme-input-border: #1e2848;
+  --theme-input-border-focus: #7b9cff;
+  --theme-input-style: 12rpx;
+  --theme-divider: rgba(26, 34, 55, 0.6);
+  --theme-divider-light: #1a2240;
+  --theme-shadow-sm: rgba(0, 0, 0, 0.3);
+  --theme-shadow-md: rgba(0, 0, 0, 0.4);
+  --theme-shadow-lg: rgba(0, 0, 0, 0.55);
+  --theme-shadow-accent: rgba(123, 156, 255, 0.15);
+  --theme-danger: #f06078;
+  --theme-danger-bg: #2a1822;
+  --theme-danger-border: #f06078;
+  --theme-success: #5ef0b8;
+  --theme-warning: #f0b868;
+  --theme-radius-sm: 12rpx;
+  --theme-radius-md: 18rpx;
+  --theme-radius-lg: 22rpx;
+  --theme-radius-pill: 999rpx;
+  --theme-radius-input: 12rpx;
+  --theme-card-border-width: 1px;
+  --theme-card-border-style: solid;
+  --theme-card-bg-opacity: 0.75;
+  --theme-layout-gap: 18rpx;
+  --theme-layout-section-gap: 24rpx;
+  --theme-tab-active-bg: #1a2448;
+  --theme-tab-height: 98rpx;
+  --theme-tab-border-radius: 26rpx;
+  --theme-tab-wrapper-bg: rgba(14, 18, 32, 0.92);
+  --theme-tab-wrapper-border: rgba(123, 156, 255, 0.14);
+  --theme-tab-wrapper-shadow: rgba(0, 0, 0, 0.5);
+  --theme-tab-wrapper-padding: 10rpx;
+  --theme-tab-text: #8890b8;
+  --theme-tab-active-text: #7b9cff;
+  --theme-tab-shadow-inset: rgba(123, 156, 255, 0.06);
+  --theme-tab-border: rgba(123, 156, 255, 0.15);
+  --theme-tab-bg: rgba(14, 18, 32, 0.92);
+  --theme-tab-shadow: rgba(0, 0, 0, 0.5);
+  --theme-metric-fill-end: #9cb8ff;
+  --theme-card-accent-bg-start: rgba(18, 22, 40, 0.75);
+  --theme-card-accent-bg-end: rgba(22, 30, 60, 0.8);
+  --theme-card-accent-shadow: rgba(123, 156, 255, 0.1);
+  --theme-card-accent-border: rgba(123, 156, 255, 0.28);
+  --theme-badge-bg: #1a2448;
+  --theme-badge-text: #9cb8ff;
+  --theme-chart-bg: rgba(22, 28, 50, 0.7);
+  --theme-chart-grid: #1e2848;
+  --theme-chart-color-0: #7b9cff;
+  --theme-chart-color-1: #5ef0b8;
+  --theme-chart-color-2: #f0b868;
+  --theme-chart-color-3: #f06078;
+  --theme-chart-color-4: #c084fc;
+  --theme-chart-line-width: 2.5;
+  --theme-chart-dot-radius: 4;
+  --theme-modal-overlay: rgba(0, 0, 0, 0.65);
+  --theme-btn-secondary-bg: rgba(22, 28, 50, 0.7);
+  --theme-btn-secondary-border: #7b9cff;
+  --theme-btn-secondary-text: #7b9cff;
+  --theme-btn-style: 12rpx;
+  --theme-summary-chip-bg: #1a2448;
+  --theme-summary-chip-text: #9cb8ff;
+  --theme-value-badge-bg: rgba(22, 30, 60, 0.7);
+  --theme-value-badge-text: #7b9cff;
+  --theme-value-badge-unit: #8890b8;
+  --theme-empty-border: #1e2848;
+  --theme-category-tabs-bg: rgba(22, 28, 50, 0.6);
+  --theme-category-tab-active-bg: #1e2850;
+  --theme-category-tab-active-shadow: rgba(0, 0, 0, 0.35);
+  --theme-quick-chip-border: #1e2848;
+  --theme-menu-accent-bg: rgba(123, 156, 255, 0.06);
+}
+
+/* ── AMBER (Agricultural / Environmental Monitor) ── */
+[data-theme="amber"] {
+  --theme-accent: #c8782b;
+  --theme-accent-light: #fdf2e6;
+  --theme-accent-dark: #b06820;
+  --theme-accent-contrast: #ffffff;
+  --theme-bg: #faf6f0;
+  --theme-bg-image: url('/static/theme/bg-amber.svg');
+  --theme-bg-image-opacity: 0.35;
+  --theme-bg-gradient-start: #f7efe2;
+  --theme-bg-gradient-end: #faf6f0;
+  --theme-bg-gradient-settings-start: #f4ecdd;
+  --theme-bg-gradient-settings-end: #faf6f0;
+  --theme-surface: #fffdf8;
+  --theme-surface-alt: #fdf9f2;
+  --theme-surface-alt-2: #fcf6ed;
+  --theme-surface-hover: #fef8ef;
+  --theme-surface-border: rgba(180, 140, 100, 0.18);
+  --theme-surface-border-light: rgba(200, 120, 40, 0.07);
+  --theme-surface-border-accent: rgba(200, 120, 40, 0.22);
+  --theme-text-primary: #2d2218;
+  --theme-text-secondary: #8c7458;
+  --theme-text-tertiary: #a69078;
+  --theme-text-heading: #3d2e20;
+  --theme-hero-bg-start: #6b8c3a;
+  --theme-hero-bg-end: #3d2a18;
+  --theme-hero-border: rgba(255, 255, 255, 0.18);
+  --theme-hero-text: #fffaf2;
+  --theme-hero-text-muted: rgba(255, 245, 230, 0.72);
+  --theme-hero-btn-bg: rgba(255, 255, 255, 0.12);
+  --theme-hero-btn-border: rgba(255, 255, 255, 0.18);
+  --theme-hero-overlay: none;
+  --theme-input-bg: #fdf9f2;
+  --theme-input-border: #e0d4c0;
+  --theme-input-border-focus: #c8782b;
+  --theme-input-style: 16rpx;
+  --theme-divider: #f4ecdd;
+  --theme-divider-light: #e8dcc8;
+  --theme-shadow-sm: rgba(80, 50, 20, 0.06);
+  --theme-shadow-md: rgba(80, 50, 20, 0.08);
+  --theme-shadow-lg: rgba(60, 35, 10, 0.14);
+  --theme-shadow-accent: rgba(200, 120, 40, 0.16);
+  --theme-danger: #c04540;
+  --theme-danger-bg: #fef5f4;
+  --theme-danger-border: #c04540;
+  --theme-success: #5da870;
+  --theme-warning: #d9a040;
+  --theme-radius-sm: 16rpx;
+  --theme-radius-md: 24rpx;
+  --theme-radius-lg: 32rpx;
+  --theme-radius-pill: 999rpx;
+  --theme-radius-input: 16rpx;
+  --theme-card-border-width: 1px;
+  --theme-card-border-style: solid;
+  --theme-card-bg-opacity: 1;
+  --theme-layout-gap: 22rpx;
+  --theme-layout-section-gap: 28rpx;
+  --theme-tab-active-bg: #fdf2e6;
+  --theme-tab-height: 100rpx;
+  --theme-tab-border-radius: 30rpx;
+  --theme-tab-wrapper-bg: rgba(255, 253, 248, 0.96);
+  --theme-tab-wrapper-border: rgba(180, 140, 100, 0.16);
+  --theme-tab-wrapper-shadow: rgba(60, 35, 10, 0.1);
+  --theme-tab-wrapper-padding: 12rpx;
+  --theme-tab-text: #8c7458;
+  --theme-tab-active-text: #c8782b;
+  --theme-tab-shadow-inset: rgba(200, 120, 40, 0.05);
+  --theme-tab-border: rgba(180, 140, 100, 0.16);
+  --theme-tab-bg: rgba(255, 253, 248, 0.96);
+  --theme-tab-shadow: rgba(60, 35, 10, 0.1);
+  --theme-metric-fill-end: #e8a858;
+  --theme-card-accent-bg-start: #fffdf8;
+  --theme-card-accent-bg-end: #fef6ed;
+  --theme-card-accent-shadow: rgba(200, 120, 40, 0.1);
+  --theme-card-accent-border: rgba(200, 120, 40, 0.24);
+  --theme-badge-bg: #fdf2e6;
+  --theme-badge-text: #c8782b;
+  --theme-chart-bg: #fdf9f2;
+  --theme-chart-grid: #e8dcc8;
+  --theme-chart-color-0: #c8782b;
+  --theme-chart-color-1: #5da870;
+  --theme-chart-color-2: #4a90c4;
+  --theme-chart-color-3: #c04540;
+  --theme-chart-color-4: #8b5fc0;
+  --theme-chart-line-width: 3;
+  --theme-chart-dot-radius: 5;
+  --theme-modal-overlay: rgba(30, 20, 10, 0.45);
+  --theme-btn-secondary-bg: #fdf9f2;
+  --theme-btn-secondary-border: #c8782b;
+  --theme-btn-secondary-text: #c8782b;
+  --theme-btn-style: 16rpx;
+  --theme-summary-chip-bg: #fdf2e6;
+  --theme-summary-chip-text: #c8782b;
+  --theme-value-badge-bg: #fdf6ed;
+  --theme-value-badge-text: #c8782b;
+  --theme-value-badge-unit: #8c7458;
+  --theme-empty-border: #e0d4c0;
+  --theme-category-tabs-bg: #f4ecdd;
+  --theme-category-tab-active-bg: #fffdf8;
+  --theme-category-tab-active-shadow: rgba(80, 50, 20, 0.05);
+  --theme-quick-chip-border: #e0d4c0;
+  --theme-menu-accent-bg: rgba(200, 120, 40, 0.06);
+}
+
+/* ── STEEL (Enterprise Ops Briefing) ── */
+[data-theme="steel"] {
+  --theme-accent: #2c5282;
+  --theme-accent-light: #e8eff8;
+  --theme-accent-dark: #1e3d64;
+  --theme-accent-contrast: #ffffff;
+  --theme-bg: #f4f6f9;
+  --theme-bg-image: url('/static/theme/bg-steel.svg');
+  --theme-bg-image-opacity: 0.3;
+  --theme-bg-gradient-start: #eaedf2;
+  --theme-bg-gradient-end: #f4f6f9;
+  --theme-bg-gradient-settings-start: #e8ecf2;
+  --theme-bg-gradient-settings-end: #f4f6f9;
+  --theme-surface: #ffffff;
+  --theme-surface-alt: #f7f9fc;
+  --theme-surface-alt-2: #f5f7fb;
+  --theme-surface-hover: #f2f5fa;
+  --theme-surface-border: rgba(44, 60, 90, 0.1);
+  --theme-surface-border-light: rgba(44, 82, 130, 0.05);
+  --theme-surface-border-accent: rgba(44, 82, 130, 0.18);
+  --theme-text-primary: #1a2332;
+  --theme-text-secondary: #4a5a72;
+  --theme-text-tertiary: #6b7a95;
+  --theme-text-heading: #15202f;
+  --theme-hero-bg-start: #1a3650;
+  --theme-hero-bg-end: #0f2438;
+  --theme-hero-border: rgba(255, 255, 255, 0.15);
+  --theme-hero-text: #ffffff;
+  --theme-hero-text-muted: rgba(255, 255, 255, 0.65);
+  --theme-hero-btn-bg: rgba(255, 255, 255, 0.1);
+  --theme-hero-btn-border: rgba(255, 255, 255, 0.14);
+  --theme-hero-overlay: none;
+  --theme-input-bg: #f7f9fc;
+  --theme-input-border: #d0d6e0;
+  --theme-input-border-focus: #2c5282;
+  --theme-input-style: 6rpx;
+  --theme-divider: #e8ecf2;
+  --theme-divider-light: #dde3ed;
+  --theme-shadow-sm: rgba(20, 30, 50, 0.04);
+  --theme-shadow-md: rgba(20, 30, 50, 0.06);
+  --theme-shadow-lg: rgba(15, 25, 45, 0.12);
+  --theme-shadow-accent: rgba(44, 82, 130, 0.12);
+  --theme-danger: #c43840;
+  --theme-danger-bg: #fef5f6;
+  --theme-danger-border: #c43840;
+  --theme-success: #4a8a60;
+  --theme-warning: #c88828;
+  --theme-radius-sm: 4rpx;
+  --theme-radius-md: 8rpx;
+  --theme-radius-lg: 12rpx;
+  --theme-radius-pill: 999rpx;
+  --theme-radius-input: 4rpx;
+  --theme-card-border-width: 1px;
+  --theme-card-border-style: solid;
+  --theme-card-bg-opacity: 1;
+  --theme-layout-gap: 10rpx;
+  --theme-layout-section-gap: 16rpx;
+  --theme-tab-active-bg: #e8eff8;
+  --theme-tab-height: 88rpx;
+  --theme-tab-border-radius: 12rpx;
+  --theme-tab-wrapper-bg: #ffffff;
+  --theme-tab-wrapper-border: rgba(44, 60, 90, 0.1);
+  --theme-tab-wrapper-shadow: rgba(20, 30, 50, 0.08);
+  --theme-tab-wrapper-padding: 4rpx;
+  --theme-tab-text: #4a5a72;
+  --theme-tab-active-text: #2c5282;
+  --theme-tab-shadow-inset: rgba(44, 82, 130, 0.04);
+  --theme-tab-border: rgba(44, 60, 90, 0.08);
+  --theme-tab-bg: #ffffff;
+  --theme-tab-shadow: rgba(20, 30, 50, 0.08);
+  --theme-metric-fill-end: #5a8cc0;
+  --theme-card-accent-bg-start: #ffffff;
+  --theme-card-accent-bg-end: #f5f8fc;
+  --theme-card-accent-shadow: rgba(44, 82, 130, 0.08);
+  --theme-card-accent-border: rgba(44, 82, 130, 0.2);
+  --theme-badge-bg: #e8eff8;
+  --theme-badge-text: #2c5282;
+  --theme-chart-bg: #f7f9fc;
+  --theme-chart-grid: #dde4ef;
+  --theme-chart-color-0: #2c5282;
+  --theme-chart-color-1: #4a8a60;
+  --theme-chart-color-2: #c88828;
+  --theme-chart-color-3: #c43840;
+  --theme-chart-color-4: #6c50b0;
+  --theme-chart-line-width: 2;
+  --theme-chart-dot-radius: 3.5;
+  --theme-modal-overlay: rgba(10, 18, 32, 0.4);
+  --theme-btn-secondary-bg: #f5f7fb;
+  --theme-btn-secondary-border: #2c5282;
+  --theme-btn-secondary-text: #2c5282;
+  --theme-btn-style: 4rpx;
+  --theme-summary-chip-bg: #e8eff8;
+  --theme-summary-chip-text: #2c5282;
+  --theme-value-badge-bg: #f0f3f8;
+  --theme-value-badge-text: #2c5282;
+  --theme-value-badge-unit: #4a5a72;
+  --theme-empty-border: #d0d6e0;
+  --theme-category-tabs-bg: #e8ecf2;
+  --theme-category-tab-active-bg: #ffffff;
+  --theme-category-tab-active-shadow: rgba(20, 30, 50, 0.04);
+  --theme-quick-chip-border: #d0d6e0;
+  --theme-menu-accent-bg: rgba(44, 82, 130, 0.04);
+}
+
+/* ===================================================================
+   Layout Presets (structural CSS not covered by color vars)
+   =================================================================== */
+
+/* Compact (teal) - tighter spacing, sharper, floating capsule tabs */
+[data-theme-layout="compact"] page {
+  background-image: var(--theme-bg-image);
+  background-size: cover;
+  background-attachment: fixed;
+}
+
+/* Glass (night) - frosted panels, softer edges, glow tab bar */
+[data-theme-layout="glass"] page {
+  background-image: var(--theme-bg-image);
+  background-size: cover;
+  background-attachment: fixed;
+}
+
+/* Organic (amber) - generous spacing, soft rounded everything */
+[data-theme-layout="organic"] page {
+  background-image: var(--theme-bg-image);
+  background-size: cover;
+  background-attachment: fixed;
+}
+
+/* Dense (steel) - minimal gap, thin borders, corporate clean */
+[data-theme-layout="dense"] page {
+  background-image: var(--theme-bg-image);
+  background-size: cover;
+  background-attachment: fixed;
+}
+
+/* ── Base page styles ── */
+page {
+  min-height: 100%;
+  background-color: var(--theme-bg);
+  background-image: var(--theme-bg-image);
+  background-size: cover;
+  background-attachment: fixed;
+  color: var(--theme-text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button::after {
+  border: 0;
+}
+
+uni-tabbar {
+  display: none !important;
+}
+</style>

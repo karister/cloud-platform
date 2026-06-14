@@ -1,0 +1,27 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+.env
+.env.local
+.env.*.local
+.history/
+
+# Android build outputs
+android-webview/app/build/
+android-webview/.gradle/
+android-webview/build/
+android-webview/local.properties
+*.apk
+*.aab
+
+# Android SDK / build tools
+work/android-build-tools/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+Thumbs.db
