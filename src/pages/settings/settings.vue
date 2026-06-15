@@ -135,6 +135,27 @@
       </view>
     </view>
 
+    <!-- Password verification modal -->
+    <view v-if="showPasswordModal" class="modal-mask" @tap="cancelPassword">
+      <view class="password-dialog" @tap.stop>
+        <text class="password-title">管理员验证</text>
+        <text class="password-desc">请输入管理员密码以解锁配置权限</text>
+        <input
+          class="password-input"
+          type="text"
+          password
+          :value="passwordInput"
+          placeholder="请输入密码"
+          @input="passwordInput = $event.detail.value"
+          @confirm="submitPassword"
+        />
+        <view class="password-actions">
+          <button class="password-btn cancel" @tap="cancelPassword">取消</button>
+          <button class="password-btn confirm" @tap="submitPassword">确认</button>
+        </view>
+      </view>
+    </view>
+
     <view v-if="activeModal" class="modal-mask">
       <view class="modal">
         <view class="modal-head">
@@ -309,6 +330,8 @@ const unlockTapCount = ref(0)
 const unlockTimer = ref(null)
 const activeRecommendCategory = ref('display')
 const themeSectionOpen = ref(false)
+const showPasswordModal = ref(false)
+const passwordInput = ref('')
 
 const categoryDefs = [
   { key: 'display', label: '展示' },
@@ -357,18 +380,39 @@ function handleHeaderTap() {
   if (unlockTimer.value) clearTimeout(unlockTimer.value)
 
   if (unlockTapCount.value >= 5) {
-    adminMode.value = true
     unlockTapCount.value = 0
-    uni.showToast({
-      title: '管理员配置已开启',
-      icon: 'none'
-    })
+    // Show password prompt instead of directly unlocking
+    passwordInput.value = ''
+    showPasswordModal.value = true
     return
   }
 
   unlockTimer.value = setTimeout(() => {
     unlockTapCount.value = 0
   }, 10000)
+}
+
+function submitPassword() {
+  if (passwordInput.value === 'esp8266') {
+    adminMode.value = true
+    showPasswordModal.value = false
+    passwordInput.value = ''
+    uni.showToast({
+      title: '管理员配置已开启',
+      icon: 'none'
+    })
+  } else {
+    passwordInput.value = ''
+    uni.showToast({
+      title: '密码错误',
+      icon: 'error'
+    })
+  }
+}
+
+function cancelPassword() {
+  showPasswordModal.value = false
+  passwordInput.value = ''
 }
 
 function exitAdmin() {
@@ -1018,6 +1062,75 @@ onShow(reload)
   color: var(--theme-accent-contrast);
   line-height: 80rpx;
   box-shadow: 0 12rpx 28rpx var(--theme-shadow-accent);
+}
+
+/* ── Password modal ── */
+.password-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 560rpx;
+  padding: 40rpx 36rpx 30rpx;
+  border-radius: var(--theme-radius-lg);
+  background: var(--theme-surface);
+  box-shadow: 0 28rpx 68rpx var(--theme-shadow-lg);
+  z-index: 50;
+}
+
+.password-title {
+  display: block;
+  color: var(--theme-text-primary);
+  font-size: 34rpx;
+  font-weight: 900;
+}
+
+.password-desc {
+  display: block;
+  margin-top: 10rpx;
+  color: var(--theme-text-secondary);
+  font-size: 24rpx;
+}
+
+.password-input {
+  width: 100%;
+  height: 80rpx;
+  margin-top: 28rpx;
+  padding: 0 20rpx;
+  border: 1px solid var(--theme-input-border);
+  border-radius: var(--theme-radius-input);
+  background: var(--theme-input-bg);
+  color: var(--theme-text-primary);
+  font-size: 28rpx;
+  box-sizing: border-box;
+  letter-spacing: 4rpx;
+}
+
+.password-actions {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 26rpx;
+}
+
+.password-btn {
+  flex: 1;
+  height: 76rpx;
+  margin: 0;
+  border-radius: var(--theme-radius-input);
+  font-size: 27rpx;
+  font-weight: 800;
+  line-height: 76rpx;
+}
+
+.password-btn.cancel {
+  border: 1px solid var(--theme-surface-border);
+  background: var(--theme-surface-alt);
+  color: var(--theme-text-secondary);
+}
+
+.password-btn.confirm {
+  background: var(--theme-accent);
+  color: var(--theme-accent-contrast);
 }
 
 /* ── Theme selector (inline, not modal) ── */
