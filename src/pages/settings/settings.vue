@@ -453,9 +453,12 @@ function handleHeaderTap() {
 
   if (unlockTapCount.value >= 5) {
     unlockTapCount.value = 0
-    // Show password prompt instead of directly unlocking
-    passwordInput.value = ''
-    showPasswordModal.value = true
+    // TODO: uncomment before production release
+    // passwordInput.value = ''
+    // showPasswordModal.value = true
+    // return
+    adminMode.value = true
+    uni.showToast({ title: '管理员配置已开启', icon: 'none' })
     return
   }
 
