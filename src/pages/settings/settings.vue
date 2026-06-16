@@ -273,54 +273,13 @@
 </template>
 
 <script setup>
-import { computed, defineComponent, h, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import AppTabBar from '../../components/AppTabBar.vue'
+import PointFields from '../../components/PointFields.vue'
 import { buildGetUrl, createPoint } from '../../utils/defaultConfig'
 import { getConfig, saveConfig } from '../../utils/storage'
 import { THEME_LIST, applyThemeToDOM } from '../../utils/themes'
-
-const PointFields = defineComponent({
-  props: {
-    point: {
-      type: Object,
-      required: true
-    },
-    threshold: {
-      type: Boolean,
-      default: false
-    }
-  },
-  setup(props) {
-    const field = (label, key, type = 'text') =>
-      h('label', { class: 'field' }, [
-        h('text', label),
-        h('input', {
-          class: 'input',
-          type,
-          value: String(props.point[key] ?? ''),
-          onInput: (event) => {
-            props.point[key] = type === 'number' ? Number(event.detail.value) : event.detail.value
-          }
-        })
-      ])
-
-    return () =>
-      h('view', { class: 'point-fields' }, [
-        field('展示中文', 'label'),
-        field('云平台标识符', 'identifier'),
-        field('单位', 'unit'),
-        props.threshold
-          ? h('view', { class: 'threshold-grid' }, [
-              field('最小值', 'min', 'number'),
-              field('最大值', 'max', 'number'),
-              field('步长', 'step', 'number'),
-              field('默认值', 'value', 'number')
-            ])
-          : null
-      ])
-  }
-})
 
 const config = ref(getConfig())
 const draft = ref(getConfig())
