@@ -236,7 +236,7 @@
                 <text class="field-title">模拟数据模式</text>
                 <text class="field-desc">关闭后使用真实云平台接口，调试值仅在模拟模式下生效</text>
               </view>
-              <switch :color="debugSwitchColor" :checked="config.cloud.mockMode" @change="toggleMockMode" />
+              <switch :color="debugSwitchColor" :checked="config.cloud.mockMode" @change="toggleMockMode($event.detail.value)" />
             </view>
             <text class="debug-intro">设置各数据点的调试值，保存后模拟数据模式下生效。显示/阈值类数据点输入数值，开关类数据点使用切换按钮。</text>
             <view class="debug-list">
