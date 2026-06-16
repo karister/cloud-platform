@@ -36,7 +36,7 @@
     <view class="section-head list-head">
       <view>
         <text class="section-title">采样列表</text>
-        <text class="section-desc">按时间倒序展示</text>
+        <text class="section-desc">最近 {{ Math.min(history.length, 20) }} 条记录</text>
       </view>
     </view>
 
@@ -99,7 +99,7 @@ const chartDotRadius = computed(() => {
   return theme ? Number(theme.cssVars['--theme-chart-dot-radius']) || 4.5 : 4.5
 })
 
-const visibleHistory = computed(() => [...history.value].reverse())
+const visibleHistory = computed(() => [...history.value].reverse().slice(0, 20))
 
 function mockNumber(identifier, index) {
   const seed = identifier.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0)
