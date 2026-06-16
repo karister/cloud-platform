@@ -200,13 +200,6 @@
                 @input="draft.cloud.authorization = $event.detail.value"
               />
             </label>
-            <view class="switch-field">
-              <view>
-                <text class="field-title">模拟数据模式</text>
-                <text class="field-desc">关闭后使用真实云平台接口</text>
-              </view>
-              <switch color="#0f6b67" :checked="draft.cloud.mockMode" @change="draft.cloud.mockMode = $event.detail.value" />
-            </view>
           </view>
 
           <view v-else-if="activeModal === 'recommendations'" class="form">
@@ -238,6 +231,13 @@
           </view>
 
           <view v-else-if="activeModal === 'debug'" class="form">
+            <view class="switch-field">
+              <view>
+                <text class="field-title">模拟数据模式</text>
+                <text class="field-desc">关闭后使用真实云平台接口，调试值仅在模拟模式下生效</text>
+              </view>
+              <switch :color="debugSwitchColor" :checked="config.cloud.mockMode" @change="toggleMockMode" />
+            </view>
             <text class="debug-intro">设置各数据点的调试值，保存后模拟数据模式下生效。显示/阈值类数据点输入数值，开关类数据点使用切换按钮。</text>
             <view class="debug-list">
               <view v-for="point in debugDisplayPoints" :key="'debug-dp-' + point.identifier" class="debug-row">
@@ -401,6 +401,11 @@ const hasDebugPoints = computed(() =>
   debugSwitchPoints.value.length > 0 ||
   debugThresholdPoints.value.length > 0
 )
+
+function toggleMockMode(checked) {
+  config.value.cloud.mockMode = checked
+  saveConfig(config.value)
+}
 
 function openDebug() {
   // Populate debugValueMap from saved storage

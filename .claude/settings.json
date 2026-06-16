@@ -8,7 +8,12 @@
       "Bash(git rm *)",
       "Bash(git commit *)",
       "Bash(git push *)",
-      "Bash(start http://localhost:5180/)"
+      "Bash(start http://localhost:5180/)",
+      "PowerShell(Install-PackageProvider -Name NuGet -Force -ForceBootstrap; Set-PSRepository -Name PSGallery -InstallationPolicy Trusted; Install-Module -Name BurntToast -Force -AllowClobber -Scope CurrentUser)",
+      "PowerShell(Add-Type -AssemblyName System.Windows.Forms; $result = [System.Windows.Forms.MessageBox]::Show\\('Claude Code agent 测试通知', 'Claude Code', 'OK', 'Information'\\); Write-Output \"MessageBox displayed successfully, result: $result\")"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\karister\\.claude"
     ]
   }
 }
