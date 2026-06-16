@@ -1,5 +1,0 @@
-- For Apple Silicon (M1/M2/M3) Mac devices:
-  Please see ThirdPartyNotices(macosx-arm).txt
-
-- For Intel-based Mac devices:
-  Please see ThirdPartyNotices(macosx-intel).txt

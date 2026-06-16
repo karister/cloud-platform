@@ -7,21 +7,32 @@ dist/
 .env.*.local
 .history/
 
+# Build outputs
+apks/
+*.apk
+*.aab
+
 # Android build outputs
 android-webview/app/build/
 android-webview/.gradle/
 android-webview/build/
 android-webview/local.properties
-*.apk
-*.aab
+
+# Auto-generated H5 build output (rebuilt by build:h5)
+android-webview/app/src/main/assets/www/
 
 # Android SDK / build tools
 work/android-build-tools/
 
+# HBuilderX IDE (not part of the project)
+work/hbuilderx/
+
 # IDE
 .idea/
-.vscode/
 *.iml
+
+# Local config overrides
+.claude/settings.local.json
 
 # OS
 Thumbs.db

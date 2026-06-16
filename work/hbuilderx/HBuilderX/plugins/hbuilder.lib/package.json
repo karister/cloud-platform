@@ -1,8 +1,0 @@
-{
-  "name": "hbuilder.lib",
-  "version": "8.0.2",
-  "description": "Platform dependency library file for HBuilderX",  
-  "root":true,
-  "__private":true,
-  "qt_version":"5.6.3_x64"
-}

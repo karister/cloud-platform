@@ -1,1 +1,0 @@
-function t(t,e=""){return null==t||""===t?"--":"number"==typeof t?`${Number(t.toFixed(2))}${e}`:"boolean"==typeof t?t?"开启":"关闭":`${t}${e}`}function e(t){if(!t)return"--";const e=new Date(t),n=t=>String(t).padStart(2,"0");return`${n(e.getHours())}:${n(e.getMinutes())}:${n(e.getSeconds())}`}export{t as a,e as f};
