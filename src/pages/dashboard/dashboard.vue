@@ -50,7 +50,7 @@
           <text class="metric-value" :class="{ 'value-alarm': isAlarming(point, values[point.identifier]) }">
             {{ formatValue(values[point.identifier], point.unit) }}
           </text>
-          <view class="metric-track">
+          <view v-if="point.alarmThresholdId" class="metric-track">
             <view
               class="metric-fill"
               :class="{ 'fill-alarm': isAlarming(point, values[point.identifier]) }"
