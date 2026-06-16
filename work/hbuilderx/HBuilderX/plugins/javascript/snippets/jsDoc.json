@@ -1,0 +1,86 @@
+{
+    "@alias": {
+        "body": [
+            "@alias $0"
+        ],
+        "prefix": "@alias",
+        "triggerAssist": false
+    },
+    "@description": {
+        "body": [
+            "@description $0"
+        ],
+        "prefix": "@description",
+        "triggerAssist": false
+    },
+    "@event": {
+        "body": [
+            "@event {Function(${1})} ${2:name} $0"
+        ],
+        "prefix": "@event",
+        "triggerAssist": false
+    },
+    "@example": {
+        "body": [
+            "@example $0"
+        ],
+        "prefix": "@example",
+        "triggerAssist": false
+    },
+    "@extends": {
+        "body": [
+            "@extends {${1:parent_type}}"
+        ],
+        "prefix": "@extends",
+        "triggerAssist": false
+    },
+    "@param": {
+        "body": [
+            "@param {${1:type}} ${2:$FN_PARAMS} $0"
+        ],
+        "prefix": "@param",
+        "triggerAssist": false
+    },
+    "@param with values": {
+        "body": [
+            "@param {${1:type}} ${2:$FN_PARAMS} = [${3:value}] $0"
+        ],
+        "prefix": "@paramvalues",
+        "triggerAssist": false
+    },
+    "@property": {
+        "body": [
+            "@property {${1:type}} ${2:prop_name} $0"
+        ],
+        "prefix": "@property",
+        "triggerAssist": false
+    },
+    "@property with values": {
+        "body": [
+            "@property {${1:type}} ${2:prop_name} = [${3:value}] $0"
+        ],
+        "prefix": "@propertyvalues",
+        "triggerAssist": false
+    },
+    "@return": {
+        "body": [
+            "@return {${1:type}}"
+        ],
+        "prefix": "@return",
+        "triggerAssist": false
+    },
+    "@tutorial": {
+        "body": [
+            "@tutorial ${1:url}"
+        ],
+        "prefix": "@tutorial",
+        "triggerAssist": false
+    },
+    "@type": {
+        "body": [
+            "@type {${1:type}}"
+        ],
+        "prefix": "@type",
+        "triggerAssist": false
+    }
+}

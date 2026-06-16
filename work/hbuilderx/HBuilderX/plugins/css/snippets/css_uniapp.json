@@ -1,0 +1,23 @@
+{
+    "height --status-bar-height": {
+        "body": [
+            "height: var(--status-bar-height);"
+        ],
+        "prefix": "heightstatusbar"
+
+    },
+    "height --window-top": {
+        "body": [
+            "height: var(--window-top);"
+        ],
+        "prefix": "heightwindowtop"
+
+    },
+    "height --window-bottom": {
+        "body": [
+            "height: var(--window-bottom);"
+        ],
+        "prefix": "heightwindowbottom"
+
+    }
+}

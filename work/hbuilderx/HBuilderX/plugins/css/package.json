@@ -1,0 +1,104 @@
+{
+    "name": "css",
+    "version": "0.1.1.2025121816",
+    "__private": true,
+    "contributes": {
+        "snippets": [
+            {
+                "language": "css",
+                "path": "./snippets/atRule.json",
+                "scope": "source ! (meta.property-list|meta.attribute-selector|meta.at-rule.import)"
+            },
+            {
+                "language": "less",
+                "path": "./snippets/atRule.json",
+                "scope": "source ! (meta.property-list|meta.attribute-selector|meta.at-rule.import)"
+            },
+            {
+                "language": "scss",
+                "path": "./snippets/atRule.json",
+                "scope": "source ! (meta.property-list|meta.attribute-selector|meta.at-rule.import)"
+            },
+            {
+                "language": "css",
+                "path": "./snippets/css.json",
+                "scope": "source meta.property-list ! (meta.property-value|punctuation.terminator.rule)"
+            },
+            {
+                "language": "less",
+                "path": "./snippets/css.json",
+                "scope": "source meta.property-list ! (meta.property-value|punctuation.terminator.rule)"
+            },
+            {
+                "language": "scss",
+                "path": "./snippets/css.json",
+                "scope": "source meta.property-list ! (meta.property-value|punctuation.terminator.rule)"
+            },
+            {
+                "language": "css",
+                "path": "./snippets/css_uniapp.json",
+                "project": "uni-app,uni-app-x",
+                "scope": "source meta.property-list ! (meta.property-value|punctuation.terminator.rule)"
+            },
+            {
+                "language": "less",
+                "path": "./snippets/css_uniapp.json",
+                "project": "uni-app,uni-app-x",
+                "scope": "source meta.property-list ! (meta.property-value|punctuation.terminator.rule)"
+            },
+            {
+                "language": "scss",
+                "path": "./snippets/css_uniapp.json",
+                "project": "uni-app,uni-app-x",
+                "scope": "source meta.property-list ! (meta.property-value|punctuation.terminator.rule)"
+            },
+            {
+                "language": "stylus",
+                "path": "./snippets/stylus.json"
+            },
+            {
+                "language": "css",
+                "path": "./snippets/condition_comment.json",
+                "project": "uni-app"
+            },
+            {
+                "language": "less",
+                "path": "./snippets/condition_comment.json",
+                "project": "uni-app"
+            },
+            {
+                "language": "scss",
+                "path": "./snippets/condition_comment.json",
+                "project": "uni-app"
+            },
+            {
+                "language": "stylus",
+                "path": "./snippets/condition_comment.json",
+                "project": "uni-app"
+            },
+            {
+                "language": "css",
+                "path": "./snippets/condition_comment_uniappx.json",
+                "project": "uni-app-x"
+            },
+            {
+                "language": "less",
+                "path": "./snippets/condition_comment_uniappx.json",
+                "project": "uni-app-x"
+            },
+            {
+                "language": "scss",
+                "path": "./snippets/condition_comment_uniappx.json",
+                "project": "uni-app-x"
+            },
+            {
+                "language": "stylus",
+                "path": "./snippets/condition_comment_uniappx.json",
+                "project": "uni-app-x"
+            }
+        ]
+    },
+    "devDependencies": {
+        "@types/node": "^6.0.51"
+    }
+}

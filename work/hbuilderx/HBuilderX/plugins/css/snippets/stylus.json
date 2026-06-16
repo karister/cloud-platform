@@ -1,0 +1,41 @@
+{
+    "@import": {
+        "body": [
+            "@import \"$1\""
+        ],
+        "prefix": "@import",
+        "scope": "source ! (meta.property-list|keyword.operator)"
+    },
+    "@extend": {
+        "body": [
+            "@extend $0"
+        ],
+        "prefix": "@extend",
+        "scope": "source ! (meta.property-list|keyword.operator)"
+    },
+    "@media": {
+        "body": [
+            "@media print",
+            "\t$0"
+        ],
+        "prefix": "@media",
+        "scope": "source ! (meta.property-list|keyword.operator)"
+    },
+    "@font-face": {
+        "body": [
+            "@font-face",
+            "\tfont-family $1",
+            "\tfont-style $2",
+            "\tsrc url($3)$0"
+        ],
+        "prefix": "@font-face",
+        "scope": "source ! (meta.property-list|keyword.operator)"
+    },
+    "@keyframes": {
+        "body": [
+            "@keyframes $0"
+        ],
+        "prefix": "@keyframes",
+        "scope": "source ! (meta.property-list|keyword.operator)"
+    }
+}

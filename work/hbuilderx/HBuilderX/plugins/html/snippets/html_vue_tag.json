@@ -1,0 +1,118 @@
+{
+    "Vue Base": {
+        "body": [
+            "<template>",
+            "\t<${1:div}>",
+            "",
+            "\t</${1:div}>",
+            "</template>",
+            "",
+            "<script>",
+            "\texport default {",
+            "\t\t${0}",
+            "\t}",
+            "</script>",
+            "",
+            "<style scoped>",
+            "",
+            "</style>"
+        ],
+        "description": "Base for Vue File",
+        "prefix": "vbase"
+    },
+    "Vue Class Binding": {
+        "body": [
+            "<${1:div} :class=\"{ ${2:className}: ${3:data} }\"></${1:div}>"
+        ],
+        "description": "vue class binding",
+        "prefix": "vclass"
+    },
+    "Vue Class Binding Object": {
+        "body": [
+            "<${1:div} :class=\"[${2:classNameA}, ${3:classNameB}]\"></${1:div}>"
+        ],
+        "description": "vue class binding",
+        "prefix": "vclass-obj"
+    },
+    "Vue Component with Props Binding": {
+        "body": [
+            "<${1:component} :${1:propName}=\"${0}\"></${1:component}>"
+        ],
+        "description": "component element with props",
+        "prefix": "vel-props"
+    },
+    "Vue Image Source Binding": {
+        "body": [
+            "<img :src=\"'/path/to/images/' + ${1:fileName}\" alt=\"${2:altText}\"/>"
+        ],
+        "description": "image source binding",
+        "prefix": "vsrc"
+    },
+    "Vue Multiple Conditional Class Bindings": {
+        "body": [
+            "<${1:div} :class=\"[${2:classNameA}, {${3:classNameB} : ${4:condition}}]\"></${1:div}>"
+        ],
+        "description": "vue multiple conditional class bindings",
+        "prefix": "vclass-obj-mult"
+    },
+    "Vue Nuxt Routing Link": {
+        "body": [
+            "<nuxt-link to=\"/${1:page}\">${1:page}</nuxt-link>"
+        ],
+        "description": "nuxt routing link",
+        "prefix": "vnuxtl"
+    },
+    "Vue Style Binding": {
+        "body": [
+            "<${1:div} :style=\"{ fontSize: ${2:data} + 'px' }\"></${1:div}>"
+        ],
+        "description": "vue inline style binding",
+        "prefix": "vstyle"
+    },
+    "Vue Style Binding Object": {
+        "body": [
+            "<${1:div} :style=\"[${2:styleObjectA}, ${3:styleObjectB]}\"></${1:div}>"
+        ],
+        "description": "vue inline style binding, objects",
+        "prefix": "vstyle-obj"
+    },
+    "Vue Transition Component with JavaScript Hooks": {
+        "body": [
+            "<transition",
+            "\tmode=\"out-in\"",
+            "\t@before-enter=\"beforeEnter\"",
+            "\t@enter=\"enter\"",
+            "",
+            "\t@before-leave=\"beforeLeave\"",
+            "\t@leave=\"leave\"",
+            "\t:css=\"false\">",
+            "",
+            "</transition>"
+        ],
+        "description": "transition component js hooks",
+        "prefix": "vanim"
+    },
+    "Vue v-for Shortcut Directive": {
+        "body": [
+            "<${1:div} v-for=\"${2:item} in ${2:item}s\" :key=\"${2:item}.id\">",
+            "\t{{ ${2:item} }}",
+            "</${1:div}>"
+        ],
+        "description": "vfor statement",
+        "prefix": "vfor"
+    },
+    "Vue v-model Directive": {
+        "body": [
+            "<input v-model=\"${1:data}\" type=\"text\" />"
+        ],
+        "description": "v-model directive",
+        "prefix": "vmodel"
+    },
+    "Vue v-model Number Directive": {
+        "body": [
+            "<input v-model.number=\"${1:numData}\" type=\"number\" step=\"1\" />"
+        ],
+        "description": "v-model directive number input",
+        "prefix": "vmodel-num"
+    }
+}

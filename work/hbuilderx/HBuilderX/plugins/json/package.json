@@ -1,0 +1,22 @@
+{
+    "name": "json",
+    "version": "0.0.1.2025121816",
+    "__private": true,
+    "contributes": {
+        "snippets": [
+            {
+                "project": "uni-app",
+                "language": "json",
+                "path": "./snippets/condition_comment.json"
+            },
+            {
+                "project": "uni-app-x",
+                "language": "json",
+                "path": "./snippets/condition_comment_uniappx.json"
+            }
+        ]
+    },
+    "devDependencies": {
+        "@types/node": "^6.0.51"
+    }
+}

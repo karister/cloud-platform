@@ -1,0 +1,21 @@
+{
+	"name":"uvue组件模板",
+	"description":"uvue组件模板",
+	"templates":[
+		{
+			"file": "default component.uvue"
+		},
+		{
+			"file": "less component.uvue"
+		},
+		{
+			"file": "scss component.uvue"
+		},
+		{
+			"file": "stylus component.uvue"
+		},
+		{
+			"file": "typescript component.uvue"
+		}
+	]
+}

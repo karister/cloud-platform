@@ -1,0 +1,100 @@
+{
+    "@-moz-keyframes": {
+        "body": [
+            "@-moz-keyframes ${1:name}{",
+            "\tfrom{$2}",
+            "\tto{$3}",
+            "}"
+        ],
+        "prefix": "@keyframes",
+        "triggerAssist": false
+    },
+    "@-ms-keyframes": {
+        "body": [
+            "@-ms-keyframes ${1:name}{",
+            "\tfrom{$2}",
+            "\tto{$3}",
+            "}"
+        ],
+        "prefix": "@keyframes",
+        "triggerAssist": false
+    },
+    "@-webkit-keyframes": {
+        "body": [
+            "@-webkit-keyframes ${1:name}{",
+            "\tfrom{$2}",
+            "\tto{$3}",
+            "}"
+        ],
+        "prefix": "@keyframes",
+        "triggerAssist": false
+    },
+    "@charset": {
+        "body": [
+            "@charset \"${1:utf-8}\";"
+        ],
+        "prefix": "@charset",
+        "triggerAssist": false
+    },
+    "@document": {
+        "body": [
+            "@document ${1:url}(\"$2\") {",
+            "\t$3",
+            "}"
+        ],
+        "prefix": "@document",
+        "triggerAssist": false
+    },
+    "@font-face": {
+        "body": [
+            "@font-face {",
+            "\tfont-family:$1;",
+            "\tsrc: url($2);",
+            "}"
+        ],
+        "prefix": "@fontface",
+        "triggerAssist": false
+    },
+    "@import": {
+        "body": [
+            "@import url(\"$1\");"
+        ],
+        "prefix": "@import",
+        "triggerAssist": true
+    },
+    "@keyframes": {
+        "body": [
+            "@keyframes ${1:name}{",
+            "\tfrom{$2}",
+            "\tto{$3}",
+            "}"
+        ],
+        "prefix": "@keyframes",
+        "triggerAssist": false
+    },
+    "@namespace": {
+        "body": [
+            "@namespace ${1:prefix} \"$2\";"
+        ],
+        "prefix": "@namespace",
+        "triggerAssist": false
+    },
+    "@page": {
+        "body": [
+            "@page:${1:first}{",
+            "\t",
+            "}"
+        ],
+        "prefix": "@page",
+        "triggerAssist": false
+    },
+    "@supports": {
+        "body": [
+            "@supports(${1:prop}:${2:value}) {",
+            "\t$3",
+            "}"
+        ],
+        "prefix": "@supports",
+        "triggerAssist": false
+    }
+}

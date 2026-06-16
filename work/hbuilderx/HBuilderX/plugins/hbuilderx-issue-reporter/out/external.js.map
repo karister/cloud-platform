@@ -1,0 +1,1 @@
+{"version":3,"file":"external.js","mappings":"wGAAA,iBAAuB,C","sources":[".././src/external.ts"],"sourcesContent":["export function api() {}\r\n"],"names":[],"sourceRoot":""}

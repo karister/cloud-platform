@@ -1,0 +1,30 @@
+{
+    "data-": {
+        "body": [
+            "data-${1:type} = \"$2\""
+        ],
+        "prefix": "data-",
+        "triggerAssist": false
+    },
+    "ng-": {
+        "body": [
+            "ng-${1:app}=\"$2\""
+        ],
+        "prefix": "ng-",
+        "triggerAssist": false
+    },
+    "Vue v-for": {
+        "body": [
+            "v-for=\"(${1:item},${2:index}) in ${3:Data}\""
+        ],
+        "prefix": "v-for",
+        "triggerAssist": false
+    },
+    "Vue v-on Click": {
+        "body": [
+            "@click=\"${1:handler}(${2:arg}, $event)\""
+        ],
+        "description": "v-on click handler with arguments",
+        "prefix": "von"
+    }
+}

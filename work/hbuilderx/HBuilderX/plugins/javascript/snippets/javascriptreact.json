@@ -1,0 +1,22 @@
+{
+    "define module": {
+        "prefix": "define",
+        "body": [
+            "define([",
+            "\t'require',",
+            "\t'${1:dependency}'",
+            "], function(require, ${2:factory}) {",
+            "\t'use strict';",
+            "\t$0",
+            "});"
+        ],
+        "description": "define module"
+    },
+    "Relative Reference to another File": {
+        "prefix": "reference",
+        "body": [
+            "/// <reference path=\"$1\" />$0"
+        ],
+        "description": "Relative Reference to another File"
+    }
+}

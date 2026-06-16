@@ -1,0 +1,102 @@
+{
+    "Getter": {
+        "body": [
+            "get ${1:name}() {",
+            "\t$0",
+            "}"
+        ],
+        "prefix": "getter",
+        "scope": "(source meta.class$) | (source meta.class meta.field.declaration meta.definition.property variable.object.property$)",
+        "triggerAssist": false
+    },
+    "Key:Value": {
+        "body": [
+            "${1:key} : ${2:value},"
+        ],
+        "prefix": "kv",
+        "scope": "(source meta.var.expr meta.objectliteral meta.object.member & !meta.function.expression & !meta.method.declaration & !meta.arrow & variable.other.readwrite$) | (source meta.export.default meta.objectliteral meta.object.member & !meta.function.expression & !meta.method.declaration & !meta.arrow & variable.other.readwrite$)",
+        "triggerAssist": false
+    },
+    "Setter": {
+        "body": [
+            "set ${1:property}(${2:value}) {",
+            "\t$0",
+            "}"
+        ],
+        "prefix": "setter",
+        "scope": "(source meta.class$) | (source meta.class meta.field.declaration meta.definition.property variable.object.property$)",
+        "triggerAssist": false
+    },
+    "constructor": {
+        "body": [
+            "constructor(${1:arg}) {",
+            "    $0",
+            "}"
+        ],
+        "prefix": "cons",
+        "scope": "(source meta.class$) | (source meta.class meta.field.declaration meta.definition.property variable.object.property$)",
+        "triggerAssist": false
+    },
+    "$ (document.getElementById)": {
+        "body": [
+            "document.getElementById(\"$1\")"
+        ],
+        "prefix": "$$$",
+        "project": "Web,App,Wap2App",
+        "scope": "source$ | (source & !meta.import & !switch-expression.expr & !case-clause.expr & variable.other.readwrite$) | (source & !meta.import & meta.block$)",
+        "triggerAssist": true
+    },
+    "$(\".\")": {
+        "body": [
+            "$(\".$1\")"
+        ],
+        "prefix": "dlclass",
+        "project": "Web,App,Wap2App",
+        "scope": "source$ | (source & !meta.import & !switch-expression.expr & !case-clause.expr & variable.other.readwrite$) | (source & !meta.import & meta.block$)",
+        "triggerAssist": true
+    },
+    "Vue Mixin": {
+        "body": [
+            "const ${1:mixinName} = {",
+            "\tmounted() {",
+            "\t\tconsole.log('hello from mixin!')",
+            "\t},",
+            "}"
+        ],
+        "description": "vue mixin",
+        "prefix": "vmixin",
+        "project": "Web,App,Wap2App,uni-app",
+        "scope": "source$ | (source & !meta.import & !switch-expression.expr & !case-clause.expr & variable.other.readwrite$) | (source & !meta.import & meta.block$)"
+    },
+    "Vue Transition Methods with JavaScript Hooks": {
+        "body": [
+            "beforeEnter(el) {",
+            "\tconsole.log('beforeEnter');",
+            "},",
+            "enter(el, done) {",
+            "\tconsole.log('enter');",
+            "\tdone();",
+            "},",
+            "beforeLeave(el) {",
+            "\tconsole.log('beforeLeave');",
+            "},",
+            "leave(el, done) {",
+            "\tconsole.log('leave');",
+            "\tdone();",
+            "},"
+        ],
+        "description": "transition component js hooks",
+        "prefix": "vanimhook-js",
+        "project": "Web,App,Wap2App,uni-app",
+        "scope": "source$ | (source & !meta.import & !switch-expression.expr & !case-clause.expr & variable.other.readwrite$) | (source & !meta.import & meta.block$)"
+    },
+    "var currentWebview": {
+        "body": [
+            "var currentWebview = this.\\$scope.\\$getAppWebview()"
+        ],
+        "prefix": "varcw",
+        "project": "uni-app",
+        "scope": "source$ | (source & !meta.import & !switch-expression.expr & !case-clause.expr & variable.other.readwrite$) | (source & !meta.import & meta.block$)",
+        "triggerAssist": false
+    }
+}

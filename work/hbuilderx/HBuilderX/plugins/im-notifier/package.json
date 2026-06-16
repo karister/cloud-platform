@@ -1,0 +1,39 @@
+{
+  "id": "im-notifier",
+  "name": "im-notifier",
+  "description": "接收 uni-im 的新消息通知并提示给用户。",
+  "displayName": "im 消息通知",
+  "version": "1.1.5",
+  "publisher": "DCloud uni-im team",
+  "engines": {
+    "HBuilderX": "^3.6.9"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./extension.js",
+  "activationEvents": [
+    "*"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "extension.im-notifier",
+        "title": "im-notifier"
+      }
+    ],
+    "icons": {
+      "logo-ttf": {
+        "description": "uni-im",
+        "default": {
+          "fontPath": "./iconfont.ttf",
+          "fontCharacter": "\\e900"
+        }
+      }
+    }
+  },
+  "extensionDependencies": [
+    "plugin-manager"
+  ],
+  "_dc_signatures": "7a5e2089e656430147df4ab6cbb36da9819ad7050ab81a409f35c59f6efe5a2f7d5cd6228e861ad91bfc22ae1837f7cf"
+}

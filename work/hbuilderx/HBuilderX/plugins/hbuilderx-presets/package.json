@@ -1,0 +1,19 @@
+{
+	"name": "hbuilderx-presets",
+	"description": "预置插件集合",
+	"version": "1.0.4.2025090415",
+	"__private": true,
+	"__from": "HBuilderX",
+	"extensionDependencies": [
+		"node",
+		"h5-Extension",
+		"flyingBook-Extension",
+		"uniapp-basic",
+		"chrome-base",
+		"ripgrep",
+		"hbuilderx-update",
+		"hbuilder.fswatcher",
+		"hbuilder.zstd",
+		"crashpad"
+	]
+}

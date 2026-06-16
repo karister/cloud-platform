@@ -1,0 +1,99 @@
+{
+    "Decrementer": {
+        "body": [
+            "return ${1:this.num} -= ${2:1}"
+        ],
+        "description": "decrement",
+        "prefix": "vdec"
+    },
+    "Incrementer": {
+        "body": [
+            "return ${1:this.num} += ${2:1}"
+        ],
+        "description": "increment",
+        "prefix": "vinc"
+    },
+    "Unit Test": {
+        "body": [
+            "import Vue from 'vue'",
+            "import ${1:HelloWorld} from './components/${1:HelloWorld}'",
+            "",
+            "describe('${1:HelloWorld}.vue', () => {",
+            "\tit('${2:should render correct contents}', () => {",
+            "\t\tconst Constructor = Vue.extend(${1:HelloWorld})",
+            "\t\tconst vm = new Constructor().$mount()",
+            "\t\texpect(vm.$el.querySelector('.hello h1').textContent)",
+            "\t\t\t.to.equal(${3:'Welcome to Your Vue.js App'})",
+            "\t})",
+            "})"
+        ],
+        "description": "unit test component",
+        "prefix": "vtest"
+    },
+    "Vue Custom Directive": {
+        "body": [
+            "Vue.directive('${1:directiveName}', {",
+            "\tbind(el, binding, vnode) {",
+            "\t\tel.style.${2:arg} = binding.value.${2:arg};",
+            "\t}",
+            "});"
+        ],
+        "description": "vue custom directive",
+        "prefix": "vc-direct"
+    },
+    "Vue Import Export": {
+        "body": [
+            "import ${1:Name} from './components/${1:Name}.vue'",
+            "",
+            "export default {",
+            "\tcomponents: {",
+            "\t\t${1:Name}",
+            "\t},",
+            "}"
+        ],
+        "description": "import a component and include it in export default",
+        "prefix": "vimport-export"
+    },
+    "Vue Import File": {
+        "body": [
+            "import ${1:New} from '/components/${1:New}.vue';"
+        ],
+        "description": "Import one component into another",
+        "prefix": "vimport"
+    },
+    "Vue Import GSAP": {
+        "body": [
+            "import { TimelineMax, ${1:Ease} } from 'gsap'"
+        ],
+        "description": "component methods options that dispatch an action from vuex store.",
+        "prefix": "vimport-gsap"
+    },
+    "Vue Import Library": {
+        "body": [
+            "import { ${1:libName} } from '${1:libName}'"
+        ],
+        "description": "import a library",
+        "prefix": "vimport-lib"
+    },
+    "Vue Use Mixin": {
+        "body": [
+            "mixins: [${1:mixinName}]"
+        ],
+        "description": "vue use mixin",
+        "prefix": "vmixin-use"
+    },
+    "import": {
+        "body": [
+            "import { $1 } from \"vue\""
+        ],
+        "prefix": "importvue"
+    },
+    "setup": {
+        "body": [
+            "setup(${1:props}, ${2:context}) {",
+            "\t$0",
+            "}"
+        ],
+        "prefix": "setup"
+    }
+}

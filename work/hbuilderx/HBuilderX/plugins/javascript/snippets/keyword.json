@@ -1,0 +1,135 @@
+{
+    "Class": {
+        "body": [
+            "class ${1:name} {",
+            "\tconstructor(${2:arg}) {",
+            "\t\t$0",
+            "\t}",
+            "\t",
+            "}"
+        ],
+        "prefix": "class",
+        "triggerAssist": false
+    },
+    "Do-While Statement": {
+        "body": [
+            "do {",
+            "\t$0",
+            "} while (${1:condition});"
+        ],
+        "description": "Do-While Statement",
+        "prefix": "dowhile"
+    },
+    "For Loop": {
+        "body": [
+            "for (var ${1:index} = 0; ${1:index} < ${2:array}.length; ${1:index}++) {",
+            "\tvar ${3:element} = ${2:array}[${1:index}];",
+            "\t$0",
+            "}"
+        ],
+        "description": "For Loop",
+        "prefix": "for"
+    },
+    "For-Each Loop": {
+        "body": [
+            "${1:array}.forEach(function(${2:element}) {",
+            "\t$0",
+            "}, this);"
+        ],
+        "description": "For-Each Loop",
+        "prefix": "foreach"
+    },
+    "For-In Loop": {
+        "body": [
+            "for (var ${1:key} in ${2:object}) {",
+            "\tif (${2:object}.hasOwnProperty(${1:key})) {",
+            "\t\tvar ${3:element} = ${2:object}[${1:key}];",
+            "\t\t$0",
+            "\t}",
+            "}"
+        ],
+        "description": "For-In Loop",
+        "prefix": "forin"
+    },
+    "Function Statement": {
+        "body": [
+            "function ${1:name}(${2:params}) {",
+            "\t$0",
+            "}"
+        ],
+        "description": "Function Statement",
+        "prefix": "function"
+    },
+    "If Statement": {
+        "body": [
+            "if (${1:condition}) {",
+            "\t$0",
+            "}"
+        ],
+        "description": "If Statement",
+        "prefix": "if"
+    },
+    "If-Else Statement": {
+        "body": [
+            "if (${1:condition}) {",
+            "\t$0",
+            "} else {",
+            "\t",
+            "}"
+        ],
+        "description": "If-Else Statement",
+        "prefix": "ifelse"
+    },
+    "New Statement": {
+        "body": [
+            "var ${1:name} = new ${2:type}(${3:arguments});$0"
+        ],
+        "description": "New Statement",
+        "prefix": "new"
+    },
+    "Set Timeout Function": {
+        "body": [
+            "setTimeout(function() {",
+            "\t$0",
+            "}, ${1:timeout});"
+        ],
+        "description": "Set Timeout Function",
+        "prefix": "settimeout",
+        "triggerAssist": false
+    },
+    "Switch Statement": {
+        "body": [
+            "switch (${1:key}) {",
+            "\tcase ${2:value}:",
+            "\t\t$0",
+            "\t\tbreak;",
+            "",
+            "\tdefault:",
+            "\t\tbreak;",
+            "}"
+        ],
+        "description": "Switch Statement",
+        "prefix": "switch"
+    },
+    "Try-Catch Statement": {
+        "body": [
+            "try {",
+            "\t$SELECTION$0",
+            "} catch (error) {",
+            "\t//TODO handle the exception",
+            "}"
+        ],
+        "description": "Try-Catch Statement",
+        "prefix": "trycatch",
+        "triggerAssist": false
+    },
+    "While Statement": {
+        "body": [
+            "while (${1:condition}) {",
+            "\t$0",
+            "}"
+        ],
+        "description": "While Statement",
+        "prefix": "while"
+    }
+}

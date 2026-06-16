@@ -1,0 +1,236 @@
+{
+    "uAudio": {
+        "body": [
+            "<audio :src=\"$1\" :poster=\"$0\" :name=\"$2\" :author=\"$3\" :action=\"$4\" controls></audio>"
+        ],
+        "prefix": "uaudio",
+        "triggerAssist": false
+    },
+    "uButton": {
+        "body": [
+            "<button type=\"default\">$1</button>"
+        ],
+        "prefix": "ubutton",
+        "triggerAssist": false
+    },
+    "uCheckbox": {
+        "body": [
+            "<label>",
+            "\t<checkbox :value=\"$1\" /><text>$0</text>",
+            "</label>"
+        ],
+        "prefix": "ucheckbox",
+        "triggerAssist": false
+    },
+    "uCheckboxGroup": {
+        "body": [
+            "<checkbox-group name=\"$1\">",
+            "\t<label>",
+            "\t\t<checkbox :value=\"$2\" /><text>$0</text>",
+            "\t</label>",
+            "</checkbox-group>"
+        ],
+        "prefix": "ucheckboxgroup",
+        "triggerAssist": false
+    },
+    "uCustomTabBar": {
+        "body": [
+            "<custom-tab-bar direction=\"$1\" :show-icon=\"$2\" :selected=\"$3\" @onTabItemTap=\"$4\" />"
+        ],
+        "prefix": "customtabbar",
+        "triggerAssist": true
+    },
+    "uEditor": {
+        "body": [
+            "<editor placeholder=\"$1\"></editor>"
+        ],
+        "prefix": "uEditor",
+        "triggerAssist": false
+    },
+    "uImage": {
+        "body": [
+            "<image src=\"$1\" mode=\"$2\"></image>"
+        ],
+        "prefix": "uimage",
+        "triggerAssist": true
+    },
+    "uInput": {
+        "body": [
+            "<input type=\"text\" value=\"$0\" />"
+        ],
+        "prefix": "uinput",
+        "triggerAssist": false
+    },
+    "uMap": {
+        "body": [
+            "<map :latitude=\"$1\" :longitude=\"$0\"></map>"
+        ],
+        "prefix": "umap",
+        "triggerAssist": false
+    },
+    "uNavigationBar": {
+        "body": [
+            "<navigation-bar :title=\"$0\"/>"
+        ],
+        "prefix": "navigationbar",
+        "triggerAssist": true
+    },
+    "uNavigator": {
+        "body": [
+            "<navigator url=\"$1\">$0</navigator>"
+        ],
+        "prefix": "unavigator",
+        "triggerAssist": true
+    },
+    "uPageMeta": {
+        "body": [
+            "<page-meta :background-text-style=\"$0\" :background-color=\"$1\">",
+            "\t$0",
+            "</page-meta>"
+        ],
+        "prefix": "pagemeta",
+        "triggerAssist": true
+    },
+    "uPicker": {
+        "body": [
+            "<picker mode=\"$1\" :range=\"$2\" @change=\"$3\">",
+            "\t<view>{{$0}}</view>",
+            "</picker>"
+        ],
+        "prefix": "upicker",
+        "triggerAssist": true
+    },
+    "uPickerView": {
+        "body": [
+            "<picker-view indicator-style=\"height: 50px;\" :value=\"value$1\" @change=\"bindChange\">",
+            "\t<picker-view-column>",
+            "\t\t$0",
+            "\t</picker-view-column>",
+            "\t<picker-view-column>",
+            "\t\t$2",
+            "\t</picker-view-column>",
+            "\t<picker-view-column>",
+            "\t\t",
+            "\t</picker-view-column>",
+            "</picker-view>"
+        ],
+        "prefix": "upickerview",
+        "triggerAssist": false
+    },
+    "uProgress": {
+        "body": [
+            "<progress percent=\"$1\" show-info$0 />"
+        ],
+        "prefix": "uprogress"
+    },
+    "uRadio": {
+        "body": [
+            "<label class=\"radio\">",
+            "\t<radio value=\"$1\" /><text>$0</text>",
+            "</label>"
+        ],
+        "prefix": "uradio",
+        "triggerAssist": false
+    },
+    "uRadioGroup": {
+        "body": [
+            "<radio-group name=\"$1\">",
+            "\t<label>",
+            "\t\t<radio :value=\"$2\" /><text>$3</text>",
+            "\t</label>",
+            "\t<label>",
+            "\t\t<radio :value=\"$4\" /><text>$5</text>",
+            "\t</label>",
+            "</radio-group>"
+        ],
+        "prefix": "uradiogroup"
+    },
+    "uRichText": {
+        "body": [
+            "<rich-text :nodes=\"$1\"></rich-text>"
+        ],
+        "prefix": "urichtext",
+        "triggerAssist": false
+    },
+    "uScrollView": {
+        "body": [
+            "<scroll-view scroll-y=\"true\" $1>",
+            "\t<view>$0</view>",
+            "</scroll-view>"
+        ],
+        "prefix": "uscrollview",
+        "triggerAssist": false
+    },
+    "uSlider": {
+        "body": [
+            "<slider @change=\"$1\"/>"
+        ],
+        "prefix": "uslider",
+        "triggerAssist": false
+    },
+    "uSwiper": {
+        "body": [
+            "<swiper :indicator-dots=\"true\" :autoplay=\"true\" :interval=\"3000\" :duration=\"1000\">",
+            "\t<swiper-item>",
+            "\t\t<view class=\"swiper-item\">$1</view>",
+            "\t</swiper-item>",
+            "\t<swiper-item>",
+            "\t\t<view class=\"swiper-item\">$2</view>",
+            "\t</swiper-item>",
+            "</swiper>"
+        ],
+        "prefix": "uswiper",
+        "triggerAssist": false
+    },
+    "uSwitch": {
+        "body": [
+            "<switch checked=\"true\" @change=\"$1\" />"
+        ],
+        "prefix": "uswitch",
+        "triggerAssist": false
+    },
+    "uTemplate": {
+        "body": [
+            "<template>",
+            "\t<view>$0</view>",
+            "</template>"
+        ],
+        "prefix": "utemplate",
+        "triggerAssist": false
+    },
+    "uText": {
+        "body": [
+            "<text>$0</text>"
+        ],
+        "prefix": "utext",
+        "triggerAssist": false
+    },
+    "uTextarea": {
+        "body": [
+            "<textarea value=\"$1\" placeholder=\"$0\" />"
+        ],
+        "prefix": "utextarea",
+        "triggerAssist": false
+    },
+    "uVideo": {
+        "body": [
+            "<video src=\"$1\" controls></video>"
+        ],
+        "prefix": "uvideo",
+        "triggerAssist": false
+    },
+    "uView": {
+        "body": [
+            "<view class=\"$1\">$0</view>"
+        ],
+        "prefix": "uview",
+        "triggerAssist": false
+    },
+    "uWebView": {
+        "body": [
+            "<web-view src=\"$1\"></web-view>"
+        ],
+        "prefix": "uwebview",
+        "triggerAssist": false
+    }
+}

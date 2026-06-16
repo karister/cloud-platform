@@ -1,0 +1,261 @@
+{
+    "plus.Screen": {
+        "body": [
+            "plus.Screen."
+        ],
+        "prefix": "pScreen",
+        "triggerAssist": true
+    },
+    "plus.accelerometer": {
+        "body": [
+            "plus.accelerometer."
+        ],
+        "prefix": "pacce",
+        "triggerAssist": true
+    },
+    "plus.android": {
+        "body": [
+            "plus.android."
+        ],
+        "prefix": "pandroid",
+        "triggerAssist": true
+    },
+    "plus.audio": {
+        "body": [
+            "plus.audio."
+        ],
+        "prefix": "paudio",
+        "triggerAssist": true
+    },
+    "plus.barcode": {
+        "body": [
+            "plus.barcode."
+        ],
+        "prefix": "pbarcode",
+        "triggerAssist": true
+    },
+    "plus.camera": {
+        "body": [
+            "plus.camera."
+        ],
+        "prefix": "pcamera",
+        "triggerAssist": true
+    },
+    "plus.contacts": {
+        "body": [
+            "plus.contacts."
+        ],
+        "prefix": "pcontacts",
+        "triggerAssist": true
+    },
+    "plus.device": {
+        "body": [
+            "plus.device."
+        ],
+        "prefix": "pdevice",
+        "triggerAssist": true
+    },
+    "plus.display": {
+        "body": [
+            "plus.display."
+        ],
+        "prefix": "pdisplay",
+        "triggerAssist": true
+    },
+    "plus.downloader": {
+        "body": [
+            "plus.downloader."
+        ],
+        "prefix": "pdown",
+        "triggerAssist": true
+    },
+    "plus.gallery": {
+        "body": [
+            "plus.gallery."
+        ],
+        "prefix": "pgallery",
+        "triggerAssist": true
+    },
+    "plus.geolocation": {
+        "body": [
+            "plus.geolocation."
+        ],
+        "prefix": "pgeolocation",
+        "triggerAssist": true
+    },
+    "plus.io": {
+        "body": [
+            "plus.io."
+        ],
+        "prefix": "pio",
+        "triggerAssist": true
+    },
+    "plus.ios": {
+        "body": [
+            "plus.ios."
+        ],
+        "prefix": "pios",
+        "triggerAssist": true
+    },
+    "plus.key": {
+        "body": [
+            "plus.key."
+        ],
+        "prefix": "pkey",
+        "triggerAssist": true
+    },
+    "plus.maps": {
+        "body": [
+            "plus.maps."
+        ],
+        "prefix": "pmaps",
+        "triggerAssist": true
+    },
+    "plus.messaging": {
+        "body": [
+            "plus.messaging."
+        ],
+        "prefix": "pmessaging",
+        "triggerAssist": true
+    },
+    "plus.nativeObj": {
+        "body": [
+            "plus.nativeObj."
+        ],
+        "prefix": "pnativeObj",
+        "triggerAssist": true
+    },
+    "plus.nativeUI": {
+        "body": [
+            "plus.nativeUI."
+        ],
+        "prefix": "pnativeUI",
+        "triggerAssist": true
+    },
+    "plus.nativeUI.alert": {
+        "body": [
+            "plus.nativeUI.alert($1)"
+        ],
+        "prefix": "pnalert",
+        "triggerAssist": false
+    },
+    "plus.navigator": {
+        "body": [
+            "plus.navigatorsc."
+        ],
+        "prefix": "pnavigator",
+        "triggerAssist": true
+    },
+    "plus.net": {
+        "body": [
+            "plus.net."
+        ],
+        "prefix": "pnet",
+        "triggerAssist": true
+    },
+    "plus.networkinfo": {
+        "body": [
+            "plus.networkinfo."
+        ],
+        "prefix": "pnetworkinfo",
+        "triggerAssist": true
+    },
+    "plus.oauth": {
+        "body": [
+            "plus.oauth."
+        ],
+        "prefix": "poauth",
+        "triggerAssist": true
+    },
+    "plus.orientation": {
+        "body": [
+            "plus.orientation."
+        ],
+        "prefix": "porientation",
+        "triggerAssist": true
+    },
+    "plus.os": {
+        "body": [
+            "plus.os."
+        ],
+        "prefix": "pos",
+        "triggerAssist": true
+    },
+    "plus.payment": {
+        "body": [
+            "plus.payment."
+        ],
+        "prefix": "ppayment",
+        "triggerAssist": true
+    },
+    "plus.proximity": {
+        "body": [
+            "plus.proximity."
+        ],
+        "prefix": "pproximity",
+        "triggerAssist": true
+    },
+    "plus.push": {
+        "body": [
+            "plus.push."
+        ],
+        "prefix": "ppush",
+        "triggerAssist": true
+    },
+    "plus.runtime": {
+        "body": [
+            "plus.runtime."
+        ],
+        "prefix": "pruntime",
+        "triggerAssist": true
+    },
+    "plus.share": {
+        "body": [
+            "plus.share."
+        ],
+        "prefix": "pshare",
+        "triggerAssist": true
+    },
+    "plus.speech": {
+        "body": [
+            "plus.speech.$0"
+        ],
+        "prefix": "pspeech",
+        "triggerAssist": true
+    },
+    "plus.statistic": {
+        "body": [
+            "plus.statistic."
+        ],
+        "prefix": "pstatistic",
+        "triggerAssist": true
+    },
+    "plus.storage": {
+        "body": [
+            "plus.storage."
+        ],
+        "prefix": "pstorage",
+        "triggerAssist": true
+    },
+    "plus.uploader": {
+        "body": [
+            "plus.uploader."
+        ],
+        "prefix": "puploader",
+        "triggerAssist": true
+    },
+    "plus.webview": {
+        "body": [
+            "plus.webview."
+        ],
+        "prefix": "pweb",
+        "triggerAssist": true
+    },
+    "plus.zip": {
+        "body": [
+            "plus.zip."
+        ],
+        "prefix": "pzip",
+        "triggerAssist": true
+    }
+}

@@ -1,0 +1,22 @@
+{
+    "#ifdef": {
+        "body": [
+            "// #ifdef ${1:APP/APP-PLUS/APP-VUE/APP-NVUE/APP-HARMONY/VUE2/VUE3/MP-ALIPAY/MP-BAIDU/MP-WEIXIN/MP-QQ/MP-TOUTIAO/MP-360/MP-KUAISHOU/MP-HARMONY/MP-LARK/MP-XHS/MP-JD/MP/H5/WEB/QUICKAPP-WEBVIEW-HUAWEI/QUICKAPP-WEBVIEW-UNION/QUICKAPP-WEBVIEW/UNI-APP-X} ",
+            "$0",
+            "// #endif "
+        ],
+        "prefix": "ifdef",
+        "filenames": ["pages.json"],
+        "scope": "!string.json"
+    },
+    "#ifndef": {
+        "body": [
+            "// #ifndef ${1:APP/APP-PLUS/APP-VUE/APP-NVUE/APP-HARMONY/VUE2/VUE3/MP-ALIPAY/MP-BAIDU/MP-WEIXIN/MP-QQ/MP-TOUTIAO/MP-360/MP-KUAISHOU/MP-HARMONY/MP-LARK/MP-XHS/MP-JD/MP/H5/WEB/QUICKAPP-WEBVIEW-HUAWEI/QUICKAPP-WEBVIEW-UNION/QUICKAPP-WEBVIEW/UNI-APP-X} ",
+            "$0",
+            "// #endif "
+        ],
+        "prefix": "ifndef",
+        "filenames": ["pages.json"],
+        "scope": "!string.json"
+    }
+}

@@ -1,0 +1,178 @@
+{
+  "id": "nodeserver",
+  "name": "nodeserver",
+  "description": "",
+  "displayName": "",
+  "version": "1.0.49-2026020615",
+  "__private": true,
+  "publisher": "dcloud",
+  "engines": {
+    "HBuilderX": "^3.6.9"
+  },
+  "__from": "HBuilderX",
+  "categories": [
+    "Other"
+  ],
+  "main": "out/index",
+  "scripts": {},
+  "activationEvents": [
+    "*"
+  ],
+  "extensionDependencies": [
+    "node",
+    "plugin-manager"
+  ],
+  "dependencies": {},
+  "devDependencies": {},
+  "contributes": {
+    "previewUrls": [
+      {
+        "provider": "htmlPreviewUrl",
+        "loadingPage": "public/loading.html",
+        "when": "langId == 'html_es6'",
+        "priority": 99
+      },
+      {
+        "provider": "markdownPreviewUrl",
+        "loadingPage": "public/loading.html",
+        "when": "langId == 'markdown'",
+        "priority": 999999
+      }
+    ],
+    "commands": [
+      {
+        "command": "extension.ConfigWebServer"
+      },
+      {
+        "command": "mdPreviewInChrome",
+        "title": "Chrome"
+      },
+      {
+        "command": "mdPreviewInFirefox",
+        "title": "Firefox"
+      },
+      {
+        "command": "mdPreviewInSafari",
+        "title": "Safari"
+      },
+      {
+        "command": "mdPreviewInIE",
+        "title": "IE"
+      },
+      {
+        "command": "mdPreviewInEdge",
+        "title": "Edge"
+      },
+      {
+        "command": "extension.saveAutoRefreshBrowser",
+        "title": "%saveAutoRefreshBrowser%(&B)"
+      }
+    ],
+    "menus": {
+      "menubar/run": [
+        {
+          "id": "runInBrowser",
+          "title": "%runinbrowser%(&B)",
+          "group": "_top",
+          "overrideId": "old_builtin_browser_menu",
+          "when": "(langId == 'markdown' || langId == 'html_es6') && workspaceFolder.type != 'UniApp_Vue'"
+        },
+        {
+          "command": "mdPreviewInChrome",
+          "group": "runInBrowser@1",
+          "when": "(langId == 'markdown' || langId == 'html_es6') && workspaceFolder.type != 'UniApp_Vue'"
+        },
+        {
+          "command": "mdPreviewInFirefox",
+          "group": "runInBrowser@2",
+          "when": "(langId == 'markdown' || langId == 'html_es6') && workspaceFolder.type != 'UniApp_Vue'"
+        },
+        {
+          "command": "mdPreviewInSafari",
+          "group": "runInBrowser@2",
+          "when": "(langId == 'markdown' || langId == 'html_es6') && isMac && workspaceFolder.type != 'UniApp_Vue'"
+        },
+        {
+          "command": "mdPreviewInIE",
+          "group": "runInBrowser@2",
+          "when": "(langId == 'markdown' || langId == 'html_es6') && !isMac && workspaceFolder.type != 'UniApp_Vue'"
+        },
+        {
+          "command": "mdPreviewInEdge",
+          "group": "runInBrowser@2",
+          "when": "(langId == 'markdown' || langId == 'html_es6') && !isMac && workspaceFolder.type != 'UniApp_Vue'"
+        },
+        {
+          "group": "runInBrowser@5"
+        },
+        {
+          "command": "extension.saveAutoRefreshBrowser",
+          "group": "runInBrowser@4",
+          "checked": "config.windows.runBrowserAutoRefresh",
+          "when": "langId == 'html_es6' && workspaceFolder.type != 'UniApp_Vue'"
+        },
+        {
+          "title": "%configwebserver%(&W)",
+          "command": "extension.ConfigWebServer",
+          "group": "runInBrowser@6"
+        }
+      ]
+    },
+    "launchers": [
+      {
+        "type": "mdPreviewInChrome",
+        "launcherId": "mdPreviewInChrome",
+        "mode": "run",
+        "label": "${menuIndex} Chrome",
+        "when": "(langId == 'markdown' || langId == 'html_es6') && workspaceFolder.type != 'UniApp_Vue' && workspaceFolder.type != 'App'",
+        "priority": 200,
+        "version": 2
+      },
+      {
+        "type": "mdPreviewInFirefox",
+        "launcherId": "mdPreviewInFirefox",
+        "mode": "run",
+        "label": "${menuIndex} Firefox",
+        "when": "(langId == 'markdown' || langId == 'html_es6') && workspaceFolder.type != 'UniApp_Vue' && workspaceFolder.type != 'App'",
+        "priority": 199,
+        "version": 2
+      },
+      {
+        "type": "mdPreviewInSafari",
+        "launcherId": "mdPreviewInSafari",
+        "mode": "run",
+        "label": "${menuIndex} Safari",
+        "when": "(langId == 'markdown' || langId == 'html_es6') && isMac && workspaceFolder.type != 'UniApp_Vue' && workspaceFolder.type != 'App'",
+        "priority": 198,
+        "version": 2
+      },
+      {
+        "type": "mdPreviewInIE",
+        "launcherId": "mdPreviewInIE",
+        "mode": "run",
+        "label": "${menuIndex} IE",
+        "when": "(langId == 'markdown' || langId == 'html_es6') && !isMac && workspaceFolder.type != 'UniApp_Vue' && workspaceFolder.type != 'App'",
+        "priority": 198,
+        "version": 2
+      },
+      {
+        "type": "mdPreviewInEdge",
+        "launcherId": "mdPreviewInEdge",
+        "mode": "run",
+        "label": "${menuIndex} Edge",
+        "when": "(langId == 'markdown' || langId == 'html_es6') && !isMac && workspaceFolder.type != 'UniApp_Vue' && workspaceFolder.type != 'App'",
+        "priority": 197,
+        "version": 2
+      },
+      {
+        "type": "mdPreviewInnerBrowser",
+        "launcherId": "mdPreviewInnerBrowser",
+        "mode": "run",
+        "label": "${menuIndex} %runBuiltin%(&P)",
+        "when": "langId == 'markdown' || langId == 'html_es6' && workspaceFolder.type != 'UniApp_Vue' && workspaceFolder.type != 'App'",
+        "priority": 196,
+        "version": 2
+      }
+    ]
+  }
+}

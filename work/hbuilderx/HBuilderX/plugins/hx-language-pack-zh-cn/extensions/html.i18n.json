@@ -1,0 +1,32 @@
+{
+    "": [
+        "--------------------------------------------------------------------------------------------",
+        "Copyright (c) DCloud . All rights reserved.",
+        "--------------------------------------------------------------------------------------------"
+    ],
+    "version": "1.0.0",
+    "contents": {
+        "html": {
+            "scriptHtml5plus.description": "html5plus提前注入时需要加上此script块",
+            "video.body.text1": "当前浏览器不支持 video直接播放，点击这里下载视频:",
+            "video.body.text2": "下载视频"
+        },
+        "vue_tag_onlyUniapp": {
+            "uTable.body.text": "暂无更多数据",
+            "uNavBar.body.text1": "返回",
+            "uNavBar.body.text2": "菜单",
+            "uNavBar.body.text3": "标题",
+            "uSegmentedControl.body.text1": "选项卡1的内容",
+            "uSegmentedControl.body.text2": "选项卡2的内容",
+            "uSegmentedControl.body.text3": "选项卡3的内容",
+            "uCard.body.text1": "标题文字",
+            "uCard.body.text2": "额外信息",
+            "uCard.body.text3": "内容主体，可自定义内容及样式",
+            "uCollapse.body.text": "内容",
+            "uGroup.body.text": "内容主体，可自定义内容及样式",
+            "uSection.body.text": "内容主体，可自定义内容及样式"
+        },
+        "vue_tag_uni": {
+        }
+    }
+}

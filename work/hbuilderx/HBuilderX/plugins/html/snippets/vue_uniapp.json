@@ -1,0 +1,20 @@
+{
+    "view_for": {
+        "body": [
+            "<view v-for=\"(item,index) in ${1:data}\" :key=\"index\">",
+            "\t$0",
+            "</view>"
+        ],
+        "description": "view带for循环",
+        "prefix": "viewfor"
+    },
+    "view_class": {
+        "body": [
+            "<view class=\"$1\">",
+            "\t$0",
+            "</view>"
+        ],
+        "prefix": "viewclass",
+        "triggerAssist": true
+    }
+}

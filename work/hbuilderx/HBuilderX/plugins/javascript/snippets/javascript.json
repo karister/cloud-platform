@@ -1,0 +1,453 @@
+{
+    "$(\"\")": {
+        "body": [
+            "$(\"$1\")"
+        ],
+        "prefix": "dl",
+        "triggerAssist": true
+    },
+    "$(\"#\")": {
+        "body": [
+            "$(\"#$1\")"
+        ],
+        "prefix": "dlid",
+        "triggerAssist": true
+    },
+    "Arrow function": {
+        "body": [
+            "($1) => {",
+            "\t$0",
+            "}"
+        ],
+        "prefix": "arrow",
+        "triggerAssist": false
+    },
+    "Class Extends": {
+        "body": [
+            "class ${1:name} extends ${2:AnotherClass} {",
+            "\tconstructor(${3:arg}) {",
+            "\t\t$0",
+            "\t}",
+            "\t",
+            "}"
+        ],
+        "prefix": "classextends",
+        "triggerAssist": false
+    },
+    "Export": {
+        "body": [
+            "export ${1:default} ${2:bar}"
+        ],
+        "prefix": "export",
+        "triggerAssist": false
+    },
+    "Export Class": {
+        "body": [
+            "export class ${1:name} {",
+            "\t$0",
+            "}"
+        ],
+        "prefix": "exportclass",
+        "triggerAssist": false
+    },
+    "Import": {
+        "body": [
+            "import ${1:foo} from \"${2:bar}\""
+        ],
+        "prefix": "importfrom",
+        "triggerAssist": false
+    },
+    "Object Method": {
+        "body": [
+            "${1:method_name}: function(${2:attribute}){",
+            "\t$0",
+            "}${3:,}"
+        ],
+        "prefix": ":f",
+        "triggerAssist": false
+    },
+    "Object Method String": {
+        "body": [
+            "'${1:${2:#thing}:${3:click}}': function(element){",
+            "\t$0",
+            "}${4:,}"
+        ],
+        "prefix": ":f",
+        "triggerAssist": false
+    },
+    "Object Value JS": {
+        "body": [
+            "${1:value_name}:${0:value},"
+        ],
+        "prefix": ":,",
+        "triggerAssist": false
+    },
+    "Object key - key: \"value\"": {
+        "body": [
+            "${1:key}: ${2:\"${3:value}\"}${4:, }"
+        ],
+        "prefix": ":",
+        "triggerAssist": false
+    },
+    "Prototype": {
+        "body": [
+            "${1:class_name}.prototype.${2:method_name} = function(${3:first_argument}) {",
+            "\t${0:// body...}",
+            "};"
+        ],
+        "prefix": "proto",
+        "triggerAssist": false
+    },
+    "clog": {
+        "body": [
+            "console.log($1);"
+        ],
+        "description": "%clog.description%",
+        "prefix": "clog"
+    },
+    "clogjson": {
+        "body": [
+            "console.log(\"$1: \" + JSON.stringify($1));"
+        ],
+        "description": "%clogjson.description%",
+        "prefix": "clogjson"
+    },
+    "clogvar": {
+        "body": [
+            "console.log('${0:$nearestVar}: ',${0:$nearestVar});"
+        ],
+        "description": "%clogvar.description%",
+        "prefix": "clogvar"
+    },
+    "console.dir": {
+        "body": [
+            "console.dir($1)"
+        ],
+        "prefix": "cdir",
+        "triggerAssist": true
+    },
+    "dbadd": {
+        "body": [
+            "db.collection('$1')",
+            "\t.add($2)",
+            "\t.then((res) => {",
+            "\t\t$3",
+            "\t})",
+            "\t.catch((err) => {",
+            "\t\t$4",
+            "\t})"
+        ],
+        "description": "%dbadd.description%",
+        "prefix": "dbadd"
+    },
+    "dbget": {
+        "body": [
+            "db.collection('$1')",
+            "\t.get()",
+            "\t.then((res) => {",
+            "\t\t$2",
+            "\t})",
+            "\t.catch((err) => {",
+            "\t\t$3",
+            "\t})"
+        ],
+        "description": "%dbget.description%",
+        "prefix": "dbget"
+    },
+    "dbremove": {
+        "body": [
+            "db.collection('$1')",
+            "\t.where($2)",
+            "\t.remove($3)",
+            "\t.then((res) => {",
+            "\t\t$4",
+            "\t})",
+            "\t.catch((err) => {",
+            "\t\t$5",
+            "\t})"
+        ],
+        "description": "%dbremove.description%",
+        "prefix": "dbremove"
+    },
+    "dbupdate": {
+        "body": [
+            "db.collection('$1')",
+            "\t.where($2)",
+            "\t.update($3)",
+            "\t.then((res) => {",
+            "\t\t$4",
+            "\t})",
+            "\t.catch((err) => {",
+            "\t\t$5",
+            "\t})"
+        ],
+        "description": "%dbupdate.description%",
+        "prefix": "dbupdate"
+    },
+    "document.getElementById": {
+        "body": [
+            "document.getElementById(\"$1\")"
+        ],
+        "prefix": "dg",
+        "triggerAssist": true
+    },
+    "document.querySelectorAll": {
+        "body": [
+            "document.querySelectorAll(\"$1\")"
+        ],
+        "prefix": "dqs",
+        "triggerAssist": true
+    },
+    "document.write": {
+        "body": [
+            "document.write(\"$1\")"
+        ],
+        "prefix": "dw",
+        "triggerAssist": false
+    },
+    "export default": {
+        "body": [
+            "export default {",
+            "\t$0",
+            "}"
+        ],
+        "prefix": "edefault",
+        "triggerAssist": false
+    },
+    "for (...) {...}": {
+        "body": [
+            "for ($1) {",
+            "\t$SELECTION$0",
+            "}"
+        ],
+        "prefix": "forr",
+        "triggerAssist": false
+    },
+    "for let": {
+        "body": [
+            "for (let i = 0; i < ${1:Things}.length; i++) {",
+            "\t${1:Things}[i]",
+            "}"
+        ],
+        "prefix": "forl",
+        "triggerAssist": false
+    },
+    "for let in": {
+        "body": [
+            "for (let ${1:var1} in ${2:var2}) {",
+            "\t$0",
+            "}"
+        ],
+        "prefix": "forli",
+        "triggerAssist": false
+    },
+    "for...of": {
+        "body": [
+            "for (let ${1:s} of ${2:sequence}) {",
+            "\t$0",
+            "}"
+        ],
+        "prefix": "forof",
+        "triggerAssist": false
+    },
+    "fori": {
+        "body": [
+            "for (var i = 0; i < ${1:Things}.length; i++) {",
+            "\t${1:Things}[i]",
+            "}"
+        ],
+        "prefix": "fori",
+        "triggerAssist": false
+    },
+    "function": {
+        "body": [
+            "function ${1:function_name} ($2) {",
+            "\t$SELECTION$0",
+            "}"
+        ],
+        "prefix": "funn",
+        "triggerAssist": false
+    },
+    "function*": {
+        "body": [
+            "function* ${1:name}($2) {",
+            "\tyield $0;",
+            "}"
+        ],
+        "prefix": "fung",
+        "triggerAssist": false
+    },
+    "function_anonymous": {
+        "body": [
+            "function ($1) {",
+            "\t$0",
+            "}"
+        ],
+        "prefix": "funan",
+        "triggerAssist": false
+    },
+    "function_closures": {
+        "body": [
+            "(function ($1) {",
+            "\t$0",
+            "})($2)"
+        ],
+        "prefix": "funcl",
+        "triggerAssist": false
+    },
+    "if": {
+        "body": [
+            "if ($1) {",
+            "\t$SELECTION$0",
+            "}"
+        ],
+        "prefix": "iff",
+        "triggerAssist": false
+    },
+    "if ... else": {
+        "body": [
+            "if ($1) {",
+            "\t$SELECTION$0",
+            "} else{",
+            "\t",
+            "}"
+        ],
+        "prefix": "ife",
+        "triggerAssist": false
+    },
+    "if_compare": {
+        "body": [
+            "if ($1 == ${2:true}) {",
+            "\t$0",
+            "} else{",
+            "\t",
+            "}"
+        ],
+        "prefix": "ifc",
+        "triggerAssist": false
+    },
+    "module.exports": {
+        "body": [
+            "module.exports = {",
+            "\t$0",
+            "}"
+        ],
+        "prefix": "mexports",
+        "triggerAssist": false
+    },
+    "navigator.userAgent;": {
+        "body": [
+            "navigator.userAgent"
+        ],
+        "prefix": "nuser",
+        "triggerAssist": false
+    },
+    "return false": {
+        "body": [
+            "return false;"
+        ],
+        "prefix": "rfalse",
+        "triggerAssist": false
+    },
+    "return true": {
+        "body": [
+            "return true;"
+        ],
+        "prefix": "rtrue",
+        "triggerAssist": false
+    },
+    "switch_case": {
+        "body": [
+            "switch (${1}){",
+            "\tcase ${2:value}:",
+            "\t\tbreak;",
+            "\tdefault:",
+            "\t\tbreak;",
+            "}"
+        ],
+        "prefix": "switchcase",
+        "triggerAssist": false
+    },
+    "typeof": {
+        "body": [
+            "typeof($1)==\"${2:undefined}\""
+        ],
+        "prefix": "typeoff",
+        "triggerAssist": false
+    },
+    "typeof!": {
+        "body": [
+            "typeof($1)!=\"${2:undefined}\""
+        ],
+        "prefix": "typeof!",
+        "triggerAssist": false
+    },
+    "use strict": {
+        "body": [
+            "\"use strict\""
+        ],
+        "prefix": "use",
+        "triggerAssist": false
+    },
+    "var a=[];": {
+        "body": [
+            "var ${1:a}=[$2];"
+        ],
+        "prefix": "vara",
+        "triggerAssist": false
+    },
+    "var c = canvas": {
+        "body": [
+            "var ${2:c} = document.getElementById(\"$1\").getContext(\"2d\");"
+        ],
+        "prefix": "varc",
+        "triggerAssist": true
+    },
+    "var i=0;": {
+        "body": [
+            "var ${1:i}=${2:0};"
+        ],
+        "prefix": "vari",
+        "triggerAssist": false
+    },
+    "var l=a.length;": {
+        "body": [
+            "var ${1:l}=${2:a}.length;"
+        ],
+        "prefix": "varl",
+        "triggerAssist": false
+    },
+    "var s=\"\";": {
+        "body": [
+            "var ${1:s}=\"$2\";"
+        ],
+        "prefix": "vars",
+        "triggerAssist": false
+    },
+    "var xhr": {
+        "body": [
+            "var ${1:xhr} = new XMLHttpRequest();",
+            "xhr.open(\"${2:POST}\",\"$3\",${4:true});"
+        ],
+        "prefix": "varxhr",
+        "triggerAssist": false
+    },
+    "while": {
+        "body": [
+            "while (${1:condition}){",
+            "\t$SELECTION$0",
+            "}"
+        ],
+        "prefix": "whilee",
+        "triggerAssist": false
+    },
+    "with": {
+        "body": [
+            "with ($1){",
+            "\t$SELECTION$0",
+            "}"
+        ],
+        "prefix": "withh",
+        "triggerAssist": false
+    }
+}

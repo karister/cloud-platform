@@ -1,0 +1,13 @@
+{
+    "Vue Computed": {
+        "prefix": "vcomputed",
+        "body": [
+            "computed: {",
+            "\t${1:name}(): ${3:any} {",
+            "\t\treturn this.${2:data} ${0}",
+            "\t}",
+            "},"
+        ],
+        "description": "computed value"
+    }
+}

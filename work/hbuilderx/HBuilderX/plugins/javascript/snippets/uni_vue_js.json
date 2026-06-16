@@ -1,0 +1,298 @@
+{
+    "cdb": {
+        "body": [
+            "const db = uniCloud.database();",
+            "$0"
+        ],
+        "prefix": "cdb"
+    },
+    "const $1 =  uniCloud.importObject": {
+        "body": [
+            "const $1 = uniCloud.importObject(\"$2\")"
+        ],
+        "prefix": "constco",
+        "triggerAssist": false
+    },
+    "db.collection": {
+        "body": [
+            "db.collection(\"$1\")"
+        ],
+        "prefix": "dbc",
+        "triggerAssist": false
+    },
+    "globalData": {
+        "body": [
+            "getApp().globalData."
+        ],
+        "prefix": "gdata",
+        "triggerAssist": true
+    },
+    "ifAndroid": {
+        "body": [
+            "if (uni.getSystemInfoSync().platform == \"android\") {",
+            "\t$1",
+            "}"
+        ],
+        "prefix": "ifandroid",
+        "triggerAssist": false
+    },
+    "ifiOS": {
+        "body": [
+            "if (uni.getSystemInfoSync().platform == \"ios\") {",
+            "\t$1",
+            "}"
+        ],
+        "prefix": "ifios",
+        "triggerAssist": false
+    },
+    "return uniError": {
+        "body": [
+            "return {",
+            "\terrSubject: '$1',",
+            "\terrCode: ${2:0},",
+            "\terrMsg: '$3'",
+            "}"
+        ],
+        "description": "return uni error object",
+        "prefix": "returnu"
+    },
+    "uAlert": {
+        "body": [
+            "uni.showModal({",
+            "\tcontent: '$1',",
+            "\tshowCancel: false",
+            "});"
+        ],
+        "prefix": "ualert",
+        "triggerAssist": false
+    },
+    "uConfirm": {
+        "body": [
+            "uni.showModal({",
+            "\tcontent: '$1',",
+            "\tsuccess: function (res) {",
+            "\t\tif (res.confirm) {",
+            "\t\t\t$2",
+            "\t\t} else if (res.cancel) {",
+            "\t\t\t$3",
+            "\t\t}",
+            "\t}",
+            "});"
+        ],
+        "prefix": "uconfirm",
+        "triggerAssist": false
+    },
+    "uGetLocation": {
+        "body": [
+            "uni.getLocation({",
+            "\ttype: 'wgs84',",
+            "\tsuccess: res => {$0},",
+            "\tfail: () => {},",
+            "\tcomplete: () => {}",
+            "});"
+        ],
+        "prefix": "ugetlocation",
+        "triggerAssist": false
+    },
+    "uLogin": {
+        "body": [
+            "uni.login({",
+            "\tprovider: '$1',",
+            "\tsuccess: res => {},",
+            "\tfail: () => {},",
+            "\tcomplete: () => {}",
+            "});"
+        ],
+        "prefix": "ulogin",
+        "triggerAssist": false
+    },
+    "uNavigateBack": {
+        "body": [
+            "uni.navigateBack({",
+            "\tdelta: $1",
+            "});"
+        ],
+        "prefix": "unavigateback",
+        "triggerAssist": false
+    },
+    "uNavigateTo": {
+        "body": [
+            "uni.navigateTo({",
+            "\turl: '$1',",
+            "\tsuccess: res => {},",
+            "\tfail: () => {},",
+            "\tcomplete: () => {}",
+            "});"
+        ],
+        "prefix": "unavigateto",
+        "triggerAssist": false
+    },
+    "uPay": {
+        "body": [
+            "uni.requestPayment({",
+            "\tprovider: '$1',",
+            "\torderInfo: '$2',",
+            "\tsuccess: res => {},",
+            "\tfail: () => {},",
+            "\tcomplete: () => {}",
+            "});"
+        ],
+        "prefix": "upay",
+        "triggerAssist": false
+    },
+    "uRedirectTo": {
+        "body": [
+            "uni.redirectTo({",
+            "\turl: '$1',",
+            "\tsuccess: res => {},",
+            "\tfail: () => {},",
+            "\tcomplete: () => {}",
+            "});"
+        ],
+        "prefix": "uredirectto",
+        "triggerAssist": false
+    },
+    "uRequest": {
+        "body": [
+            "uni.request({",
+            "\turl: '$1',",
+            "\tmethod: 'GET$2',",
+            "\tdata: {$3},",
+            "\tsuccess: res => {$0},",
+            "\tfail: () => {},",
+            "\tcomplete: () => {}",
+            "});"
+        ],
+        "prefix": "urequest",
+        "triggerAssist": false
+    },
+    "uRequestPayment": {
+        "body": [
+            "uni.requestPayment({",
+            "\tprovider: '$1',",
+            "\torderInfo: '$2',",
+            "\tsuccess: res => {},",
+            "\tfail: () => {},",
+            "\tcomplete: () => {}",
+            "});"
+        ],
+        "prefix": "urequestpayment",
+        "triggerAssist": false
+    },
+    "uShare": {
+        "body": [
+            "uni.share({",
+            "\tprovider: '$1',",
+            "\ttype: 0$2,",
+            "\ttitle: '$3',",
+            "\thref: '$4',",
+            "\timageUrl: '$5',",
+            "\tsuccess: res => {},",
+            "\tfail: () => {},",
+            "\tcomplete: () => {}",
+            "});"
+        ],
+        "prefix": "ushare",
+        "triggerAssist": false
+    },
+    "uShowActionSheet": {
+        "body": [
+            "uni.showActionSheet({",
+            "\titemList: $1,",
+            "\tsuccess: res => {},",
+            "\tfail: () => {},",
+            "\tcomplete: () => {}",
+            "});"
+        ],
+        "prefix": "ushowactionsheet",
+        "triggerAssist": false
+    },
+    "uShowLoading": {
+        "body": [
+            "uni.showLoading({",
+            "\ttitle: '$1',",
+            "\tmask: false",
+            "});"
+        ],
+        "prefix": "ushowloading",
+        "triggerAssist": false
+    },
+    "uShowModal": {
+        "body": [
+            "uni.showModal({",
+            "\ttitle: '$1',",
+            "\tcontent: '$2',",
+            "\tshowCancel: false$3,",
+            "\tcancelText: '$4',",
+            "\tconfirmText: '$5',",
+            "\tsuccess: res => {$0},",
+            "\tfail: () => {},",
+            "\tcomplete: () => {}",
+            "});"
+        ],
+        "prefix": "ushowmodal",
+        "triggerAssist": false
+    },
+    "uShowToast": {
+        "body": [
+            "uni.showToast({",
+            "\ttitle: '$1'",
+            "});"
+        ],
+        "prefix": "ushowtoast",
+        "triggerAssist": false
+    },
+    "uShowToastNoIcon": {
+        "body": [
+            "uni.showToast({",
+            "\ttitle: '$1',",
+            "\ticon: 'none'",
+            "});"
+        ],
+        "prefix": "ushowtoastnoicon",
+        "triggerAssist": false
+    },
+    "uStartPullDownRefresh": {
+        "body": [
+            "uni.startPullDownRefresh({",
+            "\tsuccess: res => {},",
+            "\tfail: () => {},",
+            "\tcomplete: () => {}",
+            "});"
+        ],
+        "prefix": "ustartpulldownrefresh",
+        "triggerAssist": false
+    },
+    "uStopPullDownRefresh": {
+        "body": [
+            "uni.stopPullDownRefresh();"
+        ],
+        "prefix": "ustoppulldownrefresh",
+        "triggerAssist": false
+    },
+    "uniCloud http request": {
+        "body": [
+            "const $1 = await uniCloud.httpclient.request('$2', {",
+            "\tdataType: 'json'",
+            "})"
+        ],
+        "description": "uniCloud http request with json decode",
+        "prefix": "uhttp",
+        "triggerAssist": false
+    },
+    "uniCloud.database": {
+        "body": [
+            "const db = uniCloud.database()"
+        ],
+        "prefix": "constdb",
+        "triggerAssist": false
+    },
+    "uniCloud.importObject": {
+        "body": [
+            "const $1 = uniCloud.importObject('$2')"
+        ],
+        "description": "uniCloud.importObject('ObjectName')",
+        "prefix": "cco",
+        "triggerAssist": false
+    }
+}

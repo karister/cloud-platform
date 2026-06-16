@@ -1,0 +1,108 @@
+{
+    "Vue Commit Vuex Store in Methods": {
+        "body": [
+            "${1:mutationName}() {",
+            "\tthis.\\$store.commit('${1:mutationName}', ${2:payload})",
+            "}"
+        ],
+        "description": "commit to vuex store in methods for mutation",
+        "prefix": "vcommit",
+        "project": "Web,App,Wap2App,uni-app"
+    },
+    "Vue Computed": {
+        "body": [
+            "computed: {",
+            "\t${1:name}() {",
+            "\t\treturn this.${2:data} ${0}",
+            "\t}",
+            "},"
+        ],
+        "description": "computed value",
+        "prefix": "vcomputed",
+        "project": "Web,App,Wap2App,uni-app"
+    },
+    "Vue Data": {
+        "body": [
+            "data() {",
+            "\treturn {",
+            "\t\t${1:key}: ${2:value}",
+            "\t}",
+            "},"
+        ],
+        "description": "Vue Component Data",
+        "prefix": "vdata"
+    },
+    "Vue Dispatch Vuex Store in Methods": {
+        "body": [
+            "${1:actionName}() {",
+            "\tthis.\\$store.dispatch('${1:actionName}', ${2:payload})",
+            "}"
+        ],
+        "description": "dispatch to vuex store in methods for action",
+        "prefix": "vdispatch",
+        "project": "Web,App,Wap2App,uni-app"
+    },
+    "Vue Filter": {
+        "body": [
+            "filters: {",
+            "\t${1:fnName}: function(${2:value}) {",
+            "\t\treturn ${2:value}${0};",
+            "\t}",
+            "}"
+        ],
+        "description": "vue filter",
+        "prefix": "vfilter",
+        "project": "Web,App,Wap2App,uni-app"
+    },
+    "Vue Import into the Component": {
+        "body": [
+            "components: {",
+            "\t${1:New},",
+            "}"
+        ],
+        "description": "%VueComponents.description%",
+        "prefix": "vcomponents"
+    },
+    "Vue Methods": {
+        "body": [
+            "methods: {",
+            "\t${1:name}() {",
+            "\t\t${0}",
+            "\t}",
+            "},"
+        ],
+        "description": "vue method",
+        "prefix": "vmethod"
+    },
+    "Vue Props with Default": {
+        "body": [
+            "props: {",
+            "\t${1:propName}: {",
+            "\t\ttype: ${2:Number},",
+            "\t\tdefault: ${0}",
+            "\t},",
+            "},"
+        ],
+        "description": "Vue Props with Default",
+        "prefix": "vprops"
+    },
+    "Vue Watchers": {
+        "body": [
+            "watch: {",
+            "\t${1:data}(${2:newValue}, ${3:oldValue}) {",
+            "\t\t${0}",
+            "\t}",
+            "},"
+        ],
+        "description": "vue watcher",
+        "prefix": "vwatcher"
+    },
+    "async method_name(){}": {
+        "body": [
+            "async ${1:method_name}($2){",
+            "\t$0",
+            "}"
+        ],
+        "prefix": "asyncm"
+    }
+}

@@ -10,7 +10,17 @@
       "Bash(git push *)",
       "Bash(start http://localhost:5180/)",
       "PowerShell(Install-PackageProvider -Name NuGet -Force -ForceBootstrap; Set-PSRepository -Name PSGallery -InstallationPolicy Trusted; Install-Module -Name BurntToast -Force -AllowClobber -Scope CurrentUser)",
-      "PowerShell(Add-Type -AssemblyName System.Windows.Forms; $result = [System.Windows.Forms.MessageBox]::Show\\('Claude Code agent 测试通知', 'Claude Code', 'OK', 'Information'\\); Write-Output \"MessageBox displayed successfully, result: $result\")"
+      "PowerShell(Add-Type -AssemblyName System.Windows.Forms; $result = [System.Windows.Forms.MessageBox]::Show\\('Claude Code agent 测试通知', 'Claude Code', 'OK', 'Information'\\); Write-Output \"MessageBox displayed successfully, result: $result\")",
+      "Bash(npm run *)",
+      "Bash(start https://unicloud.dcloud.net.cn/)",
+      "Bash(start dist\\\\build\\\\h5)",
+      "Bash(start \"\" \"dist\\\\build\\\\h5\")",
+      "WebFetch(domain:static-mp-70459e72-3958-42a0-9743-4e80b54716cd.next.bspapp.com)",
+      "WebSearch",
+      "WebFetch(domain:hx.dcloud.net.cn)",
+      "Bash(npm search *)",
+      "Bash(npm info *)",
+      "WebFetch(domain:doc.dcloud.net.cn)"
     ],
     "additionalDirectories": [
       "C:\\Users\\karister\\.claude"

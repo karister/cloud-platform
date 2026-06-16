@@ -1,0 +1,79 @@
+{
+    "applet (code width height)": {
+        "body": [
+            "<applet code=\"$1\" width=\"$2\" height=\"$3\">\n$0\n</applet>"
+        ],
+        "deserted": true,
+        "prefix": "applet",
+        "triggerAssist": false
+    },
+    "basefont_color_size": {
+        "body": [
+            "<basefont color=\"$0\" size=\"$1\" />"
+        ],
+        "deserted": true,
+        "prefix": "basefont",
+        "triggerAssist": false
+    },
+    "font_size_color": {
+        "body": [
+            "<font size=\"$1\" color=\"$2\">$0</font>"
+        ],
+        "deserted": true,
+        "prefix": "font",
+        "triggerAssist": false
+    },
+    "frame_src": {
+        "body": [
+            "<frame src=\"$0\" >"
+        ],
+        "deserted": true,
+        "prefix": "frame",
+        "triggerAssist": false
+    },
+    "frameset_cols": {
+        "body": [
+            "<frameset cols=\"$1\">",
+            "\t$0",
+            "</frameset>"
+        ],
+        "deserted": true,
+        "prefix": "frameset",
+        "triggerAssist": false
+    },
+    "html_5": {
+        "body": [
+            "<!DOCTYPE HTML>"
+        ],
+        "prefix": "dochtml5",
+        "triggerAssist": false
+    },
+    "html_structure": {
+        "body": [
+            "<!DOCTYPE html>",
+            "<html>",
+            "\t<head>",
+            "\t\t<meta charset=\"utf-8\" />",
+            "\t\t<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
+            "\t\t<title>$0</title>",
+            "\t</head>",
+            "\t<body>",
+            "\t\t",
+            "\t</body>",
+            "</html>"
+        ],
+        "prefix": "html",
+        "triggerAssist": false
+    },
+    "table_structure": {
+        "body": [
+            "<table border=\"$1\" cellspacing=\"$2\" cellpadding=\"$3\">",
+            "\t<tr><th>${4:Header}</th></tr>",
+            "\t<tr><td>${5:Data}</td></tr>",
+            "</table>"
+        ],
+        "deserted": true,
+        "prefix": "table",
+        "triggerAssist": false
+    }
+}

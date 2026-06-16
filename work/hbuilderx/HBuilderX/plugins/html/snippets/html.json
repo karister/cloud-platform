@@ -1,0 +1,291 @@
+{
+    "&lt;!--[if IE]&gt;": {
+        "body": [
+            "<!--[if IE]>",
+            "\t$1",
+            "<![endif]-->"
+        ],
+        "prefix": "ifie",
+        "triggerAssist": false
+    },
+    "&lt;!--[if lte IE 6]&gt;": {
+        "body": [
+            "<!--[if lte IE 6]>",
+            "\t$1",
+            "<![endif]-->"
+        ],
+        "prefix": "ifie6",
+        "triggerAssist": false
+    },
+    "Non-Breaking Space": {
+        "body": [
+            "&nbsp;"
+        ],
+        "prefix": "space",
+        "triggerAssist": false
+    },
+    "a_href": {
+        "body": [
+            "<a href=\"$1\">$0</a>"
+        ],
+        "prefix": "ahref",
+        "triggerAssist": true
+    },
+    "base_href_target": {
+        "body": [
+            "<base href=\"$0\" target=\"$1\" />"
+        ],
+        "prefix": "baseht",
+        "triggerAssist": false
+    },
+    "button_type": {
+        "body": [
+            "<button type=\"button\">$0</button>"
+        ],
+        "prefix": "button",
+        "triggerAssist": false
+    },
+    "canvas (id width height)": {
+        "body": [
+            "<canvas id=\"$1\" width=\"$2\" height=\"$3\"></canvas>"
+        ],
+        "prefix": "canvas",
+        "triggerAssist": false
+    },
+    "div_class": {
+        "body": [
+            "<div class=\"$1\">",
+            "\t$0",
+            "</div>"
+        ],
+        "prefix": "divc",
+        "triggerAssist": true
+    },
+    "div_id": {
+        "body": [
+            "<div id=\"$1\">",
+            "\t$0",
+            "</div>"
+        ],
+        "prefix": "div",
+        "triggerAssist": true
+    },
+    "dl_dt_dd": {
+        "body": [
+            "<dl>",
+            "\t<dt>$1</dt>",
+            "\t<dd>$2</dd>",
+            "</dl>"
+        ],
+        "prefix": "dl",
+        "triggerAssist": false
+    },
+    "fieldset_id": {
+        "body": [
+            "<fieldset id=\"$2\">",
+            "\t<legend>$1</legend>",
+            "\t",
+            "\t$0",
+            "</fieldset>"
+        ],
+        "prefix": "fieldset",
+        "triggerAssist": false
+    },
+    "form_action_method": {
+        "body": [
+            "<form action=\"$1\" method=\"$2\">",
+            "\t$0",
+            "</form>"
+        ],
+        "prefix": "form",
+        "triggerAssist": false
+    },
+    "form_submit": {
+        "body": [
+            "<form action=\"$1\" method=\"${2:post}\">",
+            "\t$0",
+            "\t<input type=\"submit\" value=\"$3\"/>",
+            "</form>"
+        ],
+        "prefix": "form",
+        "triggerAssist": true
+    },
+    "head_structure": {
+        "body": [
+            "<head>",
+            "\t<meta charset=\"utf-8\"/>",
+            "\t<title>$1</title>",
+            "\t",
+            "</head>"
+        ],
+        "prefix": "head",
+        "triggerAssist": false
+    },
+    "iframe_src_width_height": {
+        "body": [
+            "<iframe src=\"$1\" width=\"$2\" height=\"$3\"></iframe>"
+        ],
+        "prefix": "iframe",
+        "triggerAssist": true
+    },
+    "input_lable": {
+        "body": [
+            "<input type=\"${1:radio}\" name=\"$2\" id=\"$2\" value=\"$3\"/><label for=\"$2\">$4</label>"
+        ],
+        "prefix": "inputlable",
+        "triggerAssist": false
+    },
+    "input_reset": {
+        "body": [
+            "<input type=\"reset\" value=\"$1\" />"
+        ],
+        "prefix": "inreset",
+        "triggerAssist": false
+    },
+    "input_search": {
+        "body": [
+            "<input type=\"search\" name=\"$1\" required=\"$2\" placeholder=\"Search\" x-webkit-speech=\"$3\" x-webkit-grammar=\"builtin:search\" lang=\"zh-CN\">"
+        ],
+        "prefix": "insearch",
+        "triggerAssist": false
+    },
+    "input_structure": {
+        "body": [
+            "<input type=\"$1\" name=\"$2\" id=\"$2\" value=\"$3\" />"
+        ],
+        "prefix": "input",
+        "triggerAssist": true
+    },
+    "input_submit": {
+        "body": [
+            "<input type=\"submit\" id=\"$1\" name=\"$2\" />"
+        ],
+        "prefix": "insubmit",
+        "triggerAssist": false
+    },
+    "input_text": {
+        "body": [
+            "<input type=\"text\" id=\"$1\" value=\"$2\" />"
+        ],
+        "prefix": "intext",
+        "triggerAssist": true
+    },
+    "meta_GB2312": {
+        "body": [
+            "<meta charset=\"GB2312\"/>"
+        ],
+        "prefix": "metagb",
+        "triggerAssist": false
+    },
+    "meta_keywords": {
+        "body": [
+            "<meta name=\"Keywords\" content=\"$1\"/>"
+        ],
+        "prefix": "metakeywords",
+        "triggerAssist": false
+    },
+    "meta_name_content": {
+        "body": [
+            "<meta name=\"$1\" content=\"$2\"/>"
+        ],
+        "prefix": "meta",
+        "triggerAssist": true
+    },
+    "meta_nocache": {
+        "body": [
+            "<meta http-equiv=\"Pragma\" content=\"no-cache\" />"
+        ],
+        "prefix": "metanocache",
+        "triggerAssist": false
+    },
+    "meta_viewport": {
+        "body": [
+            "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no\" />"
+        ],
+        "prefix": "metaviewport",
+        "triggerAssist": false
+    },
+    "ng-pluralize": {
+        "body": [
+            "<ng-pluralize>$1</ng-pluralize>"
+        ],
+        "prefix": "ngp",
+        "triggerAssist": false
+    },
+    "script html5plus": {
+        "body": [
+            "<script src=\"html5plus://ready\"></script>"
+        ],
+        "description": "%scriptHtml5plus.description%",
+        "prefix": "sctplus",
+        "triggerAssist": false
+    },
+    "script_src_type": {
+        "body": [
+            "<script src=\"$1\" type=\"text/javascript\" charset=\"${3:utf-8}\"></script>"
+        ],
+        "prefix": "scsrc",
+        "triggerAssist": true
+    },
+    "script_type": {
+        "body": [
+            "<script type=\"text/javascript\">",
+            "\t$0",
+            "</script>"
+        ],
+        "prefix": "script",
+        "triggerAssist": false
+    },
+    "select_option": {
+        "body": [
+            "<select name=\"$1\">",
+            "\t<option value=\"$2\">$3</option>",
+            "</select>"
+        ],
+        "prefix": "select",
+        "triggerAssist": false
+    },
+    "span_id": {
+        "body": [
+            "<span id=\"$1\">",
+            "\t$0",
+            "</span>"
+        ],
+        "prefix": "span",
+        "triggerAssist": true
+    },
+    "style_type": {
+        "body": [
+            "<style type=\"text/css\">",
+            "\t$0",
+            "</style>"
+        ],
+        "prefix": "style",
+        "triggerAssist": false
+    },
+    "ul_li": {
+        "body": [
+            "<ul>",
+            "\t<li>$1</li>",
+            "</ul>"
+        ],
+        "prefix": "ul",
+        "triggerAssist": false
+    },
+    "video_structure": {
+        "body": [
+            "<video width=\"${1:800}\" height=\"$2\">",
+            "\t<source src=\"${3:myvideo.mp4}\" type=\"video/mp4\"></source>",
+            "\t<source src=\"${4:myvideo.ogv}\" type=\"video/ogg\"></source>",
+            "\t<source src=\"${5:myvideo.webm}\" type=\"video/webm\"></source>",
+            "\t<object width=\"$6\" height=\"$7\" type=\"application/x-shockwave-flash\" data=\"${8:myvideo.swf}\">",
+            "\t\t<param name=\"movie\" value=\"$8\" />",
+            "\t\t<param name=\"flashvars\" value=\"autostart=true&amp;file=$8\" />",
+            "\t</object>",
+            "\t%video.body.text1% <a href=\"${9:myvideo.webm}\">%video.body.text2%</a>",
+            "</video>"
+        ],
+        "prefix": "video",
+        "triggerAssist": false
+    }
+}

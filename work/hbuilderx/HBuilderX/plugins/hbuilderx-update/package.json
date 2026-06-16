@@ -1,0 +1,19 @@
+{
+  "name": "hbuilderx-update",
+  "version": "1.0.33",
+  "description": "即时生效升级插件",
+  "scripts": {
+    "postinstall": "../../../../../HBuilderX/plugins/node/node update.js"
+  },
+  "keywords": [],
+  "author": "",
+  "publisher": "HBuilderX",
+  "__private": true,
+  "engines": {
+    "HBuilderX": "^3.0.0",
+    "platform": "darwin"
+  },
+  "dependencies": {    
+	"fs":"*"
+  }
+}

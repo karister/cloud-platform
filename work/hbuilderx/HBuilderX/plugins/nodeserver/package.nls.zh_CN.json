@@ -1,0 +1,6 @@
+{
+	"runinbrowser": "运行到浏览器",
+	"configwebserver": "配置web服务器",
+	"runBuiltin": "运行到内置浏览器",
+	"saveAutoRefreshBrowser": "保存自动刷新浏览器(仅内置服务器)"
+}

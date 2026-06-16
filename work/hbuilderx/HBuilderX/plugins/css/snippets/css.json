@@ -1,0 +1,159 @@
+{
+    "-moz-": {
+        "body": [
+            "-moz-"
+        ],
+        "prefix": "moz",
+        "triggerAssist": true
+    },
+    "-ms-": {
+        "body": [
+            "-ms-"
+        ],
+        "prefix": "ms",
+        "triggerAssist": true
+    },
+    "-webkit-": {
+        "body": [
+            "-webkit-"
+        ],
+        "prefix": "webkit",
+        "triggerAssist": true
+    },
+    "background-color: #": {
+        "body": [
+            "background-color: #$1"
+        ],
+        "prefix": "bch",
+        "triggerAssist": true
+    },
+    "background-color: rgb": {
+        "body": [
+            "background-color: rgb(${1:255},${2:255},${3:255})"
+        ],
+        "prefix": "bcr",
+        "triggerAssist": false
+    },
+    "background-image": {
+        "body": [
+            "background-image: $1"
+        ],
+        "prefix": "bi",
+        "triggerAssist": true
+    },
+    "background-image: url": {
+        "body": [
+            "background-image: url($1)"
+        ],
+        "prefix": "biu",
+        "triggerAssist": true
+    },
+    "background-position": {
+        "body": [
+            "background-position: $1"
+        ],
+        "prefix": "bp",
+        "triggerAssist": true
+    },
+    "background: image repeat attachment position": {
+        "body": [
+            "background: url($1) ${2:repeat} ${3:fixed} ${4:center};$0"
+        ],
+        "prefix": "bg",
+        "triggerAssist": true
+    },
+    "border-color": {
+        "body": [
+            "border-color: $1"
+        ],
+        "prefix": "boc",
+        "triggerAssist": true
+    },
+    "border-style": {
+        "body": [
+            "border-style: $1"
+        ],
+        "prefix": "bs",
+        "triggerAssist": true
+    },
+    "flex-direction: row": {
+        "body": [
+            "flex-direction: row;"
+        ],
+        "prefix": "fdr",
+        "triggerAssist": false
+    },
+    "font-family": {
+        "body": [
+            "font-family: $1"
+        ],
+        "prefix": "ff",
+        "triggerAssist": true
+    },
+    "font-size": {
+        "body": [
+            "font-size: $1"
+        ],
+        "prefix": "fsize",
+        "triggerAssist": true
+    },
+    "height px": {
+        "body": [
+            "height: ${1}px;$0"
+        ],
+        "prefix": "hpx",
+        "triggerAssist": false
+    },
+    "list-style-image: url": {
+        "body": [
+            "list-style-image: url($1);"
+        ],
+        "prefix": "lsi",
+        "triggerAssist": true
+    },
+    "scrollbar": {
+        "body": [
+            "scrollbar-base-color:       ${1:#CCCCCC};",
+            "scrollbar-arrow-color:      ${2:#000000};",
+            "scrollbar-track-color:      ${3:#999999};",
+            "scrollbar-3dlight-color:    ${4:#EEEEEE};",
+            "scrollbar-highlight-color:  ${5:#FFFFFF};",
+            "scrollbar-face-color:       ${6:#CCCCCC};",
+            "scrollbar-shadow-color:     ${7:#999999};",
+            "scrollbar-darkshadow-color: ${8:#666666};"
+        ],
+        "prefix": "scrollbarr",
+        "triggerAssist": false
+    },
+    "text-align: left": {
+        "body": [
+            "text-align: left;"
+        ],
+        "prefix": "tal",
+        "triggerAssist": false
+    },
+    "text-transform": {
+        "body": [
+            "text-transform: $1"
+        ],
+        "prefix": "tt",
+        "triggerAssist": true
+    },
+    "user-select:none (List)": {
+        "body": [
+            "-webkit-user-select: none;",
+            "-moz-user-select: none;",
+            "-ms-user-select: none;",
+            "user-select: none;"
+        ],
+        "prefix": "usn",
+        "triggerAssist": false
+    },
+    "width length": {
+        "body": [
+            "width: ${1}px;$0"
+        ],
+        "prefix": "widthlength",
+        "triggerAssist": false
+    }
+}
