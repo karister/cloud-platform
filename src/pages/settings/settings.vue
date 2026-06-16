@@ -238,23 +238,45 @@
           </view>
 
           <view v-else-if="activeModal === 'debug'" class="form">
-            <text class="debug-intro">以下为已配置的展示和开关数据点，可手动设置调试值。仅在模拟数据模式下生效。</text>
+            <text class="debug-intro">设置各数据点的调试值，保存后模拟数据模式下生效。显示/阈值类数据点输入数值，开关类数据点使用切换按钮。</text>
             <view class="debug-list">
-              <view v-for="point in debugPoints" :key="'debug-' + point.identifier" class="debug-row">
+              <view v-for="point in debugDisplayPoints" :key="'debug-dp-' + point.identifier" class="debug-row">
                 <view class="debug-info">
                   <text class="debug-label">{{ point.label || point.identifier }}</text>
-                  <text class="debug-id">{{ point.identifier }} {{ point.unit }}</text>
+                  <text class="debug-id">{{ point.identifier }} {{ point.unit }} · 展示数据</text>
                 </view>
                 <input
                   class="debug-input"
                   type="text"
-                  :value="String(debugValueMap[point.identifier] ?? '')"
-                  :placeholder="String(debugCurrentValues[point.identifier] ?? '--')"
-                  @input="onDebugValueChange(point.identifier, $event.detail.value)"
+                  v-model="debugValueMap[point.identifier]"
+                  :placeholder="'--'"
+                />
+              </view>
+              <view v-for="point in debugSwitchPoints" :key="'debug-sp-' + point.identifier" class="debug-row">
+                <view class="debug-info">
+                  <text class="debug-label">{{ point.label || point.identifier }}</text>
+                  <text class="debug-id">{{ point.identifier }} · 开关数据</text>
+                </view>
+                <switch
+                  :color="debugSwitchColor"
+                  :checked="debugValueMap[point.identifier] === true || debugValueMap[point.identifier] === 1"
+                  @change="onDebugSwitchChange(point.identifier, $event.detail.value)"
+                />
+              </view>
+              <view v-for="point in debugThresholdPoints" :key="'debug-tp-' + point.identifier" class="debug-row">
+                <view class="debug-info">
+                  <text class="debug-label">{{ point.label || point.identifier }}</text>
+                  <text class="debug-id">{{ point.identifier }} {{ point.unit }} · 阈值数据</text>
+                </view>
+                <input
+                  class="debug-input"
+                  type="text"
+                  v-model="debugValueMap[point.identifier]"
+                  :placeholder="String(point.value ?? '--')"
                 />
               </view>
             </view>
-            <view v-if="!debugPoints.length" class="debug-empty">请先在展示数据点和开关数据点中配置属性。</view>
+            <view v-if="!hasDebugPoints" class="debug-empty">请先在后台配置中添加数据点。</view>
             <button class="secondary-btn" style="margin-top: 20rpx" @tap="clearDebugValues">清空调试值</button>
           </view>
 
@@ -319,7 +341,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import AppTabBar from '../../components/AppTabBar.vue'
 import PointFields from '../../components/PointFields.vue'
@@ -338,8 +360,7 @@ const activeRecommendCategory = ref('display')
 const themeSectionOpen = ref(false)
 const showPasswordModal = ref(false)
 const passwordInput = ref('')
-const debugValueMap = ref({})
-const debugCurrentValues = ref({})
+const debugValueMap = reactive({})
 
 const categoryDefs = [
   { key: 'display', label: '展示' },
@@ -370,32 +391,33 @@ function onAlarmThresholdChange(point, pickerIndex) {
   point.alarmThresholdId = selected ? selected.identifier : ''
 }
 
-// Debug panel
-const debugPoints = computed(() => {
-  return [...(config.value.displayPoints || []), ...(config.value.switchPoints || [])]
-})
+// Debug panel - reactive for proper two-way binding with v-model
+const debugDisplayPoints = computed(() => config.value.displayPoints || [])
+const debugSwitchPoints = computed(() => config.value.switchPoints || [])
+const debugThresholdPoints = computed(() => config.value.thresholdPoints || [])
+
+const hasDebugPoints = computed(() =>
+  debugDisplayPoints.value.length > 0 ||
+  debugSwitchPoints.value.length > 0 ||
+  debugThresholdPoints.value.length > 0
+)
 
 function openDebug() {
-  debugValueMap.value = { ...getDebugValues() }
-  // Build current values snapshot from config (for placeholder display)
-  const snapshot = {}
-  const allPoints = [...(config.value.displayPoints || []), ...(config.value.switchPoints || [])]
-  allPoints.forEach((p) => {
-    if (p.identifier) snapshot[p.identifier] = '--'
-  })
-  debugCurrentValues.value = snapshot
+  // Populate debugValueMap from saved storage
+  const saved = getDebugValues()
+  Object.keys(debugValueMap).forEach((k) => delete debugValueMap[k])
+  Object.assign(debugValueMap, saved)
   activeModal.value = 'debug'
 }
 
-function onDebugValueChange(identifier, value) {
-  debugValueMap.value[identifier] = value === '' ? undefined : value
+function onDebugSwitchChange(identifier, checked) {
+  debugValueMap[identifier] = checked ? 1 : 0
 }
 
 function saveDebug() {
   const cleaned = {}
-  Object.entries(debugValueMap.value).forEach(([key, val]) => {
-    if (val !== undefined && val !== '') {
-      // Try to parse numbers
+  Object.entries(debugValueMap).forEach(([key, val]) => {
+    if (val !== undefined && val !== null && val !== '') {
       const num = Number(val)
       cleaned[key] = Number.isFinite(num) ? num : val
     }
@@ -407,7 +429,7 @@ function saveDebug() {
 
 function clearDebugValues() {
   clearDebugStorage()
-  debugValueMap.value = {}
+  Object.keys(debugValueMap).forEach((k) => delete debugValueMap[k])
   uni.showToast({ title: '调试值已清空', icon: 'success' })
 }
 
@@ -426,6 +448,11 @@ const modalTitle = computed(() => {
 const currentThemeName = computed(() => {
   const theme = THEME_LIST.find((t) => t.id === config.value.themeId)
   return theme ? theme.name : '默认墨绿'
+})
+
+const debugSwitchColor = computed(() => {
+  const theme = THEME_LIST.find((t) => t.id === config.value.themeId)
+  return theme ? theme.cssVars['--theme-accent'] : '#0dc9b0'
 })
 
 const recommendedDisplayPoints = computed(() => draft.value.recommendedPoints?.display || [])
