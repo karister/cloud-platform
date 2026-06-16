@@ -87,6 +87,16 @@
           </view>
           <text class="menu-arrow">{{ themeSectionOpen ? '收起' : '展开' }}</text>
         </view>
+        <view class="menu-card debug-action" @tap="openDebug">
+          <view class="menu-icon-wrap">
+            <image class="menu-icon" src="/static/tab/threshold-active.png" mode="aspectFit" />
+          </view>
+          <view class="menu-copy">
+            <text class="menu-title">数据调试</text>
+            <text class="menu-desc">手动设置模拟数据值进行调试</text>
+          </view>
+          <text class="menu-arrow">调试</text>
+        </view>
       </template>
     </view>
 
@@ -227,6 +237,27 @@
             <button class="secondary-btn" @tap="addRecommendedPoint">新增推荐数据点</button>
           </view>
 
+          <view v-else-if="activeModal === 'debug'" class="form">
+            <text class="debug-intro">以下为已配置的展示和开关数据点，可手动设置调试值。仅在模拟数据模式下生效。</text>
+            <view class="debug-list">
+              <view v-for="point in debugPoints" :key="'debug-' + point.identifier" class="debug-row">
+                <view class="debug-info">
+                  <text class="debug-label">{{ point.label || point.identifier }}</text>
+                  <text class="debug-id">{{ point.identifier }} {{ point.unit }}</text>
+                </view>
+                <input
+                  class="debug-input"
+                  type="text"
+                  :value="String(debugValueMap[point.identifier] ?? '')"
+                  :placeholder="String(debugCurrentValues[point.identifier] ?? '--')"
+                  @input="onDebugValueChange(point.identifier, $event.detail.value)"
+                />
+              </view>
+            </view>
+            <view v-if="!debugPoints.length" class="debug-empty">请先在展示数据点和开关数据点中配置属性。</view>
+            <button class="secondary-btn" style="margin-top: 20rpx" @tap="clearDebugValues">清空调试值</button>
+          </view>
+
           <view v-else class="form">
             <view v-if="activeModal === 'displayPoints'" class="quick-panel">
               <view class="quick-head">
@@ -257,13 +288,28 @@
                 <button class="remove-btn" @tap="removePoint(index)">删除</button>
               </view>
               <PointFields :point="point" :threshold="activeModal === 'thresholdPoints'" />
+              <!-- Alarm threshold binding (display points only) -->
+              <view v-if="activeModal === 'displayPoints'" class="alarm-field">
+                <text>报警阈值绑定</text>
+                <picker
+                  :range="thresholdPickerRange"
+                  :range-key="'label'"
+                  :value="getThresholdPickerIndex(point)"
+                  @change="onAlarmThresholdChange(point, $event.detail.value)"
+                >
+                  <view class="alarm-picker">
+                    {{ getAlarmThresholdLabel(point) }}
+                  </view>
+                </picker>
+              </view>
             </view>
             <button class="secondary-btn" @tap="addPoint">新增数据点</button>
           </view>
         </scroll-view>
 
         <view class="modal-footer">
-          <button class="primary-btn" @tap="saveModal">保存配置</button>
+          <button v-if="activeModal === 'debug'" class="primary-btn" @tap="saveDebug">保存调试值</button>
+          <button v-else class="primary-btn" @tap="saveModal">保存配置</button>
         </view>
       </view>
     </view>
@@ -278,7 +324,7 @@ import { onShow } from '@dcloudio/uni-app'
 import AppTabBar from '../../components/AppTabBar.vue'
 import PointFields from '../../components/PointFields.vue'
 import { buildGetUrl, createPoint } from '../../utils/defaultConfig'
-import { getConfig, saveConfig } from '../../utils/storage'
+import { getConfig, saveConfig, getDebugValues, saveDebugValues, clearDebugValues as clearDebugStorage } from '../../utils/storage'
 import { THEME_LIST, applyThemeToDOM } from '../../utils/themes'
 
 const config = ref(getConfig())
@@ -291,6 +337,8 @@ const activeRecommendCategory = ref('display')
 const themeSectionOpen = ref(false)
 const showPasswordModal = ref(false)
 const passwordInput = ref('')
+const debugValueMap = ref({})
+const debugCurrentValues = ref({})
 
 const categoryDefs = [
   { key: 'display', label: '展示' },
@@ -298,13 +346,78 @@ const categoryDefs = [
   { key: 'threshold', label: '阈值' }
 ]
 
+// Alarm threshold dropdown helpers
+const thresholdPickerRange = computed(() => {
+  return [{ label: '无', identifier: '' }, ...(draft.value.thresholdPoints || [])]
+})
+
+function getThresholdPickerIndex(point) {
+  const id = point.alarmThresholdId || ''
+  const idx = thresholdPickerRange.value.findIndex((t) => t.identifier === id)
+  return idx >= 0 ? idx : 0
+}
+
+function getAlarmThresholdLabel(point) {
+  const id = point.alarmThresholdId || ''
+  if (!id) return '无'
+  const found = thresholdPickerRange.value.find((t) => t.identifier === id)
+  return found ? found.label : '无'
+}
+
+function onAlarmThresholdChange(point, pickerIndex) {
+  const selected = thresholdPickerRange.value[pickerIndex]
+  point.alarmThresholdId = selected ? selected.identifier : ''
+}
+
+// Debug panel
+const debugPoints = computed(() => {
+  return [...(config.value.displayPoints || []), ...(config.value.switchPoints || [])]
+})
+
+function openDebug() {
+  debugValueMap.value = { ...getDebugValues() }
+  // Build current values snapshot from config (for placeholder display)
+  const snapshot = {}
+  const allPoints = [...(config.value.displayPoints || []), ...(config.value.switchPoints || [])]
+  allPoints.forEach((p) => {
+    if (p.identifier) snapshot[p.identifier] = '--'
+  })
+  debugCurrentValues.value = snapshot
+  activeModal.value = 'debug'
+}
+
+function onDebugValueChange(identifier, value) {
+  debugValueMap.value[identifier] = value === '' ? undefined : value
+}
+
+function saveDebug() {
+  const cleaned = {}
+  Object.entries(debugValueMap.value).forEach(([key, val]) => {
+    if (val !== undefined && val !== '') {
+      // Try to parse numbers
+      const num = Number(val)
+      cleaned[key] = Number.isFinite(num) ? num : val
+    }
+  })
+  saveDebugValues(cleaned)
+  closeModal()
+  uni.showToast({ title: '调试值已保存', icon: 'success' })
+}
+
+function clearDebugValues() {
+  clearDebugStorage()
+  debugValueMap.value = {}
+  uni.showToast({ title: '调试值已清空', icon: 'success' })
+}
+
 const modalTitle = computed(() => {
   const titles = {
     cloud: '云平台连接配置',
     displayPoints: '展示数据点配置',
     switchPoints: '开关数据点配置',
     thresholdPoints: '阈值数据点配置',
-    recommendations: '推荐数据点配置'
+    recommendations: '推荐数据点配置',
+    debug: '数据调试'
   }
   return titles[activeModal.value] || ''
 })
@@ -1197,5 +1310,101 @@ onShow(reload)
   color: var(--theme-accent-contrast);
   font-size: 19rpx;
   font-weight: 800;
+}
+
+/* ── Alarm threshold field ── */
+.alarm-field {
+  margin-top: 16rpx;
+  padding: 16rpx 18rpx;
+  border: 1rpx solid var(--theme-divider-light);
+  border-radius: 16rpx;
+  background: var(--theme-surface-alt);
+}
+
+.alarm-field text {
+  display: block;
+  margin-bottom: 10rpx;
+  color: var(--theme-text-secondary);
+  font-size: 23rpx;
+  font-weight: 750;
+}
+
+.alarm-picker {
+  height: 68rpx;
+  padding: 0 18rpx;
+  border: 1rpx solid var(--theme-input-border);
+  border-radius: var(--theme-radius-input);
+  background: var(--theme-input-bg);
+  color: var(--theme-text-primary);
+  font-size: 26rpx;
+  line-height: 68rpx;
+}
+
+/* ── Debug panel ── */
+.debug-action {
+  border-color: rgba(200, 160, 40, 0.2);
+}
+
+.debug-intro {
+  display: block;
+  margin-bottom: 22rpx;
+  color: var(--theme-text-secondary);
+  font-size: 24rpx;
+}
+
+.debug-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.debug-row {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  padding: 16rpx 18rpx;
+  border: 1rpx solid var(--theme-divider-light);
+  border-radius: 16rpx;
+  background: var(--theme-surface-alt);
+}
+
+.debug-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.debug-label {
+  display: block;
+  color: var(--theme-text-primary);
+  font-size: 27rpx;
+  font-weight: 800;
+}
+
+.debug-id {
+  display: block;
+  margin-top: 6rpx;
+  color: var(--theme-text-tertiary);
+  font-size: 22rpx;
+}
+
+.debug-input {
+  width: 160rpx;
+  height: 64rpx;
+  padding: 0 14rpx;
+  border: 1rpx solid var(--theme-input-border);
+  border-radius: var(--theme-radius-input);
+  background: var(--theme-input-bg);
+  color: var(--theme-accent);
+  font-size: 26rpx;
+  font-weight: 800;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.debug-empty {
+  padding: 40rpx 20rpx;
+  text-align: center;
+  color: var(--theme-text-tertiary);
+  font-size: 25rpx;
 }
 </style>

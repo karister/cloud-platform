@@ -37,15 +37,27 @@
       </view>
 
       <view v-if="config.displayPoints.length" class="metric-grid">
-        <view v-for="point in config.displayPoints" :key="point.identifier" class="metric-card">
+        <view
+          v-for="point in config.displayPoints"
+          :key="point.identifier"
+          class="metric-card"
+          :class="{ 'metric-alarm': isAlarming(point, values[point.identifier]) }"
+        >
           <view class="metric-top">
             <text class="metric-label">{{ point.label || point.identifier }}</text>
             <text class="metric-id">{{ point.identifier }}</text>
           </view>
-          <text class="metric-value">{{ formatValue(values[point.identifier], point.unit) }}</text>
+          <text class="metric-value" :class="{ 'value-alarm': isAlarming(point, values[point.identifier]) }">
+            {{ formatValue(values[point.identifier], point.unit) }}
+          </text>
           <view class="metric-track">
-            <view class="metric-fill" :style="{ width: metricWidth(values[point.identifier]) }" />
+            <view
+              class="metric-fill"
+              :class="{ 'fill-alarm': isAlarming(point, values[point.identifier]) }"
+              :style="{ width: metricWidth(point, values[point.identifier]) }"
+            />
           </view>
+          <text v-if="isAlarming(point, values[point.identifier])" class="alarm-tag">告警</text>
         </view>
       </view>
       <EmptyState v-else title="未配置展示数据点" desc="请在后台配置中添加需要读取的云平台属性" />
@@ -112,9 +124,28 @@ const themeAccent = computed(() => {
   return theme ? theme.cssVars['--theme-accent'] : '#0f6b67'
 })
 
-function metricWidth(value) {
+function getThresholdForPoint(point) {
+  if (!point.alarmThresholdId) return null
+  return (config.value.thresholdPoints || []).find((t) => t.identifier === point.alarmThresholdId) || null
+}
+
+function isAlarming(point, value) {
+  const threshold = getThresholdForPoint(point)
+  if (!threshold) return false
+  return Number(value) > Number(threshold.value)
+}
+
+function metricWidth(point, value) {
   const number = Number(value)
   if (!Number.isFinite(number)) return '18%'
+  const threshold = getThresholdForPoint(point)
+  // If threshold is bound, use threshold.value as the full scale
+  if (threshold) {
+    const max = Number(threshold.value) || 100
+    const pct = (number / max) * 100
+    return `${Math.max(8, Math.min(100, pct))}%`
+  }
+  // Fallback: use value as-is (for percentage-like values such as humidity)
   return `${Math.max(18, Math.min(96, number))}%`
 }
 
@@ -365,6 +396,7 @@ onShow(() => {
 }
 
 .metric-card {
+  position: relative;
   min-height: 224rpx;
   padding: 22rpx;
   border: var(--theme-card-border-width) var(--theme-card-border-style) var(--theme-surface-border);
@@ -446,5 +478,31 @@ onShow(() => {
   gap: 12rpx;
   color: var(--theme-text-secondary);
   font-size: 23rpx;
+}
+
+/* ── Alarm state ── */
+.metric-card.metric-alarm {
+  border-color: rgba(220, 50, 50, 0.35);
+  background: linear-gradient(135deg, var(--theme-surface-alt) 0%, rgba(220, 50, 50, 0.05) 100%);
+}
+
+.metric-value.value-alarm {
+  color: #e04040;
+}
+
+.metric-fill.fill-alarm {
+  background: linear-gradient(90deg, #e04040, #f06050);
+}
+
+.alarm-tag {
+  position: absolute;
+  top: 12rpx;
+  right: 14rpx;
+  padding: 4rpx 12rpx;
+  border-radius: var(--theme-radius-pill);
+  background: #e04040;
+  color: #fff;
+  font-size: 19rpx;
+  font-weight: 800;
 }
 </style>

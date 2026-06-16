@@ -72,3 +72,24 @@ export function appendHistory(values, displayPoints) {
 export function clearHistory() {
   uni.removeStorageSync(HISTORY_KEY)
 }
+
+// ── Debug values ──
+
+const DEBUG_VALUES_KEY = 'cloud_comm_debug_values'
+
+export function getDebugValues() {
+  try {
+    return uni.getStorageSync(DEBUG_VALUES_KEY) || {}
+  } catch (error) {
+    console.warn('Failed to read debug values', error)
+    return {}
+  }
+}
+
+export function saveDebugValues(values) {
+  uni.setStorageSync(DEBUG_VALUES_KEY, values || {})
+}
+
+export function clearDebugValues() {
+  uni.removeStorageSync(DEBUG_VALUES_KEY)
+}

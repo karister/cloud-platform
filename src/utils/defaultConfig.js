@@ -74,6 +74,7 @@ export function createPoint(kind = 'display') {
   return {
     label: '',
     identifier: '',
-    unit: ''
+    unit: '',
+    alarmThresholdId: ''
   }
 }

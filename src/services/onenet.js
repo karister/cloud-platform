@@ -1,3 +1,5 @@
+import { getDebugValues } from '../utils/storage'
+
 function request(options) {
   return new Promise((resolve, reject) => {
     uni.request({
@@ -75,9 +77,15 @@ export async function fetchProperties(config) {
   ].filter((point) => point.identifier)
 
   if (config.cloud.mockMode) {
+    const debugValues = getDebugValues()
     const values = {}
     allPoints.forEach((point, index) => {
-      values[point.identifier] = makeMockValue(point.identifier, index)
+      // Use debug override if set, otherwise generate mock value
+      if (debugValues[point.identifier] !== undefined && debugValues[point.identifier] !== '') {
+        values[point.identifier] = debugValues[point.identifier]
+      } else {
+        values[point.identifier] = makeMockValue(point.identifier, index)
+      }
     })
     return values
   }
