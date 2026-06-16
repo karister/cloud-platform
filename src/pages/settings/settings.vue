@@ -330,7 +330,8 @@ import { THEME_LIST, applyThemeToDOM } from '../../utils/themes'
 const config = ref(getConfig())
 const draft = ref(getConfig())
 const activeModal = ref('')
-const adminMode = ref(false)
+// TODO: revert to false before production release
+const adminMode = ref(true)
 const unlockTapCount = ref(0)
 const unlockTimer = ref(null)
 const activeRecommendCategory = ref('display')
