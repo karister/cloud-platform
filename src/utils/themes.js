@@ -645,9 +645,64 @@ function getThemeTargets() {
   return Array.from(targets)
 }
 
+// ---------------------------------------------------------------------------
+// rpx → px conversion for CSS variables
+// ---------------------------------------------------------------------------
+// uni-app's `rpx` is a runtime unit (750rpx = screen width). The Vue compiler
+// converts rpx → rem for static CSS, but it CAN'T inspect the value of a
+// CSS custom property (--var-name) because that value is set at runtime.
+// As a result, `height: var(--theme-tab-height)` resolves to `height: 96rpx`,
+// which the browser silently rejects — the rule is dropped, and the element
+// falls back to its content height. This is why the tab bar shrinks to a flat
+// rectangle after a theme switch and only "recovers" when the surrounding
+// page is rebuilt by a tab navigation.
+//
+// We fix it by translating every rpx in the CSS-var payload into a concrete
+// `px` value before writing it to the DOM. We also re-apply on resize so
+// the conversion tracks the actual viewport width.
+const RPX_RE = /(-?\d+(?:\.\d+)?)rpx\b/gi
+
+function viewportRpxRatio() {
+  if (typeof window === 'undefined' || !window.innerWidth) return 0
+  // uni-app defaults: 750rpx = full screen width
+  return window.innerWidth / 750
+}
+
+function convertRpxInValue(value) {
+  if (typeof value !== 'string' || value.indexOf('rpx') === -1) return value
+  const ratio = viewportRpxRatio()
+  if (!ratio) return value
+  return value.replace(RPX_RE, (_, num) => `${parseFloat(num) * ratio}px`)
+}
+
+function convertVars(vars) {
+  if (!vars) return vars
+  const out = {}
+  for (const [k, v] of Object.entries(vars)) {
+    out[k] = convertRpxInValue(v)
+  }
+  return out
+}
+
+// Cache the last-applied theme id so resize can re-run the same write.
+let lastAppliedThemeId = null
+let resizeBound = false
+
+function bindResizeAutoApply() {
+  if (resizeBound) return
+  if (typeof window === 'undefined') return
+  resizeBound = true
+  let raf = 0
+  window.addEventListener('resize', () => {
+    if (!lastAppliedThemeId) return
+    if (raf) cancelAnimationFrame(raf)
+    raf = window.requestAnimationFrame(() => writeThemeToTargets(getThemeById(lastAppliedThemeId)))
+  })
+}
+
 function writeThemeToTargets(theme) {
   const layout = theme.layoutPreset || 'compact'
-  const vars = theme.cssVars || {}
+  const vars = convertVars(theme.cssVars) || {}
 
   getThemeTargets().forEach((element) => {
     element.setAttribute('data-theme', theme.id)
@@ -669,9 +724,11 @@ export function applyThemeToDOM(themeId) {
   if (typeof document === 'undefined' || !document.documentElement) return
 
   const theme = getThemeById(themeId)
+  lastAppliedThemeId = themeId
   const apply = () => writeThemeToTargets(theme)
 
   apply()
+  bindResizeAutoApply()
 
   if (typeof window !== 'undefined') {
     if (typeof window.requestAnimationFrame === 'function') {
