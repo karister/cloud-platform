@@ -11,83 +11,83 @@
  */
 
 // ---------------------------------------------------------------------------
-// Teal - Industrial IoT Command Center
+// Teal - Industrial IoT Command Center (Bright Edition)
 // ---------------------------------------------------------------------------
 const TEAL = {
   id: 'teal',
   name: '工业互联指挥舱', // 工业互联指挥舱
-  description: 'Dark teal hero, grid background, compact data cards, strong status indicators',
+  description: 'Light technical blueprint background, electric teal accents, white data cards with strong status indicators',
   layoutPreset: 'compact',
   surfacePreset: 'sharp',
   tabPreset: 'capsule',
   chartPreset: 'angular',
   backgroundImage: "url('/static/theme/bg-teal.svg')",
-  heroPattern: 'solid-dark',
+  heroPattern: 'solid-bright',
   cssVars: {
-    // Accent
-    '--theme-accent': '#0dc9b0',
-    '--theme-accent-light': '#0a3035',
-    '--theme-accent-dark': '#0ab898',
+    // Accent — electric teal, single source of color identity
+    '--theme-accent': '#0891a0',
+    '--theme-accent-light': '#e0f4f6',
+    '--theme-accent-dark': '#066976',
     '--theme-accent-contrast': '#ffffff',
 
-    // Background
-    '--theme-bg': '#0d2829',
+    // Background — light cool teal-tinted paper
+    '--theme-bg': '#eef3f5',
     '--theme-bg-image': "url('/static/theme/bg-teal.svg')",
-    '--theme-bg-image-opacity': '0.55',
-    '--theme-bg-gradient-start': '#0e3032',
-    '--theme-bg-gradient-end': '#0d2829',
-    '--theme-bg-gradient-settings-start': '#0f3235',
-    '--theme-bg-gradient-settings-end': '#0d2829',
+    '--theme-bg-image-opacity': '0.5',
+    '--theme-bg-gradient-start': '#e8f0f2',
+    '--theme-bg-gradient-end': '#eef3f5',
+    '--theme-bg-gradient-settings-start': '#e6eef0',
+    '--theme-bg-gradient-settings-end': '#eef3f5',
 
-    // Surface / Cards
-    '--theme-surface': '#122f31',
-    '--theme-surface-alt': '#16383a',
-    '--theme-surface-alt-2': '#143436',
-    '--theme-surface-hover': '#1a4042',
-    '--theme-surface-border': 'rgba(13, 201, 176, 0.14)',
-    '--theme-surface-border-light': 'rgba(13, 201, 176, 0.08)',
-    '--theme-surface-border-accent': 'rgba(13, 201, 176, 0.25)',
+    // Surface / Cards — pure white with teal-tinted border (off-white to avoid pure #fff tells)
+    '--theme-surface': '#ffffff',
+    '--theme-surface-alt': '#f6fafb',
+    '--theme-surface-alt-2': '#eff6f7',
+    '--theme-surface-hover': '#f0f7f8',
+    '--theme-surface-border': 'rgba(8, 145, 160, 0.14)',
+    '--theme-surface-border-light': 'rgba(8, 145, 160, 0.07)',
+    '--theme-surface-border-accent': 'rgba(8, 145, 160, 0.24)',
 
-    // Text
-    '--theme-text-primary': '#d8ecea',
-    '--theme-text-secondary': '#7aa8a4',
-    '--theme-text-tertiary': '#5a8a85',
-    '--theme-text-heading': '#e0f2f0',
+    // Text — deep teal-navy (off-black, not pure #000)
+    '--theme-text-primary': '#0e2530',
+    '--theme-text-secondary': '#4a6573',
+    '--theme-text-tertiary': '#7a9099',
+    '--theme-text-heading': '#08182a',
 
-    // Hero
-    '--theme-hero-bg-start': '#0f3a3c',
-    '--theme-hero-bg-end': '#0a2021',
-    '--theme-hero-border': 'rgba(13, 201, 176, 0.2)',
-    '--theme-hero-text': '#e0f2f0',
-    '--theme-hero-text-muted': 'rgba(200, 230, 225, 0.7)',
-    '--theme-hero-btn-bg': 'rgba(13, 201, 176, 0.12)',
-    '--theme-hero-btn-border': 'rgba(13, 201, 176, 0.22)',
+    // Hero — saturated teal gradient (only place saturated color dominates)
+    '--theme-hero-bg-start': '#14b8a6',
+    '--theme-hero-bg-end': '#0e7490',
+    '--theme-hero-border': 'rgba(8, 145, 160, 0.2)',
+    '--theme-hero-text': '#ffffff',
+    '--theme-hero-text-muted': 'rgba(255, 255, 255, 0.78)',
+    '--theme-hero-btn-bg': 'rgba(255, 255, 255, 0.18)',
+    '--theme-hero-btn-border': 'rgba(255, 255, 255, 0.32)',
     '--theme-hero-overlay': 'none',
 
     // Inputs
-    '--theme-input-bg': '#16383a',
-    '--theme-input-border': '#1a4840',
-    '--theme-input-border-focus': '#0dc9b0',
+    '--theme-input-bg': '#ffffff',
+    '--theme-input-border': '#d2dee2',
+    '--theme-input-border-focus': '#0891a0',
     '--theme-input-style': '10rpx',
 
     // Dividers
-    '--theme-divider': '#16383a',
-    '--theme-divider-light': '#1a4042',
+    '--theme-divider': '#e0e9ec',
+    '--theme-divider-light': '#eaf1f3',
 
-    // Shadows
-    '--theme-shadow-sm': 'rgba(0, 0, 0, 0.25)',
-    '--theme-shadow-md': 'rgba(0, 0, 0, 0.35)',
-    '--theme-shadow-lg': 'rgba(0, 0, 0, 0.5)',
-    '--theme-shadow-accent': 'rgba(13, 201, 176, 0.18)',
+    // Shadows — tinted to the cool teal hue, not pure black
+    '--theme-shadow-sm': 'rgba(8, 60, 70, 0.06)',
+    '--theme-shadow-md': 'rgba(8, 60, 70, 0.1)',
+    '--theme-shadow-lg': 'rgba(8, 60, 70, 0.16)',
+    '--theme-shadow-accent': 'rgba(8, 145, 160, 0.18)',
 
     // Semantic
-    '--theme-danger': '#f06070',
-    '--theme-danger-bg': '#2a1820',
-    '--theme-danger-border': '#f06070',
-    '--theme-success': '#0dc9b0',
-    '--theme-warning': '#e0b040',
+    '--theme-danger': '#e11d48',
+    '--theme-danger-bg': '#fff1f3',
+    '--theme-danger-border': '#e11d48',
+    '--theme-success': '#0891a0',
+    '--theme-warning': '#d97706',
 
-    // Radii (compact: sharp)
+    // Radii (compact: sharp shape system)
     '--theme-radius-sm': '8rpx',
     '--theme-radius-md': '12rpx',
     '--theme-radius-lg': '16rpx',
@@ -95,7 +95,7 @@ const TEAL = {
     '--theme-radius-input': '8rpx',
 
     // Card morphology
-    '--theme-card-border-width': '1.5px',
+    '--theme-card-border-width': '1px',
     '--theme-card-border-style': 'solid',
     '--theme-card-bg-opacity': '1',
 
@@ -103,141 +103,145 @@ const TEAL = {
     '--theme-layout-gap': '14rpx',
     '--theme-layout-section-gap': '20rpx',
 
-    // Tab bar
-    '--theme-tab-active-bg': '#0a3035',
+    // Tab bar — clean capsule on light
+    '--theme-tab-active-bg': '#ffffff',
     '--theme-tab-height': '96rpx',
     '--theme-tab-border-radius': '28rpx',
-    '--theme-tab-wrapper-bg': 'rgba(18, 47, 49, 0.96)',
-    '--theme-tab-wrapper-border': 'rgba(13, 201, 176, 0.12)',
-    '--theme-tab-wrapper-shadow': 'rgba(0, 0, 0, 0.35)',
+    '--theme-tab-wrapper-bg': 'rgba(255, 255, 255, 0.96)',
+    '--theme-tab-wrapper-border': 'rgba(8, 145, 160, 0.14)',
+    '--theme-tab-wrapper-shadow': 'rgba(8, 60, 70, 0.1)',
     '--theme-tab-wrapper-padding': '8rpx',
 
     // Misc
-    '--theme-metric-fill-end': '#0df0d0',
-    '--theme-card-accent-bg-start': '#122f31',
-    '--theme-card-accent-bg-end': '#163d3f',
-    '--theme-card-accent-shadow': 'rgba(13, 201, 176, 0.13)',
-    '--theme-card-accent-border': 'rgba(13, 201, 176, 0.28)',
-    '--theme-badge-bg': '#0a3035',
-    '--theme-badge-text': '#0dc9b0',
+    '--theme-metric-fill-end': '#14b8a6',
+    '--theme-card-accent-bg-start': '#ffffff',
+    '--theme-card-accent-bg-end': '#eaf6f7',
+    '--theme-card-accent-shadow': 'rgba(8, 145, 160, 0.1)',
+    '--theme-card-accent-border': 'rgba(8, 145, 160, 0.22)',
+    '--theme-badge-bg': '#e0f4f6',
+    '--theme-badge-text': '#066976',
 
     // Chart
-    '--theme-chart-bg': '#16383a',
-    '--theme-chart-grid': '#1a4840',
-    '--theme-chart-color-0': '#0dc9b0',
-    '--theme-chart-color-1': '#0df0d0',
-    '--theme-chart-color-2': '#e0b040',
-    '--theme-chart-color-3': '#f06070',
-    '--theme-chart-color-4': '#60a0f0',
+    '--theme-chart-bg': '#ffffff',
+    '--theme-chart-grid': '#d8e3e6',
+    '--theme-chart-color-0': '#0891a0',
+    '--theme-chart-color-1': '#14b8a6',
+    '--theme-chart-color-2': '#d97706',
+    '--theme-chart-color-3': '#e11d48',
+    '--theme-chart-color-4': '#4f46e5',
     '--theme-chart-line-width': '3',
     '--theme-chart-dot-radius': '4.5',
 
     // Modal
-    '--theme-modal-overlay': 'rgba(0, 0, 0, 0.6)',
-    '--theme-btn-secondary-bg': '#16383a',
-    '--theme-btn-secondary-border': '#0dc9b0',
-    '--theme-btn-secondary-text': '#0dc9b0',
+    '--theme-modal-overlay': 'rgba(8, 25, 35, 0.42)',
+    '--theme-btn-secondary-bg': '#ffffff',
+    '--theme-btn-secondary-border': '#0891a0',
+    '--theme-btn-secondary-text': '#0891a0',
     '--theme-btn-style': '8rpx',
 
     // Tab text
-    '--theme-tab-text': '#7aa8a4',
-    '--theme-tab-active-text': '#0dc9b0',
-    '--theme-tab-shadow-inset': 'rgba(13, 201, 176, 0.08)',
-    '--theme-tab-border': 'rgba(13, 201, 176, 0.14)',
-    '--theme-tab-bg': 'rgba(18, 47, 49, 0.96)',
-    '--theme-tab-shadow': 'rgba(0, 0, 0, 0.4)',
+    '--theme-tab-text': '#5a7682',
+    '--theme-tab-active-text': '#0891a0',
+    '--theme-tab-shadow-inset': 'rgba(8, 145, 160, 0.06)',
+    '--theme-tab-border': 'rgba(8, 145, 160, 0.14)',
+    '--theme-tab-bg': 'rgba(255, 255, 255, 0.96)',
+    '--theme-tab-shadow': 'rgba(8, 60, 70, 0.12)',
 
     // Settings-specific
-    '--theme-summary-chip-bg': '#0a3035',
-    '--theme-summary-chip-text': '#0dc9b0',
-    '--theme-value-badge-bg': '#16383a',
-    '--theme-value-badge-text': '#0dc9b0',
-    '--theme-value-badge-unit': '#7aa8a4',
-    '--theme-empty-border': '#1a4042',
-    '--theme-category-tabs-bg': '#16383a',
-    '--theme-category-tab-active-bg': '#1a4042',
-    '--theme-category-tab-active-shadow': 'rgba(0, 0, 0, 0.3)',
-    '--theme-quick-chip-border': '#1a4840',
-    '--theme-menu-accent-bg': 'rgba(13, 201, 176, 0.07)'
+    '--theme-summary-chip-bg': '#e0f4f6',
+    '--theme-summary-chip-text': '#066976',
+    '--theme-value-badge-bg': '#f0f9fa',
+    '--theme-value-badge-text': '#0891a0',
+    '--theme-value-badge-unit': '#5a7682',
+    '--theme-empty-border': '#d8e3e6',
+    '--theme-category-tabs-bg': '#eaf1f3',
+    '--theme-category-tab-active-bg': '#ffffff',
+    '--theme-category-tab-active-shadow': 'rgba(8, 60, 70, 0.06)',
+    '--theme-quick-chip-border': '#d8e3e6',
+    '--theme-menu-accent-bg': 'rgba(8, 145, 160, 0.06)'
   }
 }
 
 // ---------------------------------------------------------------------------
-// Night - Dark Tech Console
+// Night - Tech Console (Bright Glass Edition · Royal Blue)
 // ---------------------------------------------------------------------------
+// Anti-AI-Tell: original NIGHT used lilac indigo (#7b9cff) which is a
+// signature LLM "AI purple-blue glow" Tell (skill section 9.A). Replaced
+// with a sober royal blue (#2563eb) on light slate. Royal blue reads as
+// premium / engineering / IBM-Carbon territory, not AI-default lilac.
 const NIGHT = {
   id: 'night',
   name: '暗色科技控制台', // 暗色科技控制台
-  description: 'Deep dark backgrounds, neon highlights, frosted glass panels, horizontal modules',
+  description: 'Light slate base, royal blue electric highlights, frosted glass panels with sober engineering feel',
   layoutPreset: 'glass',
   surfacePreset: 'frosted',
   tabPreset: 'glow',
   chartPreset: 'neon',
   backgroundImage: "url('/static/theme/bg-night.svg')",
-  heroPattern: 'gradient-dark',
+  heroPattern: 'gradient-bright',
   cssVars: {
-    // Accent
-    '--theme-accent': '#7b9cff',
-    '--theme-accent-light': '#1a2448',
-    '--theme-accent-dark': '#6a8af0',
+    // Accent — royal blue, single source of color identity
+    '--theme-accent': '#2563eb',
+    '--theme-accent-light': '#eff6ff',
+    '--theme-accent-dark': '#1d4ed8',
     '--theme-accent-contrast': '#ffffff',
 
-    // Background
-    '--theme-bg': '#060b14',
+    // Background — light slate (not lavender, not pure white)
+    '--theme-bg': '#f1f5f9',
     '--theme-bg-image': "url('/static/theme/bg-night.svg')",
-    '--theme-bg-image-opacity': '0.45',
-    '--theme-bg-gradient-start': '#080e1a',
-    '--theme-bg-gradient-end': '#060b14',
-    '--theme-bg-gradient-settings-start': '#090f1c',
-    '--theme-bg-gradient-settings-end': '#060b14',
+    '--theme-bg-image-opacity': '0.4',
+    '--theme-bg-gradient-start': '#e8edf6',
+    '--theme-bg-gradient-end': '#f1f5f9',
+    '--theme-bg-gradient-settings-start': '#e6ebf4',
+    '--theme-bg-gradient-settings-end': '#f1f5f9',
 
-    // Surface / Cards (frosted glass)
-    '--theme-surface': 'rgba(18, 22, 40, 0.75)',
-    '--theme-surface-alt': 'rgba(22, 28, 50, 0.7)',
-    '--theme-surface-alt-2': 'rgba(20, 25, 45, 0.72)',
-    '--theme-surface-hover': 'rgba(26, 34, 58, 0.8)',
-    '--theme-surface-border': 'rgba(123, 156, 255, 0.12)',
-    '--theme-surface-border-light': 'rgba(123, 156, 255, 0.06)',
-    '--theme-surface-border-accent': 'rgba(123, 156, 255, 0.25)',
+    // Surface / Cards — frosted white on light slate
+    '--theme-surface': 'rgba(255, 255, 255, 0.78)',
+    '--theme-surface-alt': 'rgba(248, 250, 252, 0.82)',
+    '--theme-surface-alt-2': 'rgba(241, 245, 249, 0.76)',
+    '--theme-surface-hover': 'rgba(255, 255, 255, 0.9)',
+    '--theme-surface-border': 'rgba(37, 99, 235, 0.16)',
+    '--theme-surface-border-light': 'rgba(37, 99, 235, 0.08)',
+    '--theme-surface-border-accent': 'rgba(37, 99, 235, 0.28)',
 
-    // Text
-    '--theme-text-primary': '#dce0f0',
-    '--theme-text-secondary': '#8890b8',
-    '--theme-text-tertiary': '#6670a0',
-    '--theme-text-heading': '#e4eaf8',
+    // Text — deep slate (off-black, not pure #000)
+    '--theme-text-primary': '#0f172a',
+    '--theme-text-secondary': '#475569',
+    '--theme-text-tertiary': '#64748b',
+    '--theme-text-heading': '#020617',
 
-    // Hero
-    '--theme-hero-bg-start': '#0f1830',
-    '--theme-hero-bg-end': '#080e1c',
-    '--theme-hero-border': 'rgba(123, 156, 255, 0.18)',
-    '--theme-hero-text': '#e4eaf8',
-    '--theme-hero-text-muted': 'rgba(200, 210, 240, 0.65)',
-    '--theme-hero-btn-bg': 'rgba(123, 156, 255, 0.1)',
-    '--theme-hero-btn-border': 'rgba(123, 156, 255, 0.2)',
-    '--theme-hero-overlay': 'none',
+    // Hero — white-to-blue gradient with subtle radial glow
+    '--theme-hero-bg-start': '#ffffff',
+    '--theme-hero-bg-end': '#dbeafe',
+    '--theme-hero-border': 'rgba(37, 99, 235, 0.18)',
+    '--theme-hero-text': '#0f172a',
+    '--theme-hero-text-muted': 'rgba(15, 23, 42, 0.62)',
+    '--theme-hero-btn-bg': 'rgba(37, 99, 235, 0.08)',
+    '--theme-hero-btn-border': 'rgba(37, 99, 235, 0.22)',
+    '--theme-hero-overlay': 'radial-gradient(circle at 80% 20%, rgba(96, 165, 250, 0.16), transparent 60%)',
 
     // Inputs
-    '--theme-input-bg': 'rgba(22, 28, 50, 0.7)',
-    '--theme-input-border': '#1e2848',
-    '--theme-input-border-focus': '#7b9cff',
+    '--theme-input-bg': 'rgba(255, 255, 255, 0.8)',
+    '--theme-input-border': 'rgba(37, 99, 235, 0.18)',
+    '--theme-input-border-focus': '#2563eb',
     '--theme-input-style': '12rpx',
 
     // Dividers
-    '--theme-divider': 'rgba(26, 34, 55, 0.6)',
-    '--theme-divider-light': '#1a2240',
+    '--theme-divider': 'rgba(37, 99, 235, 0.1)',
+    '--theme-divider-light': 'rgba(37, 99, 235, 0.05)',
 
-    // Shadows
-    '--theme-shadow-sm': 'rgba(0, 0, 0, 0.3)',
-    '--theme-shadow-md': 'rgba(0, 0, 0, 0.4)',
-    '--theme-shadow-lg': 'rgba(0, 0, 0, 0.55)',
-    '--theme-shadow-accent': 'rgba(123, 156, 255, 0.15)',
+    // Shadows — tinted to the cool slate hue
+    '--theme-shadow-sm': 'rgba(15, 23, 42, 0.05)',
+    '--theme-shadow-md': 'rgba(15, 23, 42, 0.08)',
+    '--theme-shadow-lg': 'rgba(15, 23, 42, 0.14)',
+    '--theme-shadow-accent': 'rgba(37, 99, 235, 0.16)',
 
     // Semantic
-    '--theme-danger': '#f06078',
-    '--theme-danger-bg': '#2a1822',
-    '--theme-danger-border': '#f06078',
-    '--theme-success': '#5ef0b8',
-    '--theme-warning': '#f0b868',
+    '--theme-danger': '#e11d48',
+    '--theme-danger-bg': '#fff1f3',
+    '--theme-danger-border': '#e11d48',
+    '--theme-success': '#10b981',
+    '--theme-warning': '#d97706',
 
     // Radii (glass: medium)
     '--theme-radius-sm': '12rpx',
@@ -249,68 +253,68 @@ const NIGHT = {
     // Card morphology
     '--theme-card-border-width': '1px',
     '--theme-card-border-style': 'solid',
-    '--theme-card-bg-opacity': '0.75',
+    '--theme-card-bg-opacity': '0.82',
 
     // Layout
     '--theme-layout-gap': '18rpx',
     '--theme-layout-section-gap': '24rpx',
 
-    // Tab bar
-    '--theme-tab-active-bg': '#1a2448',
+    // Tab bar — frosted white on slate
+    '--theme-tab-active-bg': 'rgba(37, 99, 235, 0.1)',
     '--theme-tab-height': '98rpx',
     '--theme-tab-border-radius': '26rpx',
-    '--theme-tab-wrapper-bg': 'rgba(14, 18, 32, 0.92)',
-    '--theme-tab-wrapper-border': 'rgba(123, 156, 255, 0.14)',
-    '--theme-tab-wrapper-shadow': 'rgba(0, 0, 0, 0.5)',
+    '--theme-tab-wrapper-bg': 'rgba(255, 255, 255, 0.88)',
+    '--theme-tab-wrapper-border': 'rgba(37, 99, 235, 0.16)',
+    '--theme-tab-wrapper-shadow': 'rgba(15, 23, 42, 0.08)',
     '--theme-tab-wrapper-padding': '10rpx',
 
     // Misc
-    '--theme-metric-fill-end': '#9cb8ff',
-    '--theme-card-accent-bg-start': 'rgba(18, 22, 40, 0.75)',
-    '--theme-card-accent-bg-end': 'rgba(22, 30, 60, 0.8)',
-    '--theme-card-accent-shadow': 'rgba(123, 156, 255, 0.1)',
-    '--theme-card-accent-border': 'rgba(123, 156, 255, 0.28)',
-    '--theme-badge-bg': '#1a2448',
-    '--theme-badge-text': '#9cb8ff',
+    '--theme-metric-fill-end': '#60a5fa',
+    '--theme-card-accent-bg-start': 'rgba(255, 255, 255, 0.84)',
+    '--theme-card-accent-bg-end': 'rgba(219, 234, 254, 0.78)',
+    '--theme-card-accent-shadow': 'rgba(37, 99, 235, 0.1)',
+    '--theme-card-accent-border': 'rgba(37, 99, 235, 0.26)',
+    '--theme-badge-bg': '#eff6ff',
+    '--theme-badge-text': '#1d4ed8',
 
     // Chart
-    '--theme-chart-bg': 'rgba(22, 28, 50, 0.7)',
-    '--theme-chart-grid': '#1e2848',
-    '--theme-chart-color-0': '#7b9cff',
-    '--theme-chart-color-1': '#5ef0b8',
-    '--theme-chart-color-2': '#f0b868',
-    '--theme-chart-color-3': '#f06078',
-    '--theme-chart-color-4': '#c084fc',
+    '--theme-chart-bg': 'rgba(255, 255, 255, 0.8)',
+    '--theme-chart-grid': 'rgba(37, 99, 235, 0.1)',
+    '--theme-chart-color-0': '#2563eb',
+    '--theme-chart-color-1': '#10b981',
+    '--theme-chart-color-2': '#d97706',
+    '--theme-chart-color-3': '#e11d48',
+    '--theme-chart-color-4': '#0ea5e9',
     '--theme-chart-line-width': '2.5',
     '--theme-chart-dot-radius': '4',
 
     // Modal
-    '--theme-modal-overlay': 'rgba(0, 0, 0, 0.65)',
-    '--theme-btn-secondary-bg': 'rgba(22, 28, 50, 0.7)',
-    '--theme-btn-secondary-border': '#7b9cff',
-    '--theme-btn-secondary-text': '#7b9cff',
+    '--theme-modal-overlay': 'rgba(15, 23, 42, 0.36)',
+    '--theme-btn-secondary-bg': 'rgba(255, 255, 255, 0.88)',
+    '--theme-btn-secondary-border': '#2563eb',
+    '--theme-btn-secondary-text': '#2563eb',
     '--theme-btn-style': '12rpx',
 
     // Tab text
-    '--theme-tab-text': '#8890b8',
-    '--theme-tab-active-text': '#7b9cff',
-    '--theme-tab-shadow-inset': 'rgba(123, 156, 255, 0.06)',
-    '--theme-tab-border': 'rgba(123, 156, 255, 0.15)',
-    '--theme-tab-bg': 'rgba(14, 18, 32, 0.92)',
-    '--theme-tab-shadow': 'rgba(0, 0, 0, 0.5)',
+    '--theme-tab-text': '#475569',
+    '--theme-tab-active-text': '#2563eb',
+    '--theme-tab-shadow-inset': 'rgba(37, 99, 235, 0.05)',
+    '--theme-tab-border': 'rgba(37, 99, 235, 0.16)',
+    '--theme-tab-bg': 'rgba(255, 255, 255, 0.88)',
+    '--theme-tab-shadow': 'rgba(15, 23, 42, 0.1)',
 
     // Settings-specific
-    '--theme-summary-chip-bg': '#1a2448',
-    '--theme-summary-chip-text': '#9cb8ff',
-    '--theme-value-badge-bg': 'rgba(22, 30, 60, 0.7)',
-    '--theme-value-badge-text': '#7b9cff',
-    '--theme-value-badge-unit': '#8890b8',
-    '--theme-empty-border': '#1e2848',
-    '--theme-category-tabs-bg': 'rgba(22, 28, 50, 0.6)',
-    '--theme-category-tab-active-bg': '#1e2850',
-    '--theme-category-tab-active-shadow': 'rgba(0, 0, 0, 0.35)',
-    '--theme-quick-chip-border': '#1e2848',
-    '--theme-menu-accent-bg': 'rgba(123, 156, 255, 0.06)'
+    '--theme-summary-chip-bg': '#eff6ff',
+    '--theme-summary-chip-text': '#1d4ed8',
+    '--theme-value-badge-bg': 'rgba(219, 234, 254, 0.78)',
+    '--theme-value-badge-text': '#2563eb',
+    '--theme-value-badge-unit': '#475569',
+    '--theme-empty-border': 'rgba(37, 99, 235, 0.16)',
+    '--theme-category-tabs-bg': 'rgba(219, 234, 254, 0.7)',
+    '--theme-category-tab-active-bg': 'rgba(255, 255, 255, 0.96)',
+    '--theme-category-tab-active-shadow': 'rgba(15, 23, 42, 0.06)',
+    '--theme-quick-chip-border': 'rgba(37, 99, 235, 0.18)',
+    '--theme-menu-accent-bg': 'rgba(37, 99, 235, 0.06)'
   }
 }
 
@@ -624,7 +628,7 @@ const STEEL = {
 
 export const THEME_LIST = [TEAL, NIGHT, AMBER, STEEL]
 
-export const DEFAULT_THEME_ID = 'teal'
+export const DEFAULT_THEME_ID = 'amber'
 
 /** Look up a theme by its id. Returns the teal default if not found. */
 export function getThemeById(id) {
