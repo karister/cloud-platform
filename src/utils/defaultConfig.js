@@ -1,6 +1,6 @@
 export const DEFAULT_CONFIG = {
   appName: '云平台数据通信',
-  themeId: 'teal',
+  themeId: 'amber',
   cloud: {
     productId: '85zH3LlDLF',
     deviceName: 'device',

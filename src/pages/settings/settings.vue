@@ -117,6 +117,16 @@
           </view>
           <text class="menu-arrow">导入</text>
         </view>
+        <view class="menu-card reset-action" @tap.stop="resetToFactory">
+          <view class="menu-icon-wrap">
+            <image class="menu-icon" src="/static/tab/threshold-active.png" mode="aspectFit" />
+          </view>
+          <view class="menu-copy">
+            <text class="menu-title">恢复出厂设置</text>
+            <text class="menu-desc">清除所有配置回到初始状态</text>
+          </view>
+          <text class="menu-arrow danger-arrow">重置</text>
+        </view>
       </template>
     </view>
 
@@ -399,27 +409,6 @@
               </button>
             </view>
             <text v-if="exportEmailError" class="export-error">{{ exportEmailError }}</text>
-
-            <view class="export-email-config-link" @tap="showEmailConfig = !showEmailConfig">
-              <text>{{ showEmailConfig ? '收起邮箱配置' : '配置邮箱服务' }}</text>
-              <text class="export-config-arrow">{{ showEmailConfig ? '▲' : '▼' }}</text>
-            </view>
-
-            <view v-if="showEmailConfig" class="export-email-config-form">
-              <label class="field">
-                <text>EmailJS Public Key</text>
-                <input class="input" type="text" v-model="emailPublicKey" placeholder="user_xxxxxxxx" />
-              </label>
-              <label class="field">
-                <text>Service ID</text>
-                <input class="input" type="text" v-model="emailServiceId" placeholder="service_xxxxxx" />
-              </label>
-              <label class="field">
-                <text>Template ID</text>
-                <input class="input" type="text" v-model="emailTemplateId" placeholder="template_xxxxxx" />
-              </label>
-              <button class="secondary-btn" @tap="saveEmailConfigToStorage">保存邮箱配置</button>
-            </view>
           </view>
         </scroll-view>
       </view>
@@ -493,7 +482,7 @@ import { buildGetUrl, createPoint } from '../../utils/defaultConfig'
 import { getConfig, saveConfig, getDebugValues, saveDebugValues, clearDebugValues as clearDebugStorage } from '../../utils/storage'
 import { THEME_LIST, applyThemeToDOM } from '../../utils/themes'
 import { serializeConfig, downloadJsonFile, deserializeConfig, getExportFilename } from '../../utils/configImportExport'
-import { sendConfigEmail, getEmailConfig, saveEmailConfig, isEmailConfigured } from '../../services/emailService'
+import { sendConfigEmail, isEmailConfigured } from '../../services/emailService'
 
 const config = ref(getConfig())
 const draft = ref(getConfig())
@@ -516,11 +505,6 @@ const emailSending = ref(false)
 const showImportConfirm = ref(false)
 const importPreviewData = ref({})
 const pendingImportData = ref(null)
-// EmailJS settings
-const showEmailConfig = ref(false)
-const emailPublicKey = ref('')
-const emailServiceId = ref('')
-const emailTemplateId = ref('')
 
 const categoryDefs = [
   { key: 'display', label: '展示' },
@@ -860,13 +844,8 @@ function saveModal() {
 // ── Export / Import handlers ──
 
 function openExportModal() {
-  const emailCfg = getEmailConfig()
-  emailPublicKey.value = emailCfg.publicKey || ''
-  emailServiceId.value = emailCfg.serviceId || ''
-  emailTemplateId.value = emailCfg.templateId || ''
   exportEmailAddress.value = ''
   exportEmailError.value = ''
-  showEmailConfig.value = false
   showExportModal.value = true
 }
 
@@ -891,7 +870,6 @@ async function handleExportEmail() {
 
   if (!isEmailConfigured()) {
     exportEmailError.value = '请先配置邮箱服务（Public Key / Service ID / Template ID）'
-    showEmailConfig.value = true
     return
   }
 
@@ -912,15 +890,6 @@ async function handleExportEmail() {
   } finally {
     emailSending.value = false
   }
-}
-
-function saveEmailConfigToStorage() {
-  saveEmailConfig({
-    publicKey: emailPublicKey.value.trim(),
-    serviceId: emailServiceId.value.trim(),
-    templateId: emailTemplateId.value.trim()
-  })
-  uni.showToast({ title: '邮箱配置已保存', icon: 'success' })
 }
 
 function openImport() {
@@ -994,7 +963,7 @@ function handleConfirmImport() {
 
   const imported = {
     appName: src.appName || '云平台数据通信',
-    themeId: src.themeId || 'teal',
+    themeId: src.themeId || 'amber',
     cloud: {
       productId: src.cloud?.productId || '',
       deviceName: src.cloud?.deviceName || '',
@@ -1016,7 +985,7 @@ function handleConfirmImport() {
   saveConfig(imported)
   config.value = getConfig()
 
-  const themeId = imported.themeId || 'teal'
+  const themeId = imported.themeId || 'amber'
   applyThemeToDOM(themeId)
   const app = getApp()
   if (app && app.setTheme) {
@@ -1027,6 +996,31 @@ function handleConfirmImport() {
   pendingImportData.value = null
 
   uni.showToast({ title: '配置已导入并应用', icon: 'success' })
+}
+
+function resetToFactory() {
+  uni.showModal({
+    title: '恢复出厂设置',
+    content: '将清除所有配置（云平台连接、数据点、主题、邮箱设置等），回到应用初始状态。此操作不可撤销，确定继续？',
+    confirmText: '确认重置',
+    cancelText: '取消',
+    success: (res) => {
+      if (res.confirm) {
+        try {
+          uni.removeStorageSync('cloud_comm_config')
+          uni.removeStorageSync('cloud_comm_history')
+          uni.removeStorageSync('cloud_comm_debug_values')
+          uni.removeStorageSync('cloud_comm_email_config')
+        } catch (e) {
+          // ignore
+        }
+        uni.showToast({ title: '已恢复出厂设置', icon: 'success' })
+        setTimeout(() => {
+          uni.reLaunch({ url: '/pages/settings/settings.vue' })
+        }, 800)
+      }
+    }
+  })
 }
 
 onShow(reload)
@@ -1849,30 +1843,6 @@ onShow(reload)
   font-weight: 700;
 }
 
-.export-email-config-link {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8rpx;
-  padding: 16rpx 0;
-  color: var(--theme-text-tertiary);
-  font-size: 24rpx;
-}
-
-.export-config-arrow {
-  font-size: 20rpx;
-}
-
-.export-email-config-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-  padding: 18rpx;
-  border: 1rpx solid var(--theme-divider-light);
-  border-radius: var(--theme-radius-md);
-  background: var(--theme-surface-alt);
-}
-
 .import-preview-title {
   display: block;
   margin-bottom: 14rpx;
@@ -1935,5 +1905,14 @@ onShow(reload)
 
 .import-confirm-btn {
   margin-top: 8rpx;
+}
+
+/* ── Reset to factory ── */
+.reset-action {
+  border-color: rgba(225, 29, 72, 0.2);
+}
+
+.danger-arrow {
+  background: var(--theme-danger) !important;
 }
 </style>

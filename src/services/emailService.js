@@ -16,16 +16,28 @@
 
 const EMAIL_CONFIG_KEY = 'cloud_comm_email_config'
 
+// Hardcoded default EmailJS credentials (user configured)
+const DEFAULT_EMAIL_CONFIG = {
+  publicKey: 'B5wGGu6GgLI_-bDpa',
+  serviceId: 'service_1uqqwbl',
+  templateId: 'template_45uum6a'
+}
+
 /**
  * Read saved EmailJS credentials from storage.
+ * Falls back to hardcoded defaults if nothing saved.
  * @returns {{ publicKey: string, serviceId: string, templateId: string }}
  */
 export function getEmailConfig() {
   try {
-    return uni.getStorageSync(EMAIL_CONFIG_KEY) || { publicKey: '', serviceId: '', templateId: '' }
+    const saved = uni.getStorageSync(EMAIL_CONFIG_KEY)
+    if (saved && saved.publicKey && saved.serviceId && saved.templateId) {
+      return saved
+    }
   } catch (e) {
-    return { publicKey: '', serviceId: '', templateId: '' }
+    // ignore
   }
+  return { ...DEFAULT_EMAIL_CONFIG }
 }
 
 /**
@@ -123,10 +135,11 @@ export async function sendConfigEmail(recipient, configJson, appName, themeId) {
       configJson: configJson,
       exportTime: new Date().toLocaleString('zh-CN', { hour12: false }),
       appName: appName || '云平台数据通信',
-      themeId: themeId || 'teal'
+      themeId: themeId || 'amber'
     }
 
-    const result = await emailjs.send(serviceId, templateId, templateParams, publicKey)
+    emailjs.init(publicKey)
+    const result = await emailjs.send(serviceId, templateId, templateParams)
 
     if (result && result.status === 200) {
       return { success: true }
@@ -137,10 +150,10 @@ export async function sendConfigEmail(recipient, configJson, appName, themeId) {
 
     // Try to surface a useful error message
     let msg = '邮件发送失败'
-    if (err && err.text) {
-      msg += ': ' + err.text
-    } else if (err && err.message) {
-      msg += ': ' + err.message
+    if (err && typeof err === 'object') {
+      if (err.text) msg += ': ' + err.text
+      else if (err.message) msg += ': ' + err.message
+      else msg += '（请查看控制台详情）'
     }
 
     // Rate limit detection
