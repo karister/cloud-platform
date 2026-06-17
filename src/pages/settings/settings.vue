@@ -97,6 +97,26 @@
           </view>
           <text class="menu-arrow">调试</text>
         </view>
+        <view class="menu-card export-action" @tap.stop="openExportModal">
+          <view class="menu-icon-wrap">
+            <image class="menu-icon" src="/static/tab/settings-active.png" mode="aspectFit" />
+          </view>
+          <view class="menu-copy">
+            <text class="menu-title">配置导出</text>
+            <text class="menu-desc">导出为JSON文件</text>
+          </view>
+          <text class="menu-arrow">导出</text>
+        </view>
+        <view class="menu-card import-action" @tap.stop="openImport">
+          <view class="menu-icon-wrap">
+            <image class="menu-icon" src="/static/tab/threshold-active.png" mode="aspectFit" />
+          </view>
+          <view class="menu-copy">
+            <text class="menu-title">配置导入</text>
+            <text class="menu-desc">从JSON文件恢复配置</text>
+          </view>
+          <text class="menu-arrow">导入</text>
+        </view>
       </template>
     </view>
 
@@ -337,6 +357,130 @@
     </view>
 
     <AppTabBar current="settings" />
+
+    <!-- ── Export modal ── -->
+    <view v-if="showExportModal" class="modal-mask" @tap="closeExportModal">
+      <view class="modal" @tap.stop>
+        <view class="modal-head">
+          <text>导出配置</text>
+          <button class="close-btn" @tap="closeExportModal">关闭</button>
+        </view>
+
+        <scroll-view scroll-y class="modal-body">
+          <view class="form">
+            <text class="export-intro">
+              将当前云平台连接、数据点和主题设置导出为JSON配置文件，可在其他设备上导入恢复。
+            </text>
+
+            <button class="primary-btn" @tap="handleExportDownload">
+              下载配置文件 (.json)
+            </button>
+
+            <view class="export-divider">
+              <view class="export-divider-line"></view>
+              <text class="export-divider-text">或发送到邮箱</text>
+              <view class="export-divider-line"></view>
+            </view>
+
+            <view class="export-email-row">
+              <input
+                class="export-email-input"
+                type="text"
+                v-model="exportEmailAddress"
+                placeholder="请输入邮箱地址"
+                @input="exportEmailError = ''"
+              />
+              <button
+                class="secondary-btn export-send-btn"
+                :disabled="emailSending || !exportEmailAddress"
+                @tap="handleExportEmail"
+              >
+                {{ emailSending ? '发送中...' : '发送' }}
+              </button>
+            </view>
+            <text v-if="exportEmailError" class="export-error">{{ exportEmailError }}</text>
+
+            <view class="export-email-config-link" @tap="showEmailConfig = !showEmailConfig">
+              <text>{{ showEmailConfig ? '收起邮箱配置' : '配置邮箱服务' }}</text>
+              <text class="export-config-arrow">{{ showEmailConfig ? '▲' : '▼' }}</text>
+            </view>
+
+            <view v-if="showEmailConfig" class="export-email-config-form">
+              <label class="field">
+                <text>EmailJS Public Key</text>
+                <input class="input" type="text" v-model="emailPublicKey" placeholder="user_xxxxxxxx" />
+              </label>
+              <label class="field">
+                <text>Service ID</text>
+                <input class="input" type="text" v-model="emailServiceId" placeholder="service_xxxxxx" />
+              </label>
+              <label class="field">
+                <text>Template ID</text>
+                <input class="input" type="text" v-model="emailTemplateId" placeholder="template_xxxxxx" />
+              </label>
+              <button class="secondary-btn" @tap="saveEmailConfigToStorage">保存邮箱配置</button>
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+    </view>
+
+    <!-- ── Import confirmation modal ── -->
+    <view v-if="showImportConfirm" class="modal-mask" @tap="cancelImport">
+      <view class="modal" @tap.stop>
+        <view class="modal-head">
+          <text>导入配置确认</text>
+          <button class="close-btn" @tap="cancelImport">取消</button>
+        </view>
+
+        <scroll-view scroll-y class="modal-body">
+          <view class="form">
+            <text class="import-preview-title">即将导入以下配置：</text>
+
+            <view class="import-preview-card">
+              <view class="import-preview-item">
+                <text class="import-preview-label">应用名称</text>
+                <text class="import-preview-value">{{ importPreviewData.appName || '--' }}</text>
+              </view>
+              <view class="import-preview-item">
+                <text class="import-preview-label">主题风格</text>
+                <text class="import-preview-value">{{ importPreviewData.themeName || '--' }}</text>
+              </view>
+              <view class="import-preview-item">
+                <text class="import-preview-label">云平台产品</text>
+                <text class="import-preview-value">{{ importPreviewData.productId || '--' }}</text>
+              </view>
+              <view class="import-preview-item">
+                <text class="import-preview-label">运行模式</text>
+                <text class="import-preview-value">{{ importPreviewData.mockMode ? '模拟数据' : '真实云平台' }}</text>
+              </view>
+              <view class="import-preview-item">
+                <text class="import-preview-label">展示数据点</text>
+                <text class="import-preview-value">{{ importPreviewData.displayCount }} 个</text>
+              </view>
+              <view class="import-preview-item">
+                <text class="import-preview-label">开关数据点</text>
+                <text class="import-preview-value">{{ importPreviewData.switchCount }} 个</text>
+              </view>
+              <view class="import-preview-item">
+                <text class="import-preview-label">阈值数据点</text>
+                <text class="import-preview-value">{{ importPreviewData.thresholdCount }} 个</text>
+              </view>
+              <view v-if="importPreviewData.exportedAt" class="import-preview-item">
+                <text class="import-preview-label">导出时间</text>
+                <text class="import-preview-value import-preview-meta">{{ importPreviewData.formattedTime }}</text>
+              </view>
+            </view>
+
+            <view class="import-warning">
+              <text>当前配置将被覆盖。此操作不可撤销。</text>
+            </view>
+
+            <button class="primary-btn import-confirm-btn" @tap="handleConfirmImport">确认导入</button>
+          </view>
+        </scroll-view>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -348,6 +492,8 @@ import PointFields from '../../components/PointFields.vue'
 import { buildGetUrl, createPoint } from '../../utils/defaultConfig'
 import { getConfig, saveConfig, getDebugValues, saveDebugValues, clearDebugValues as clearDebugStorage } from '../../utils/storage'
 import { THEME_LIST, applyThemeToDOM } from '../../utils/themes'
+import { serializeConfig, downloadJsonFile, deserializeConfig, getExportFilename } from '../../utils/configImportExport'
+import { sendConfigEmail, getEmailConfig, saveEmailConfig, isEmailConfigured } from '../../services/emailService'
 
 const config = ref(getConfig())
 const draft = ref(getConfig())
@@ -361,6 +507,20 @@ const themeSectionOpen = ref(false)
 const showPasswordModal = ref(false)
 const passwordInput = ref('')
 const debugValueMap = reactive({})
+
+// Export / Import state
+const showExportModal = ref(false)
+const exportEmailAddress = ref('')
+const exportEmailError = ref('')
+const emailSending = ref(false)
+const showImportConfirm = ref(false)
+const importPreviewData = ref({})
+const pendingImportData = ref(null)
+// EmailJS settings
+const showEmailConfig = ref(false)
+const emailPublicKey = ref('')
+const emailServiceId = ref('')
+const emailTemplateId = ref('')
 
 const categoryDefs = [
   { key: 'display', label: '展示' },
@@ -695,6 +855,178 @@ function saveModal() {
     title: '配置已保存',
     icon: 'success'
   })
+}
+
+// ── Export / Import handlers ──
+
+function openExportModal() {
+  const emailCfg = getEmailConfig()
+  emailPublicKey.value = emailCfg.publicKey || ''
+  emailServiceId.value = emailCfg.serviceId || ''
+  emailTemplateId.value = emailCfg.templateId || ''
+  exportEmailAddress.value = ''
+  exportEmailError.value = ''
+  showEmailConfig.value = false
+  showExportModal.value = true
+}
+
+function closeExportModal() {
+  showExportModal.value = false
+}
+
+function handleExportDownload() {
+  const json = serializeConfig(config.value)
+  const filename = getExportFilename()
+  downloadJsonFile(json, filename)
+  closeExportModal()
+  uni.showToast({ title: '配置已导出', icon: 'success' })
+}
+
+async function handleExportEmail() {
+  const email = exportEmailAddress.value.trim()
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    exportEmailError.value = '请输入有效的邮箱地址'
+    return
+  }
+
+  if (!isEmailConfigured()) {
+    exportEmailError.value = '请先配置邮箱服务（Public Key / Service ID / Template ID）'
+    showEmailConfig.value = true
+    return
+  }
+
+  emailSending.value = true
+  exportEmailError.value = ''
+
+  try {
+    const json = serializeConfig(config.value)
+    const result = await sendConfigEmail(email, json, config.value.appName, config.value.themeId)
+    if (result.success) {
+      closeExportModal()
+      uni.showToast({ title: '配置已发送到邮箱', icon: 'success' })
+    } else {
+      exportEmailError.value = result.error || '发送失败，请检查邮箱配置'
+    }
+  } catch (err) {
+    exportEmailError.value = '网络错误，请稍后重试'
+  } finally {
+    emailSending.value = false
+  }
+}
+
+function saveEmailConfigToStorage() {
+  saveEmailConfig({
+    publicKey: emailPublicKey.value.trim(),
+    serviceId: emailServiceId.value.trim(),
+    templateId: emailTemplateId.value.trim()
+  })
+  uni.showToast({ title: '邮箱配置已保存', icon: 'success' })
+}
+
+function openImport() {
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.json,application/json'
+  input.style.display = 'none'
+
+  const cleanup = () => {
+    if (input.parentNode) input.parentNode.removeChild(input)
+  }
+
+  input.addEventListener('change', (e) => {
+    const file = e.target?.files?.[0]
+    if (!file) { cleanup(); return }
+
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      try {
+        const text = ev.target.result
+        const parsed = deserializeConfig(text)
+        if (!parsed.valid) {
+          uni.showToast({ title: '导入失败: ' + parsed.errors[0], icon: 'none', duration: 3000 })
+          return
+        }
+
+        const importData = parsed.data
+        const theme = THEME_LIST.find((t) => t.id === importData.themeId)
+
+        pendingImportData.value = importData
+        importPreviewData.value = {
+          appName: importData.appName || '--',
+          themeName: theme ? theme.name : (importData.themeId || '默认'),
+          productId: importData.cloud?.productId || '--',
+          mockMode: importData.cloud?.mockMode !== false,
+          displayCount: importData.displayPoints?.length || 0,
+          switchCount: importData.switchPoints?.length || 0,
+          thresholdCount: importData.thresholdPoints?.length || 0,
+          exportedAt: importData.exportedAt,
+          formattedTime: importData.exportedAt
+            ? new Date(importData.exportedAt).toLocaleString('zh-CN', { hour12: false })
+            : ''
+        }
+        showImportConfirm.value = true
+      } catch (err) {
+        uni.showToast({ title: '文件解析失败', icon: 'none' })
+      } finally {
+        cleanup()
+      }
+    }
+    reader.onerror = () => {
+      uni.showToast({ title: '读取文件失败', icon: 'error' })
+      cleanup()
+    }
+    reader.readAsText(file)
+  })
+
+  document.body.appendChild(input)
+  input.click()
+}
+
+function cancelImport() {
+  showImportConfirm.value = false
+  pendingImportData.value = null
+}
+
+function handleConfirmImport() {
+  if (!pendingImportData.value) return
+
+  const src = pendingImportData.value
+
+  const imported = {
+    appName: src.appName || '云平台数据通信',
+    themeId: src.themeId || 'teal',
+    cloud: {
+      productId: src.cloud?.productId || '',
+      deviceName: src.cloud?.deviceName || '',
+      getUrl: src.cloud?.getUrl || '',
+      postUrl: src.cloud?.postUrl || '',
+      authorization: src.cloud?.authorization || '',
+      mockMode: src.cloud?.mockMode !== false
+    },
+    displayPoints: Array.isArray(src.displayPoints) ? src.displayPoints : [],
+    switchPoints: Array.isArray(src.switchPoints) ? src.switchPoints : [],
+    thresholdPoints: Array.isArray(src.thresholdPoints) ? src.thresholdPoints : [],
+    recommendedPoints: {
+      display: [],
+      switch: [],
+      threshold: []
+    }
+  }
+
+  saveConfig(imported)
+  config.value = getConfig()
+
+  const themeId = imported.themeId || 'teal'
+  applyThemeToDOM(themeId)
+  const app = getApp()
+  if (app && app.setTheme) {
+    app.setTheme(themeId)
+  }
+
+  showImportConfirm.value = false
+  pendingImportData.value = null
+
+  uni.showToast({ title: '配置已导入并应用', icon: 'success' })
 }
 
 onShow(reload)
@@ -1442,5 +1774,166 @@ onShow(reload)
   text-align: center;
   color: var(--theme-text-tertiary);
   font-size: 25rpx;
+}
+
+/* ── Export / Import ── */
+.export-action {
+  border-color: rgba(43, 180, 120, 0.2);
+}
+
+.import-action {
+  border-color: rgba(60, 130, 220, 0.2);
+}
+
+.export-intro {
+  display: block;
+  margin-bottom: 18rpx;
+  color: var(--theme-text-secondary);
+  font-size: 25rpx;
+  line-height: 1.5;
+}
+
+.export-divider {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  margin: 6rpx 0;
+}
+
+.export-divider-line {
+  flex: 1;
+  height: 1rpx;
+  background: var(--theme-divider);
+}
+
+.export-divider-text {
+  color: var(--theme-text-tertiary);
+  font-size: 23rpx;
+  white-space: nowrap;
+}
+
+.export-email-row {
+  display: flex;
+  gap: 14rpx;
+  align-items: center;
+}
+
+.export-email-input {
+  flex: 1;
+  height: 76rpx;
+  padding: 0 20rpx;
+  border: 1rpx solid var(--theme-input-border);
+  border-radius: var(--theme-radius-input);
+  background: var(--theme-input-bg);
+  color: var(--theme-text-primary);
+  font-size: 26rpx;
+  box-sizing: border-box;
+}
+
+.export-send-btn {
+  flex-shrink: 0;
+  width: 120rpx;
+  height: 76rpx;
+  margin: 0;
+  line-height: 76rpx;
+}
+
+.export-send-btn:disabled {
+  opacity: 0.45;
+}
+
+.export-error {
+  display: block;
+  color: var(--theme-danger);
+  font-size: 23rpx;
+  font-weight: 700;
+}
+
+.export-email-config-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  padding: 16rpx 0;
+  color: var(--theme-text-tertiary);
+  font-size: 24rpx;
+}
+
+.export-config-arrow {
+  font-size: 20rpx;
+}
+
+.export-email-config-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  padding: 18rpx;
+  border: 1rpx solid var(--theme-divider-light);
+  border-radius: var(--theme-radius-md);
+  background: var(--theme-surface-alt);
+}
+
+.import-preview-title {
+  display: block;
+  margin-bottom: 14rpx;
+  color: var(--theme-text-primary);
+  font-size: 27rpx;
+  font-weight: 900;
+}
+
+.import-preview-card {
+  padding: 4rpx 0;
+  border: 1rpx solid var(--theme-divider-light);
+  border-radius: var(--theme-radius-md);
+  background: var(--theme-surface-alt);
+  overflow: hidden;
+}
+
+.import-preview-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14rpx;
+  padding: 18rpx 20rpx;
+  border-bottom: 1rpx solid var(--theme-divider-light);
+}
+
+.import-preview-item:last-child {
+  border-bottom: none;
+}
+
+.import-preview-label {
+  color: var(--theme-text-secondary);
+  font-size: 25rpx;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.import-preview-value {
+  color: var(--theme-text-primary);
+  font-size: 25rpx;
+  font-weight: 800;
+  text-align: right;
+  word-break: break-all;
+}
+
+.import-preview-meta {
+  color: var(--theme-text-tertiary);
+  font-size: 23rpx;
+}
+
+.import-warning {
+  padding: 18rpx 20rpx;
+  border: 1rpx solid rgba(225, 29, 72, 0.2);
+  border-radius: var(--theme-radius-md);
+  background: var(--theme-danger-bg);
+  color: var(--theme-danger);
+  font-size: 24rpx;
+  font-weight: 700;
+  text-align: center;
+}
+
+.import-confirm-btn {
+  margin-top: 8rpx;
 }
 </style>
