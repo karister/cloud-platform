@@ -221,6 +221,7 @@ node scripts/release-apk.mjs --help
 | `HTTP 401 / 403` | EmailJS Public Key / Service ID / Template ID 错误 | 重新核对控制台 |
 | `EmailJS returned HTTP 400: The Public Key is required` | 用了 form-encoded 而非 JSON body | 本仓库 `email-sender.mjs` 已切到 JSON,如果用第三方脚本务必用 `Content-Type: application/json` |
 | `EmailJS returned HTTP 400` (其他) | 模板缺少必要变量 | 在模板里加上 `to_email / app_name / version_name / version_code / file_size / download_url / install_password / update_description / body_html / body_text` |
+| 收到的是「配置导出」主题的邮件,内容是 `configJson` | EmailJS 账号下只有配置导出模板,没为发布通知建独立模板 | 在 https://dashboard.emailjs.com/admin/templates 新建模板,To Email 填 `{{to_email}}`,Subject 填 `{{subject}}`,Content 用代码里 `scripts/lib/email-sender.mjs` 渲染的字段(`download_url / install_password / version_name / version_code / file_size / update_description / app_name / expire_days`),然后把新模板 ID 写到 `.env` 的 `EMAILJS_TEMPLATE_ID` |
 | `Request timed out` | 上传大 APK 超过 5 分钟 | 提升 `REQUEST_TIMEOUT_MS` 或减少 APK 体积 |
 | `PGYER 4xx: invalid file` | APK 不合规(缺 `resources.arsc`、v2 签名、zipalign 等) | 用真 aapt2 打包,见下方「测试 APK」章节 |
 | `PowerShell was not found` | Linux/macOS 没装 pwsh | 安装 PowerShell 7 (`brew install powershell`)；只想上传时可加 `--skip-build` |
