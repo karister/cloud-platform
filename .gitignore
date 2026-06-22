@@ -11,6 +11,7 @@ dist/
 apks/
 *.apk
 *.aab
+release-history.json
 
 # Android build outputs
 android-webview/app/build/
@@ -23,9 +24,9 @@ android-webview/app/src/main/assets/www/
 
 # Android SDK / build tools
 work/android-build-tools/
-
-# HBuilderX IDE (not part of the project)
 work/hbuilderx/
+work/*.keystore
+work/*.jks
 
 # IDE
 .idea/

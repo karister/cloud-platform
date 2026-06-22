@@ -11,6 +11,8 @@
     "dev:app": "uni -p app",
     "build:app": "uni build -p app",
     "build:apk": "powershell -ExecutionPolicy Bypass -File scripts/build-apk.ps1",
+    "release:apk": "node scripts/release-apk.mjs",
+    "release:history": "node scripts/release-apk.mjs --list",
     "deploy:h5": "powershell -ExecutionPolicy Bypass -File scripts/deploy-h5.ps1"
   },
   "dependencies": {
