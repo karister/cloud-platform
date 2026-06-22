@@ -247,8 +247,18 @@ export async function sendReleaseEmail(params) {
     })
 
     if (response.ok) {
+      // EmailJS returns "OK" on a 200 even when the downstream SMTP
+      // might have failed silently. We log the body to surface
+      // anything that comes back beyond the bare 200.
+      let detail = ''
+      try {
+        detail = (await response.text()).slice(0, 200)
+      } catch {
+        // ignore
+      }
       info(`Email sent successfully (HTTP ${response.status}).`)
-      return { success: true, status: response.status }
+      if (detail && detail !== 'OK') info(`EmailJS response body: ${detail}`)
+      return { success: true, status: response.status, detail }
     }
 
     let detail = ''
