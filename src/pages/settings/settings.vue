@@ -207,29 +207,49 @@
           <view v-if="activeModal === 'cloud'" class="form">
             <label class="field">
               <text>Product ID</text>
-              <input class="input" :value="draft.cloud.productId" @input="draft.cloud.productId = $event.detail.value" />
+              <input class="input" :value="draft.cloud.productId" @input="draft.cloud.productId = $event.detail.value" placeholder="请输入 OneNET 产品 ID" />
             </label>
             <label class="field">
               <text>Device Name</text>
-              <input class="input" :value="draft.cloud.deviceName" @input="draft.cloud.deviceName = $event.detail.value" />
-            </label>
-            <button class="secondary-btn" @tap="syncGetUrl">根据产品和设备生成读取 URL</button>
-            <label class="field">
-              <text>GET URL</text>
-              <textarea class="textarea" :value="draft.cloud.getUrl" @input="draft.cloud.getUrl = $event.detail.value" />
+              <input class="input" :value="draft.cloud.deviceName" @input="draft.cloud.deviceName = $event.detail.value" placeholder="请输入设备名称" />
             </label>
             <label class="field">
-              <text>POST URL</text>
-              <textarea class="textarea" :value="draft.cloud.postUrl" @input="draft.cloud.postUrl = $event.detail.value" />
-            </label>
-            <label class="field">
-              <text>Authorization</text>
-              <textarea
-                class="textarea auth"
-                :value="draft.cloud.authorization"
-                @input="draft.cloud.authorization = $event.detail.value"
+              <text>Access Key</text>
+              <input
+                class="input auth-input"
+                :value="draft.cloud.accessKey"
+                @input="draft.cloud.accessKey = $event.detail.value"
+                placeholder="设备 Access Key (Base64 字符串)"
+                password
               />
+              <text class="field-tip">在 OneNET 控制台 设备详情 → AccessKey 处获取。</text>
             </label>
+            <label class="field">
+              <text>Token 有效期（天）</text>
+              <input
+                class="input"
+                type="number"
+                :value="draft.cloud.tokenTtlDays"
+                @input="onTokenTtlChange($event.detail.value)"
+                placeholder="365"
+              />
+              <text class="field-tip">验证通过后会生成对应有效期的 token，到期前无需重新计算。</text>
+            </label>
+
+            <view class="cloud-actions">
+              <button class="secondary-btn" :disabled="verifying || !canVerify" @tap="verifyAuthorization">
+                {{ verifying ? '验证中...' : '验证 token' }}
+              </button>
+            </view>
+
+            <view v-if="authError" class="cloud-status error">{{ authError }}</view>
+            <view v-else-if="authVerifyResult" class="cloud-status success">{{ authVerifyResult }}</view>
+            <view v-else-if="draft.cloud.token && draft.cloud.tokenExpiresAt" class="cloud-status info">
+              已缓存有效 token，过期时间 {{ formatExpiresAt(draft.cloud.tokenExpiresAt) }}
+            </view>
+            <view v-else class="cloud-status hint">
+              请先填写参数并点击「验证 token」，验证通过再保存配置。
+            </view>
           </view>
 
           <view v-else-if="activeModal === 'recommendations'" class="form">
@@ -361,6 +381,7 @@
 
         <view class="modal-footer">
           <button v-if="activeModal === 'debug'" class="primary-btn" @tap="saveDebug">保存调试值</button>
+          <button v-else-if="activeModal === 'cloud'" class="primary-btn" :disabled="!canSave" @tap="saveModal">保存配置</button>
           <button v-else class="primary-btn" @tap="saveModal">保存配置</button>
         </view>
       </view>
@@ -479,10 +500,12 @@ import { onShow } from '@dcloudio/uni-app'
 import AppTabBar from '../../components/AppTabBar.vue'
 import PointFields from '../../components/PointFields.vue'
 import { buildGetUrl, createPoint } from '../../utils/defaultConfig'
+import { generateOneNetToken } from '../../utils/onenetToken'
 import { getConfig, saveConfig, getDebugValues, saveDebugValues, clearDebugValues as clearDebugStorage } from '../../utils/storage'
 import { THEME_LIST, applyThemeToDOM } from '../../utils/themes'
 import { serializeConfig, downloadJsonFile, deserializeConfig, getExportFilename } from '../../utils/configImportExport'
 import { sendConfigEmail, isEmailConfigured } from '../../services/emailService'
+import { fetchProperties } from '../../services/onenet'
 
 const config = ref(getConfig())
 const draft = ref(getConfig())
@@ -496,6 +519,42 @@ const themeSectionOpen = ref(false)
 const showPasswordModal = ref(false)
 const passwordInput = ref('')
 const debugValueMap = reactive({})
+
+// Cloud / Authorization state
+const verifying = ref(false)
+const authError = ref('')
+const authVerifyResult = ref('')
+
+// 表单是否足够发起一次验证请求
+const canVerify = computed(() => {
+  const c = draft.value.cloud
+  return Boolean(c?.productId && c?.deviceName && c?.accessKey)
+})
+
+// 当前 draft 中是否已有有效 token，可以保存到 storage
+const canSave = computed(() => {
+  const c = draft.value.cloud
+  return Boolean(c?.productId && c?.deviceName && c?.accessKey && c?.token && c?.tokenExpiresAt)
+})
+
+function onTokenTtlChange(value) {
+  // 解析用户输入的天数；非法时回退到默认 365
+  const days = Number(value)
+  draft.value.cloud.tokenTtlDays = Number.isFinite(days) && days > 0 ? Math.floor(days) : 365
+  // 修改了有效期后必须重新验证
+  if (draft.value.cloud.token) {
+    delete draft.value.cloud.token
+    delete draft.value.cloud.tokenExpiresAt
+    authError.value = ''
+    authVerifyResult.value = ''
+  }
+}
+
+function formatExpiresAt(expiresAtSeconds) {
+  if (!Number.isFinite(expiresAtSeconds)) return '--'
+  const d = new Date(expiresAtSeconds * 1000)
+  return d.toLocaleString('zh-CN', { hour12: false })
+}
 
 // Export / Import state
 const showExportModal = ref(false)
@@ -682,6 +741,16 @@ function saveAppName() {
 function openCloud() {
   draft.value = clone(config.value)
   ensureRecommendedPoints(draft.value)
+  // 默认 token 有效期 365 天；老 config 没有这个字段时给个补默认值
+  if (!Number.isFinite(draft.value.cloud.tokenTtlDays) || draft.value.cloud.tokenTtlDays <= 0) {
+    draft.value.cloud.tokenTtlDays = 365
+  }
+  if (!draft.value.cloud.signMethod) {
+    draft.value.cloud.signMethod = 'md5'
+  }
+  // 清除上一次的验证状态
+  authError.value = ''
+  authVerifyResult.value = ''
   activeModal.value = 'cloud'
 }
 
@@ -758,6 +827,65 @@ function syncGetUrl() {
   draft.value.cloud.getUrl = buildGetUrl(draft.value.cloud)
 }
 
+/**
+ * 用当前 draft 配置（Product ID / Device Name / Access Key）打一个最小验证请求，
+ * 检验 token 是否能被 OneNET 接受。验证成功后将 token 与过期时间写入 draft，
+ * 等待用户在保存配置时持久化。
+ */
+function verifyAuthorization() {
+  if (!canVerify.value || verifying.value) return
+  verifying.value = true
+  authError.value = ''
+  authVerifyResult.value = ''
+
+  // 生成待验证的 token：使用用户在 UI 上配置的 tokenTtlDays
+  const ttlDays = Number(draft.value.cloud.tokenTtlDays) || 365
+  const tokenExpiresAt = Math.floor(Date.now() / 1000) + Math.floor(ttlDays * 86400)
+  let probeToken
+  try {
+    probeToken = generateOneNetToken({
+      productId: draft.value.cloud.productId,
+      deviceName: draft.value.cloud.deviceName,
+      accessKey: draft.value.cloud.accessKey,
+      expirationSeconds: tokenExpiresAt,
+      method: draft.value.cloud.signMethod || 'md5'
+    })
+  } catch (err) {
+    verifying.value = false
+    authError.value = err?.message || 'token 生成失败，请检查 Access Key 是否合法'
+    uni.showToast({ title: 'token 生成失败', icon: 'error' })
+    return
+  }
+
+  // 构造一份仅替换 cloud 字段（保持其它字段以满足 fetchProperties 的全量入参）的临时配置
+  const probeConfig = {
+    ...draft.value,
+    cloud: {
+      ...draft.value.cloud,
+      mockMode: false,
+      // 把刚生成的 token 临时挂到 cloud 上，让 fetchProperties 直接使用
+      token: probeToken,
+      tokenExpiresAt
+    }
+  }
+
+  fetchProperties(probeConfig).then(() => {
+    // 验证通过：把 token 缓存到 draft
+    draft.value.cloud.token = probeToken
+    draft.value.cloud.tokenExpiresAt = tokenExpiresAt
+    authError.value = ''
+    authVerifyResult.value = `token 验证通过（${formatExpiresAt(tokenExpiresAt)} 过期）`
+    uni.showToast({ title: 'token 验证通过', icon: 'success' })
+  }).catch((err) => {
+    const msg = err?.message || String(err)
+    authVerifyResult.value = ''
+    authError.value = msg
+    uni.showToast({ title: 'token 验证失败', icon: 'error' })
+  }).finally(() => {
+    verifying.value = false
+  })
+}
+
 function addPoint() {
   const type = activeModal.value
   draft.value[type].push(createPoint(type === 'thresholdPoints' ? 'threshold' : 'display'))
@@ -824,6 +952,29 @@ function normalizePoints(points, isThreshold = false) {
 function saveModal() {
   const nextConfig = clone(draft.value)
   ensureRecommendedPoints(nextConfig)
+  // 兼容旧版：清理残留的 authorization 字段
+  if (nextConfig.cloud && 'authorization' in nextConfig.cloud) {
+    delete nextConfig.cloud.authorization
+  }
+  if (!nextConfig.cloud) return
+  // 签名方法默认 md5
+  if (!nextConfig.cloud.signMethod) {
+    nextConfig.cloud.signMethod = 'md5'
+  }
+  // token 有效期：缺失或非法值时回退到 365 天
+  const ttlDays = Number(nextConfig.cloud.tokenTtlDays)
+  nextConfig.cloud.tokenTtlDays = Number.isFinite(ttlDays) && ttlDays > 0 ? Math.floor(ttlDays) : 365
+  // 必须已经验证通过才允许保存（canSave 已经在按钮 disabled 上把关）
+  if (!nextConfig.cloud.token || !nextConfig.cloud.tokenExpiresAt) {
+    uni.showToast({ title: '请先验证 token', icon: 'none' })
+    return
+  }
+  // 自动同步 getUrl（与 productId/deviceName 对齐），postUrl 保留默认
+  try {
+    nextConfig.cloud.getUrl = buildGetUrl(nextConfig.cloud)
+  } catch (e) {
+    // ignore — keep whatever was there
+  }
   nextConfig.displayPoints = normalizePoints(nextConfig.displayPoints)
   nextConfig.switchPoints = normalizePoints(nextConfig.switchPoints)
   nextConfig.thresholdPoints = normalizePoints(nextConfig.thresholdPoints, true)
@@ -967,9 +1118,17 @@ function handleConfirmImport() {
     cloud: {
       productId: src.cloud?.productId || '',
       deviceName: src.cloud?.deviceName || '',
-      getUrl: src.cloud?.getUrl || '',
-      postUrl: src.cloud?.postUrl || '',
-      authorization: src.cloud?.authorization || '',
+      accessKey: src.cloud?.accessKey || '',
+      signMethod: src.cloud?.signMethod || 'md5',
+      tokenTtlDays: Number.isFinite(src.cloud?.tokenTtlDays) ? src.cloud.tokenTtlDays : 365,
+      getUrl: src.cloud?.getUrl || buildGetUrl({
+        productId: src.cloud?.productId || '',
+        deviceName: src.cloud?.deviceName || ''
+      }),
+      postUrl: src.cloud?.postUrl || 'https://iot-api.heclouds.com/thingmodel/set-device-desired-property',
+      // 旧版导入不带 token，强制清空以避免误用过期/伪造值
+      token: '',
+      tokenExpiresAt: 0,
       mockMode: src.cloud?.mockMode !== false
     },
     displayPoints: Array.isArray(src.displayPoints) ? src.displayPoints : [],
@@ -1359,6 +1518,66 @@ onShow(reload)
 
 .textarea.auth {
   min-height: 190rpx;
+}
+
+/* ── Cloud / Authorization ── */
+.field-tip {
+  display: block;
+  margin-top: 8rpx;
+  color: var(--theme-text-tertiary);
+  font-size: 22rpx;
+  line-height: 1.4;
+}
+
+.auth-input {
+  font-family: monospace;
+  letter-spacing: 1rpx;
+}
+
+.cloud-actions {
+  display: flex;
+  gap: 14rpx;
+  margin-top: 8rpx;
+}
+
+.cloud-actions .inline-btn {
+  flex: 1;
+  margin: 0;
+}
+
+.cloud-actions .primary-btn.inline-btn {
+  width: auto;
+}
+
+.cloud-status {
+  display: block;
+  margin-top: 4rpx;
+  padding: 14rpx 18rpx;
+  border-radius: var(--theme-radius-input);
+  font-size: 23rpx;
+  font-weight: 700;
+  line-height: 1.4;
+  word-break: break-all;
+}
+
+.cloud-status.hint {
+  background: var(--theme-category-tabs-bg);
+  color: var(--theme-text-secondary);
+}
+
+.cloud-status.info {
+  background: rgba(13, 201, 176, 0.12);
+  color: var(--theme-accent);
+}
+
+.cloud-status.success {
+  background: rgba(13, 201, 176, 0.18);
+  color: var(--theme-accent);
+}
+
+.cloud-status.error {
+  background: var(--theme-danger-bg);
+  color: var(--theme-danger);
 }
 
 .switch-field,

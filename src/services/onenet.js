@@ -1,4 +1,5 @@
 import { getDebugValues } from '../utils/storage'
+import { generateOneNetToken } from '../utils/onenetToken'
 
 function request(options) {
   return new Promise((resolve, reject) => {
@@ -8,6 +9,49 @@ function request(options) {
       fail: reject
     })
   })
+}
+
+/**
+ * 根据当前 cloud 配置计算（或直接返回）鉴权 token。
+ *
+ * - 若 cloud.mockMode=true，返回空字符串（mock 模式不需要鉴权）
+ * - 若 cloud.token 与 cloud.tokenExpiresAt 都存在且未过期，直接复用缓存
+ * - 否则按 productId/deviceName/accessKey 在本地重新生成；过期时间沿用
+ *   cloud.tokenExpiresAt（首次未设置时默认为 +100 天，与 OneNET Java 示例一致）
+ *
+ * 失败时返回 null，由调用方决定如何降级（切换 mock 模式或提示用户）。
+ */
+export function buildAuthorization(cloud) {
+  if (!cloud || cloud.mockMode) return ''
+  const now = Math.floor(Date.now() / 1000)
+
+  // 缓存命中：token 非空且未过期
+  if (
+    typeof cloud.token === 'string' &&
+    cloud.token &&
+    Number.isFinite(cloud.tokenExpiresAt) &&
+    cloud.tokenExpiresAt > now
+  ) {
+    return cloud.token
+  }
+
+  // 计算一个新的 token
+  const expirationSeconds = Number.isFinite(cloud.tokenExpiresAt) && cloud.tokenExpiresAt > now
+    ? cloud.tokenExpiresAt
+    : now + 100 * 24 * 60 * 60
+
+  try {
+    return generateOneNetToken({
+      productId: cloud.productId,
+      deviceName: cloud.deviceName,
+      accessKey: cloud.accessKey,
+      method: cloud.signMethod || 'md5',
+      expirationSeconds
+    })
+  } catch (err) {
+    console.warn('[onenet] generate token failed:', err?.message || err)
+    return null
+  }
 }
 
 function unwrapValue(value) {
@@ -71,10 +115,10 @@ function makeMockValue(identifier, index) {
 
 export async function fetchProperties(config) {
   const allPoints = [
-    ...config.displayPoints,
-    ...config.switchPoints,
-    ...config.thresholdPoints
-  ].filter((point) => point.identifier)
+    ...(config.displayPoints || []),
+    ...(config.switchPoints || []),
+    ...(config.thresholdPoints || [])
+  ].filter((point) => point && point.identifier)
 
   if (config.cloud.mockMode) {
     const debugValues = getDebugValues()
@@ -90,11 +134,16 @@ export async function fetchProperties(config) {
     return values
   }
 
+  const authorization = buildAuthorization(config.cloud)
+  if (!authorization) {
+    throw new Error('无法生成鉴权 token，请检查 Product ID / Device Name / Access Key 是否填写')
+  }
+
   const response = await request({
     url: config.cloud.getUrl,
     method: 'GET',
     header: {
-      Authorization: config.cloud.authorization
+      Authorization: authorization
     },
     timeout: 10000
   })
@@ -125,12 +174,17 @@ export async function setDesiredProperty(config, identifier, value) {
     }
   }
 
+  const authorization = buildAuthorization(config.cloud)
+  if (!authorization) {
+    throw new Error('无法生成鉴权 token，请检查 Product ID / Device Name / Access Key 是否填写')
+  }
+
   const response = await request({
     url: config.cloud.postUrl,
     method: 'POST',
     data: payload,
     header: {
-      Authorization: config.cloud.authorization,
+      Authorization: authorization,
       'Content-Type': 'application/json'
     },
     timeout: 10000

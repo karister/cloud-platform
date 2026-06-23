@@ -8,13 +8,30 @@ function deepClone(value) {
 }
 
 function mergeConfig(saved = {}) {
+  const cloud = {
+    ...deepClone(DEFAULT_CONFIG.cloud),
+    ...(saved.cloud || {})
+  }
+  // 兼容旧版存储：旧 config.cloud.authorization 不再需要，主动丢弃
+  delete cloud.authorization
+  // 默认签名方法
+  if (!cloud.signMethod) {
+    cloud.signMethod = DEFAULT_CONFIG.cloud.signMethod || 'md5'
+  }
+  // 默认 token 有效期 365 天
+  if (!Number.isFinite(cloud.tokenTtlDays) || cloud.tokenTtlDays <= 0) {
+    cloud.tokenTtlDays = DEFAULT_CONFIG.cloud.tokenTtlDays || 365
+  }
+  // 旧版本没有缓存 token 字段时清空，避免使用伪造/过期值
+  if (typeof cloud.token !== 'string') cloud.token = ''
+  if (!Number.isFinite(cloud.tokenExpiresAt)) cloud.tokenExpiresAt = 0
+  // 兜底 getUrl / postUrl
+  if (!cloud.getUrl) cloud.getUrl = DEFAULT_CONFIG.cloud.getUrl
+  if (!cloud.postUrl) cloud.postUrl = DEFAULT_CONFIG.cloud.postUrl
   return {
     ...deepClone(DEFAULT_CONFIG),
     ...saved,
-    cloud: {
-      ...deepClone(DEFAULT_CONFIG.cloud),
-      ...(saved.cloud || {})
-    },
+    cloud,
     displayPoints: saved.displayPoints || deepClone(DEFAULT_CONFIG.displayPoints),
     switchPoints: saved.switchPoints || deepClone(DEFAULT_CONFIG.switchPoints),
     thresholdPoints: saved.thresholdPoints || deepClone(DEFAULT_CONFIG.thresholdPoints),

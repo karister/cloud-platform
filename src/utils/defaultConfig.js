@@ -4,11 +4,15 @@ export const DEFAULT_CONFIG = {
   cloud: {
     productId: '85zH3LlDLF',
     deviceName: 'device',
+    accessKey: '',
+    signMethod: 'md5',
+    tokenTtlDays: 365,
+    // 验证通过后保存的 token 与过期时间；未验证时为空对象由 storage 层补默认
+    token: '',
+    tokenExpiresAt: 0,
     getUrl:
       'https://iot-api.heclouds.com/thingmodel/query-device-property?product_id=85zH3LlDLF&device_name=device',
     postUrl: 'https://iot-api.heclouds.com/thingmodel/set-device-desired-property',
-    authorization:
-      'version=2018-10-31&res=products%2F85zH3LlDLF%2Fdevices%2Fdevice&et=1993491199&method=md5&sign=u4vFu18O1Pc6BhNnosz%2BJQ%3D%3D',
     mockMode: true
   },
   displayPoints: [
