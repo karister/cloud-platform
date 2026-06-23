@@ -100,20 +100,22 @@ import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import AppTabBar from '../../components/AppTabBar.vue'
 import EmptyState from '../../components/EmptyState.vue'
-import { fetchProperties, setDesiredProperty } from '../../services/onenet'
+import { dataStore } from '../../stores/dataStore'
 import { appendHistory, getConfig } from '../../utils/storage'
 import { formatTime, formatValue } from '../../utils/format'
 import { THEME_LIST } from '../../utils/themes'
 
 const config = ref(getConfig())
-const values = ref({})
-const status = ref('idle')
-const loading = ref(false)
-const lastUpdate = ref(0)
+const status = computed(() => (dataStore.lastError.value ? 'error' : (dataStore.lastSyncedAt.value ? 'online' : 'idle')))
+const loading = computed(() => dataStore.refreshing.value)
+const lastUpdate = computed(() => dataStore.lastSyncedAt.value)
+
+// 在 setup 内声明此模板引用的顶层标识，避免外层 ref 已删除后报 undefined
+const values = dataStore.latestValues
 
 const statusText = computed(() => {
   if (status.value === 'online') return config.value.cloud.mockMode ? '模拟运行' : '云端在线'
-  if (status.value === 'error') return '连接异常'
+  if (status.value === 'error') return dataStore.lastError.value || '连接异常'
   return '等待刷新'
 })
 
@@ -150,42 +152,20 @@ function metricWidth(point, value) {
 }
 
 async function loadData() {
-  loading.value = true
-  try {
-    const nextValues = await fetchProperties(config.value)
-    values.value = {
-      ...values.value,
-      ...nextValues
-    }
-    appendHistory(values.value, config.value.displayPoints)
-    lastUpdate.value = Date.now()
-    status.value = 'online'
-  } catch (error) {
-    status.value = 'error'
-    uni.showToast({
-      title: error.message || '读取失败',
-      icon: 'none'
-    })
-  } finally {
-    loading.value = false
+  const result = await dataStore.refresh()
+  if (result) {
+    appendHistory(dataStore.latestValues, config.value.displayPoints)
   }
 }
 
 async function onSwitchChange(point, checked) {
-  const previous = values.value[point.identifier]
-  values.value[point.identifier] = checked
+  const previous = dataStore.latestValues[point.identifier]
   try {
-    await setDesiredProperty(config.value, point.identifier, checked ? 1 : 0)
-    uni.showToast({
-      title: '指令已下发',
-      icon: 'success'
-    })
+    await dataStore.setDesired(point.identifier, checked ? 1 : 0)
+    uni.showToast({ title: '指令已下发', icon: 'success' })
   } catch (error) {
-    values.value[point.identifier] = previous
-    uni.showToast({
-      title: error.message || '下发失败',
-      icon: 'none'
-    })
+    dataStore.latestValues[point.identifier] = previous
+    uni.showToast({ title: error.message || '下发失败', icon: 'none' })
   }
 }
 

@@ -71,33 +71,30 @@
 
 <script setup>
 import { computed, reactive, ref } from 'vue'
-import { onShow, onHide } from '@dcloudio/uni-app'
+import { onShow } from '@dcloudio/uni-app'
 import AppTabBar from '../../components/AppTabBar.vue'
 import EmptyState from '../../components/EmptyState.vue'
-import { fetchProperties, setDesiredProperty } from '../../services/onenet'
+import { dataStore } from '../../stores/dataStore'
 import { getConfig, saveConfig } from '../../utils/storage'
 import { THEME_LIST } from '../../utils/themes'
 
-// 阈值页轮询节奏：与 dashboard 保持一致，每 5 秒拉一次
-const POLL_INTERVAL_MS = 5000
-
 const config = ref(getConfig())
 const thresholds = ref([])
-const refreshing = ref(false)
-const lastSyncedAt = ref(0)
 // per-identifier status: 'idle' | 'pending' | 'sending' | 'success' | { error: string }
 const sendStatus = reactive({})
 
-// 轮询 timer 与上一次下发的时间戳 — 用于避免轮询把刚下发未确认的值覆盖掉
-let pollTimer = null
-const recentPushAt = {}  // { [identifier]: timestamp }
+// 防抖 timer：每个 identifier 独立一份
+const debounceTimers = {}
+
+// 暴露 store 派生状态给模板使用
+const refreshing = computed(() => dataStore.refreshing.value)
+const lastSyncedAt = computed(() => dataStore.lastSyncedAt.value)
+const currentValues = dataStore.latestValues  // reactive 全局实时值字典
 
 const themeAccent = computed(() => {
   const theme = THEME_LIST.find((t) => t.id === config.value.themeId)
   return theme ? theme.cssVars['--theme-accent'] : '#0f6b67'
 })
-
-const debounceTimers = {}
 
 function formatTime(ts) {
   if (!ts) return '--'
@@ -118,92 +115,30 @@ function syncThresholds() {
   config.value = getConfig()
   thresholds.value = config.value.thresholdPoints.map((point) => ({
     ...point,
-    value: Number(point.value ?? point.min ?? 0)
+    // 优先用 store 里的最新值（刚拉下来的云端值），没有则用本地持久化值
+    value: Number(currentValues[point.identifier] ?? point.value ?? point.min ?? 0)
   }))
-  // 重置每个点的状态
   thresholds.value.forEach((p) => {
     sendStatus[p.identifier] = sendStatus[p.identifier] || 'idle'
   })
 }
 
-function persistThresholds() {
-  config.value.thresholdPoints = thresholds.value
-  saveConfig(config.value)
-}
-
 /**
- * 从云平台拉取每个阈值点的当前值。仅 mockMode=false 时调用。
- * 同一函数既用于初次加载，也用于轮询节奏。
+ * 用户主动触发的手动刷新：走全局 store 的 refresh()。
+ * 3s 轮询已经在 App.vue 全局跑着，这里只是手动再拉一次（与定时器去重）。
  */
-async function loadFromCloud({ silent = false } = {}) {
-  if (config.value.cloud.mockMode) {
-    lastSyncedAt.value = Date.now()
-    return
-  }
-  if (refreshing.value) return
-  refreshing.value = true
-  try {
-    const values = await fetchProperties(config.value)
-    let updated = 0
-    thresholds.value.forEach((point) => {
-      const v = values[point.identifier]
-      if (v === undefined || v === null) return
-      const num = Number(v)
-      if (!Number.isFinite(num)) return
-
-      // 如果刚刚下发过该点（1.5 秒内），跳过 — 避免轮询在服务器还没
-      // 同步完成前把下发前的旧值回灌过来
-      const pushedAt = recentPushAt[point.identifier] || 0
-      if (Date.now() - pushedAt < 1500) return
-
-      point.value = num
-      sendStatus[point.identifier] = 'success'
-      updated += 1
-    })
-    if (updated > 0) persistThresholds()
-    lastSyncedAt.value = Date.now()
-  } catch (error) {
-    if (!silent) {
-      uni.showToast({
-        title: error.message || '读取云平台失败',
-        icon: 'none'
-      })
-    }
-  } finally {
-    refreshing.value = false
-  }
-}
-
-function startPolling() {
-  stopPolling()
-  if (config.value.cloud.mockMode) return
-  pollTimer = setInterval(() => {
-    loadFromCloud({ silent: true })
-  }, POLL_INTERVAL_MS)
-}
-
-function stopPolling() {
-  if (pollTimer) {
-    clearInterval(pollTimer)
-    pollTimer = null
-  }
+async function loadFromCloud() {
+  await dataStore.refresh()
 }
 
 /**
- * 把指定阈值的最新值下发到下位机。
- * mockMode 下仅做本地持久化（不下发）。
+ * 把当前阈值最新值下发到下位机（350ms 防抖后由 onAdjust / onInputAdjust 调用）。
+ * 走全局 store.setDesired() — 已包含 recentPushAt 防覆盖 + 乐观更新。
  */
 async function pushToCloud(point) {
-  if (config.value.cloud.mockMode) {
-    sendStatus[point.identifier] = 'success'
-    persistThresholds()
-    return
-  }
   sendStatus[point.identifier] = 'sending'
-  // 标记刚下发时间，1.5 秒内的轮询不会覆盖本地值（云端可能还没同步）
-  recentPushAt[point.identifier] = Date.now()
   try {
-    await setDesiredProperty(config.value, point.identifier, Number(point.value))
+    await dataStore.setDesired(point.identifier, Number(point.value))
     sendStatus[point.identifier] = 'success'
     persistThresholds()
   } catch (error) {
@@ -215,12 +150,16 @@ async function pushToCloud(point) {
   }
 }
 
+function persistThresholds() {
+  config.value.thresholdPoints = thresholds.value
+  saveConfig(config.value)
+}
+
 function onAdjust(point, value) {
   const next = Number(value)
   if (!Number.isFinite(next)) return
   point.value = clamp(next, Number(point.min), Number(point.max))
   sendStatus[point.identifier] = 'pending'
-  // 防抖：用户连续拖动时只下发最后一次
   if (debounceTimers[point.identifier]) {
     clearTimeout(debounceTimers[point.identifier])
   }
@@ -234,7 +173,6 @@ function onInputAdjust(point, value) {
   if (!Number.isFinite(next)) return
   point.value = clamp(next, Number(point.min), Number(point.max))
   sendStatus[point.identifier] = 'pending'
-  // 输入框没有连续事件，短暂延迟后立即下发
   if (debounceTimers[point.identifier]) {
     clearTimeout(debounceTimers[point.identifier])
   }
@@ -259,20 +197,15 @@ function statusText(identifier) {
   if (s && typeof s === 'object' && s.error) return `下发失败：${s.error}`
   if (s === 'success') return config.value.cloud.mockMode
     ? '本地已更新（模拟模式）'
-    : '已同步 · ' + formatTime(lastSyncedAt || Date.now())
+    : '已同步 · ' + formatTime(lastSyncedAt.value || Date.now())
   return config.value.cloud.mockMode
     ? '模拟模式'
-    : (lastSyncedAt ? '已绑定云平台' : '正在拉取云平台当前值…')
+    : (lastSyncedAt.value ? '已绑定云平台 · ' + formatTime(lastSyncedAt.value) : '正在拉取云平台当前值…')
 }
 
 onShow(() => {
   syncThresholds()
   loadFromCloud()
-  startPolling()
-})
-
-onHide(() => {
-  stopPolling()
 })
 </script>
 

@@ -63,7 +63,7 @@ import { onShow } from '@dcloudio/uni-app'
 import AppTabBar from '../../components/AppTabBar.vue'
 import EmptyState from '../../components/EmptyState.vue'
 import HistoryChart from '../../components/HistoryChart.vue'
-import { fetchProperties } from '../../services/onenet'
+import { dataStore } from '../../stores/dataStore'
 import { appendHistory, clearHistory, getConfig, getHistory, saveHistory } from '../../utils/storage'
 import { formatTime, formatValue } from '../../utils/format'
 import { THEME_LIST } from '../../utils/themes'
@@ -134,17 +134,17 @@ function load() {
 async function sampleNow() {
   loading.value = true
   try {
-    const values = await fetchProperties(config.value)
-    history.value = appendHistory(values, config.value.displayPoints)
-    uni.showToast({
-      title: '采样完成',
-      icon: 'success'
-    })
+    // 全局 3s 轮询已经在跑，sampleNow 只是触发一次手动刷新
+    // 然后把此刻的实时值追加进历史
+    const result = await dataStore.refresh()
+    if (!result) {
+      uni.showToast({ title: dataStore.lastError.value || '采样失败', icon: 'none' })
+      return
+    }
+    history.value = appendHistory(dataStore.latestValues, config.value.displayPoints)
+    uni.showToast({ title: '采样完成', icon: 'success' })
   } catch (error) {
-    uni.showToast({
-      title: error.message || '采样失败',
-      icon: 'none'
-    })
+    uni.showToast({ title: error.message || '采样失败', icon: 'none' })
   } finally {
     loading.value = false
   }

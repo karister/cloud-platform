@@ -1,6 +1,7 @@
 <script>
 import { getConfig } from './utils/storage'
 import { getThemeById, applyThemeToDOM, DEFAULT_THEME_ID } from './utils/themes'
+import { dataStore } from './stores/dataStore'
 
 export default {
   globalData: {
@@ -9,9 +10,17 @@ export default {
   onLaunch() {
     console.log('Cloud platform communication app launched')
     this.applyTheme()
+    // 应用启动即开始 3s 轮询拉取最新云平台值，任何页面打开时都有数据
+    dataStore.start()
   },
   onShow() {
     this.applyTheme()
+    // 从后台回到前台时恢复轮询（onHide 期间已停止）
+    dataStore.start()
+  },
+  onHide() {
+    // 切到后台时停止轮询，节省流量与电量
+    dataStore.stop()
   },
   methods: {
     applyTheme() {
