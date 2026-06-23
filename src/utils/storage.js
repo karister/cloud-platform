@@ -25,6 +25,8 @@ function mergeConfig(saved = {}) {
   // 旧版本没有缓存 token 字段时清空，避免使用伪造/过期值
   if (typeof cloud.token !== 'string') cloud.token = ''
   if (!Number.isFinite(cloud.tokenExpiresAt)) cloud.tokenExpiresAt = 0
+  // TODO: 临时调试字段 — token 算法修好后删除
+  if (typeof cloud.manualToken !== 'string') cloud.manualToken = ''
   // 兜底 getUrl / postUrl
   if (!cloud.getUrl) cloud.getUrl = DEFAULT_CONFIG.cloud.getUrl
   if (!cloud.postUrl) cloud.postUrl = DEFAULT_CONFIG.cloud.postUrl

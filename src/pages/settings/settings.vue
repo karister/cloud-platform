@@ -218,6 +218,27 @@
               <text class="field-tip">验证通过后会生成对应有效期的 token，到期前无需重新计算。</text>
             </label>
 
+            <!--
+              TODO: 临时手动 token 输入框
+              当前自动计算的 token 算法与 OneNET 实际返回的 token 不一致，
+              临时让用户可以从 OneNET 控制台 / 官方 token 生成工具粘贴一个
+              已知的有效 token，覆盖自动计算结果。等算法修好后删除此区块
+              以及 buildAuthorization 中的 manualToken 优先逻辑。
+            -->
+            <label class="field manual-token-field">
+              <text>手动 Token（临时调试用）</text>
+              <textarea
+                class="textarea auth-input"
+                :value="draft.cloud.manualToken"
+                @input="draft.cloud.manualToken = $event.detail.value"
+                placeholder="version=2018-10-31&res=...&et=...&method=md5&sign=..."
+              />
+              <text class="field-tip">
+                临时调试项：填入后会直接作为 Authorization 头发送给 OneNET，
+                跳过本地 HMAC 计算。等 token 算法问题修复后此字段会被移除。
+              </text>
+            </label>
+
             <view class="cloud-actions">
               <button class="secondary-btn" :disabled="verifying || !canVerify" @tap="verifyAuthorization">
                 {{ verifying ? '验证中...' : '验证 token' }}
@@ -600,9 +621,14 @@ const verifying = ref(false)
 const authError = ref('')
 const authVerifyResult = ref('')
 
-// 表单是否足够发起一次验证请求
+// 表单是否足够发起一次验证请求（手动 token 时可以只填 token + URL 参数）
 const canVerify = computed(() => {
   const c = draft.value.cloud
+  if (!c) return false
+  // TODO: 临时允许只填 manualToken 完成验证；算法修好后移除此分支
+  if (typeof c.manualToken === 'string' && c.manualToken.trim()) {
+    return Boolean(c.productId && c.deviceName)
+  }
   return Boolean(c?.productId && c?.deviceName && c?.accessKey)
 })
 
@@ -835,6 +861,10 @@ function openCloud() {
   if (!draft.value.cloud.signMethod) {
     draft.value.cloud.signMethod = 'md5'
   }
+  // TODO: 临时调试字段 — token 算法修好后删除
+  if (typeof draft.value.cloud.manualToken !== 'string') {
+    draft.value.cloud.manualToken = ''
+  }
   // 清除上一次的验证状态
   authError.value = ''
   authVerifyResult.value = ''
@@ -968,9 +998,10 @@ function syncGetUrl() {
 }
 
 /**
- * 用当前 draft 配置（Product ID / Device Name / Access Key）打一个最小验证请求，
- * 检验 token 是否能被 OneNET 接受。验证成功后将 token 与过期时间写入 draft，
- * 等待用户在保存配置时持久化。
+ * 用当前 draft 配置打一个最小验证请求，检验 token 是否能被 OneNET 接受。
+ * 验证成功后将 token 与过期时间写入 draft，等待用户在保存配置时持久化。
+ *
+ * TODO: 临时支持 manualToken 字段，算法修好后移除该分支
  */
 function verifyAuthorization() {
   if (!canVerify.value || verifying.value) return
@@ -978,32 +1009,42 @@ function verifyAuthorization() {
   authError.value = ''
   authVerifyResult.value = ''
 
-  // 生成待验证的 token：使用用户在 UI 上配置的 tokenTtlDays
-  const ttlDays = Number(draft.value.cloud.tokenTtlDays) || 365
-  const tokenExpiresAt = Math.floor(Date.now() / 1000) + Math.floor(ttlDays * 86400)
-  let probeToken
-  try {
-    probeToken = generateOneNetToken({
-      productId: draft.value.cloud.productId,
-      deviceName: draft.value.cloud.deviceName,
-      accessKey: draft.value.cloud.accessKey,
-      expirationSeconds: tokenExpiresAt,
-      method: draft.value.cloud.signMethod || 'md5'
-    })
-  } catch (err) {
-    verifying.value = false
-    authError.value = err?.message || 'token 生成失败，请检查 Access Key 是否合法'
-    uni.showToast({ title: 'token 生成失败', icon: 'error' })
-    return
+  // 解析 manualToken 中的 et；如果没有就用当前时间 + tokenTtlDays
+  const manualToken = (draft.value.cloud.manualToken || '').trim()
+  let probeToken = ''
+  let tokenExpiresAt = 0
+
+  if (manualToken) {
+    // TODO: 临时从 manualToken 解析 et；算法修好后整段移除
+    const etMatch = manualToken.match(/et=(\d+)/)
+    tokenExpiresAt = etMatch ? Number(etMatch[1]) : Math.floor(Date.now() / 1000) + 365 * 86400
+    probeToken = manualToken
+  } else {
+    // 正常路径：用 draft.cloud 的参数生成 token
+    const ttlDays = Number(draft.value.cloud.tokenTtlDays) || 365
+    tokenExpiresAt = Math.floor(Date.now() / 1000) + Math.floor(ttlDays * 86400)
+    try {
+      probeToken = generateOneNetToken({
+        productId: draft.value.cloud.productId,
+        deviceName: draft.value.cloud.deviceName,
+        accessKey: draft.value.cloud.accessKey,
+        expirationSeconds: tokenExpiresAt,
+        method: draft.value.cloud.signMethod || 'md5'
+      })
+    } catch (err) {
+      verifying.value = false
+      authError.value = err?.message || 'token 生成失败，请检查 Access Key 是否合法'
+      uni.showToast({ title: 'token 生成失败', icon: 'error' })
+      return
+    }
   }
 
-  // 构造一份仅替换 cloud 字段（保持其它字段以满足 fetchProperties 的全量入参）的临时配置
+  // 构造一份仅替换 cloud 字段的临时配置（保持其它字段以满足 fetchProperties 的全量入参）
   const probeConfig = {
     ...draft.value,
     cloud: {
       ...draft.value.cloud,
       mockMode: false,
-      // 把刚生成的 token 临时挂到 cloud 上，让 fetchProperties 直接使用
       token: probeToken,
       tokenExpiresAt
     }
@@ -1109,6 +1150,7 @@ function saveModal() {
     uni.showToast({ title: '请先验证 token', icon: 'none' })
     return
   }
+  // manualToken 字段已经在 draft.cloud 上保留（saveModal 直接 clone）
   // 自动同步 getUrl（与 productId/deviceName 对齐），postUrl 保留默认
   try {
     nextConfig.cloud.getUrl = buildGetUrl(nextConfig.cloud)
@@ -1269,6 +1311,8 @@ function handleConfirmImport() {
       // 旧版导入不带 token，强制清空以避免误用过期/伪造值
       token: '',
       tokenExpiresAt: 0,
+      // TODO: 临时调试字段 — token 算法修好后删除
+      manualToken: '',
       mockMode: src.cloud?.mockMode !== false
     },
     displayPoints: Array.isArray(src.displayPoints) ? src.displayPoints : [],
@@ -1724,6 +1768,19 @@ onShow(reload)
 .cloud-status.error {
   background: var(--theme-danger-bg);
   color: var(--theme-danger);
+}
+
+/* TODO: 临时手动 token 输入框样式 — 算法修好后删除整块 */
+.manual-token-field .textarea.auth-input {
+  min-height: 96rpx;
+  font-family: monospace;
+  font-size: 22rpx;
+  line-height: 1.4;
+  word-break: break-all;
+}
+
+.manual-token-field .field-tip {
+  color: var(--theme-warning, #d97706);
 }
 
 /* ── Quick config tab (物模型一键导入) ── */

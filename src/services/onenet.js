@@ -15,6 +15,7 @@ function request(options) {
  * 根据当前 cloud 配置计算（或直接返回）鉴权 token。
  *
  * - 若 cloud.mockMode=true，返回空字符串（mock 模式不需要鉴权）
+ * - 若 cloud.manualToken 非空，直接返回（调试用，跳过本地计算） — TODO: 算法修好后移除
  * - 若 cloud.token 与 cloud.tokenExpiresAt 都存在且未过期，直接复用缓存
  * - 否则按 productId/deviceName/accessKey 在本地重新生成；过期时间沿用
  *   cloud.tokenExpiresAt（首次未设置时默认为 +100 天，与 OneNET Java 示例一致）
@@ -23,6 +24,12 @@ function request(options) {
  */
 export function buildAuthorization(cloud) {
   if (!cloud || cloud.mockMode) return ''
+
+  // TODO: 临时调试用 — 让用户手动粘贴一个已知的有效 token
+  if (typeof cloud.manualToken === 'string' && cloud.manualToken.trim()) {
+    return cloud.manualToken.trim()
+  }
+
   const now = Math.floor(Date.now() / 1000)
 
   // 缓存命中：token 非空且未过期

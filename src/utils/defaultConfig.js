@@ -10,6 +10,8 @@ export const DEFAULT_CONFIG = {
     // 验证通过后保存的 token 与过期时间；未验证时为空对象由 storage 层补默认
     token: '',
     tokenExpiresAt: 0,
+    // TODO: 临时调试字段 — token 算法修好后删除
+    manualToken: '',
     getUrl:
       'https://iot-api.heclouds.com/thingmodel/query-device-property?product_id=85zH3LlDLF&device_name=device',
     postUrl: 'https://iot-api.heclouds.com/thingmodel/set-device-desired-property',
