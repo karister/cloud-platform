@@ -4,11 +4,18 @@
       <view>
         <text class="eyebrow">设备参数</text>
         <text class="title">阈值设置</text>
-        <text class="desc">滑动调整阈值，确认后下发到云平台期望属性。</text>
+        <text class="desc">
+          {{ config.cloud.mockMode
+            ? '当前为模拟数据模式，阈值仅本地生效。'
+            : '已绑定云平台当前值；调整后会自动下发到下位机。' }}
+        </text>
+        <text v-if="lastSyncedAt && !config.cloud.mockMode" class="sync-meta">
+          最近同步：{{ formatTime(lastSyncedAt) }}
+        </text>
       </view>
-      <view class="summary-chip">
-        <text>{{ thresholds.length }}</text>
-        <text>项</text>
+      <view class="summary-chip" @tap="loadFromCloud">
+        <text>{{ refreshing ? '…' : thresholds.length }}</text>
+        <text>{{ refreshing ? '同步中' : '项' }}</text>
       </view>
     </view>
 
@@ -20,7 +27,7 @@
             <text class="point-id">{{ point.identifier }}</text>
           </view>
           <view class="value-badge">
-            <text>{{ point.value }}</text>
+            <text>{{ formatValue(point.value) }}</text>
             <text>{{ point.unit }}</text>
           </view>
         </view>
@@ -34,8 +41,9 @@
           :max="Number(point.max)"
           :step="Number(point.step) || 1"
           :value="Number(point.value)"
-          @changing="onSlider(point, $event.detail.value)"
-          @change="onSlider(point, $event.detail.value)"
+          :disabled="config.cloud.mockMode && false"
+          @changing="onAdjust(point, $event.detail.value)"
+          @change="onAdjust(point, $event.detail.value)"
         />
 
         <view class="range-row">
@@ -44,14 +52,14 @@
             class="value-input"
             type="number"
             :value="String(point.value)"
-            @input="onInput(point, $event.detail.value)"
+            @input="onInputAdjust(point, $event.detail.value)"
           />
           <text>{{ point.max }}{{ point.unit }}</text>
         </view>
 
-        <button class="submit-btn" :loading="submittingId === point.identifier" @tap="submit(point)">
-          下发阈值
-        </button>
+        <view class="status-row" :class="statusClass(point.identifier)">
+          <text>{{ statusText(point.identifier) }}</text>
+        </view>
       </view>
     </view>
 
@@ -62,22 +70,42 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import AppTabBar from '../../components/AppTabBar.vue'
 import EmptyState from '../../components/EmptyState.vue'
-import { setDesiredProperty } from '../../services/onenet'
+import { fetchProperties, setDesiredProperty } from '../../services/onenet'
 import { getConfig, saveConfig } from '../../utils/storage'
 import { THEME_LIST } from '../../utils/themes'
 
 const config = ref(getConfig())
 const thresholds = ref([])
-const submittingId = ref('')
+const refreshing = ref(false)
+const lastSyncedAt = ref(0)
+// per-identifier status: 'idle' | 'pending' | 'sending' | 'success' | { error: string }
+const sendStatus = reactive({})
 
 const themeAccent = computed(() => {
   const theme = THEME_LIST.find((t) => t.id === config.value.themeId)
   return theme ? theme.cssVars['--theme-accent'] : '#0f6b67'
 })
+
+const debounceTimers = {}
+
+function formatTime(ts) {
+  if (!ts) return '--'
+  const d = new Date(ts)
+  return d.toLocaleTimeString('zh-CN', { hour12: false })
+}
+
+function formatValue(v) {
+  const num = Number(v)
+  return Number.isFinite(num) ? String(num) : '--'
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value))
+}
 
 function syncThresholds() {
   config.value = getConfig()
@@ -85,6 +113,10 @@ function syncThresholds() {
     ...point,
     value: Number(point.value ?? point.min ?? 0)
   }))
+  // 重置每个点的状态
+  thresholds.value.forEach((p) => {
+    sendStatus[p.identifier] = sendStatus[p.identifier] || 'idle'
+  })
 }
 
 function persistThresholds() {
@@ -92,39 +124,118 @@ function persistThresholds() {
   saveConfig(config.value)
 }
 
-function onSlider(point, value) {
-  point.value = Number(value)
-  persistThresholds()
+/**
+ * 从云平台拉取每个阈值点的当前值。仅 mockMode=false 时调用。
+ */
+async function loadFromCloud() {
+  if (config.value.cloud.mockMode) {
+    lastSyncedAt.value = Date.now()
+    return
+  }
+  if (refreshing.value) return
+  refreshing.value = true
+  try {
+    const values = await fetchProperties(config.value)
+    let updated = 0
+    thresholds.value.forEach((point) => {
+      const v = values[point.identifier]
+      if (v === undefined || v === null) return
+      const num = Number(v)
+      if (!Number.isFinite(num)) return
+      point.value = num
+      sendStatus[point.identifier] = 'success'
+      updated += 1
+    })
+    if (updated > 0) persistThresholds()
+    lastSyncedAt.value = Date.now()
+  } catch (error) {
+    uni.showToast({
+      title: error.message || '读取云平台失败',
+      icon: 'none'
+    })
+  } finally {
+    refreshing.value = false
+  }
 }
 
-function onInput(point, value) {
-  const nextValue = Number(value)
-  if (!Number.isFinite(nextValue)) return
-  const min = Number(point.min)
-  const max = Number(point.max)
-  point.value = Math.min(max, Math.max(min, nextValue))
-  persistThresholds()
-}
-
-async function submit(point) {
-  submittingId.value = point.identifier
+/**
+ * 把指定阈值的最新值下发到下位机。
+ * mockMode 下仅做本地持久化（不下发）。
+ */
+async function pushToCloud(point) {
+  if (config.value.cloud.mockMode) {
+    sendStatus[point.identifier] = 'success'
+    persistThresholds()
+    return
+  }
+  sendStatus[point.identifier] = 'sending'
   try {
     await setDesiredProperty(config.value, point.identifier, Number(point.value))
-    uni.showToast({
-      title: '阈值已下发',
-      icon: 'success'
-    })
+    sendStatus[point.identifier] = 'success'
+    persistThresholds()
   } catch (error) {
+    sendStatus[point.identifier] = { error: error.message || '下发失败' }
     uni.showToast({
       title: error.message || '下发失败',
       icon: 'none'
     })
-  } finally {
-    submittingId.value = ''
   }
 }
 
-onShow(syncThresholds)
+function onAdjust(point, value) {
+  const next = Number(value)
+  if (!Number.isFinite(next)) return
+  point.value = clamp(next, Number(point.min), Number(point.max))
+  sendStatus[point.identifier] = 'pending'
+  // 防抖：用户连续拖动时只下发最后一次
+  if (debounceTimers[point.identifier]) {
+    clearTimeout(debounceTimers[point.identifier])
+  }
+  debounceTimers[point.identifier] = setTimeout(() => {
+    pushToCloud(point)
+  }, 350)
+}
+
+function onInputAdjust(point, value) {
+  const next = Number(value)
+  if (!Number.isFinite(next)) return
+  point.value = clamp(next, Number(point.min), Number(point.max))
+  sendStatus[point.identifier] = 'pending'
+  // 输入框没有连续事件，短暂延迟后立即下发
+  if (debounceTimers[point.identifier]) {
+    clearTimeout(debounceTimers[point.identifier])
+  }
+  debounceTimers[point.identifier] = setTimeout(() => {
+    pushToCloud(point)
+  }, 350)
+}
+
+function statusClass(identifier) {
+  const s = sendStatus[identifier]
+  if (s === 'sending') return 'is-sending'
+  if (s === 'pending') return 'is-pending'
+  if (s && typeof s === 'object' && s.error) return 'is-error'
+  if (s === 'success') return 'is-success'
+  return 'is-idle'
+}
+
+function statusText(identifier) {
+  const s = sendStatus[identifier]
+  if (s === 'sending') return '下发中…'
+  if (s === 'pending') return '待下发…'
+  if (s && typeof s === 'object' && s.error) return `下发失败：${s.error}`
+  if (s === 'success') return config.value.cloud.mockMode
+    ? '本地已更新（模拟模式）'
+    : '已同步 · ' + formatTime(lastSyncedAt || Date.now())
+  return config.value.cloud.mockMode
+    ? '模拟模式'
+    : (lastSyncedAt ? '已绑定云平台' : '正在拉取云平台当前值…')
+}
+
+onShow(() => {
+  syncThresholds()
+  loadFromCloud()
+})
 </script>
 
 <style scoped>
@@ -154,6 +265,7 @@ onShow(syncThresholds)
 .eyebrow,
 .title,
 .desc,
+.sync-meta,
 .point-label,
 .point-id,
 .value-badge text {
@@ -180,6 +292,12 @@ onShow(syncThresholds)
   line-height: 1.45;
 }
 
+.sync-meta {
+  margin-top: 8rpx;
+  color: var(--theme-text-tertiary);
+  font-size: 22rpx;
+}
+
 .summary-chip {
   display: flex;
   width: 108rpx;
@@ -192,6 +310,11 @@ onShow(syncThresholds)
   color: var(--theme-summary-chip-text);
   font-size: 22rpx;
   font-weight: 800;
+  flex-shrink: 0;
+}
+
+.summary-chip:active {
+  transform: scale(0.96);
 }
 
 .summary-chip text:first-child {
@@ -220,7 +343,7 @@ onShow(syncThresholds)
 }
 
 .point-label {
-  color: var(--theme-text-heading);
+  color: var(--theme-text-primary);
   font-size: 30rpx;
   font-weight: 850;
 }
@@ -275,15 +398,37 @@ onShow(syncThresholds)
   text-align: center;
 }
 
-.submit-btn {
-  height: 78rpx;
-  margin-top: 26rpx;
-  border-radius: var(--theme-btn-style);
-  background: var(--theme-accent);
-  color: var(--theme-accent-contrast);
-  font-size: 27rpx;
-  font-weight: 850;
-  line-height: 78rpx;
-  box-shadow: 0 12rpx 28rpx var(--theme-shadow-accent);
+.status-row {
+  margin-top: 16rpx;
+  padding: 8rpx 14rpx;
+  border-radius: var(--theme-radius-input);
+  font-size: 22rpx;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.status-row.is-idle {
+  background: var(--theme-category-tabs-bg);
+  color: var(--theme-text-tertiary);
+}
+
+.status-row.is-pending {
+  background: var(--theme-category-tabs-bg);
+  color: var(--theme-text-secondary);
+}
+
+.status-row.is-sending {
+  background: rgba(13, 201, 176, 0.12);
+  color: var(--theme-accent);
+}
+
+.status-row.is-success {
+  background: rgba(13, 201, 176, 0.18);
+  color: var(--theme-accent);
+}
+
+.status-row.is-error {
+  background: var(--theme-danger-bg);
+  color: var(--theme-danger);
 }
 </style>
