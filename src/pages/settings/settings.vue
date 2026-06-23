@@ -321,55 +321,114 @@
                 :class="{ active: activePointsTab === tab.key }"
                 @tap="activePointsTab = tab.key"
               >
-                {{ tab.label }} · {{ draft[tab.key].length }}
+                {{ tab.key === 'quickConfig' ? tab.label : `${tab.label} · ${draft[tab.key].length}` }}
               </view>
             </view>
 
-            <view v-if="activePointsTab === 'displayPoints'" class="quick-panel">
-              <view class="quick-head">
-                <view>
-                  <text class="quick-title">快速选择推荐数据点</text>
-                  <text class="quick-desc">点击图标按钮即可加入当前展示配置</text>
-                </view>
-              </view>
-              <view class="quick-grid">
-                <view
-                  v-for="point in recommendedDisplayPoints"
-                  :key="point.identifier"
-                  class="quick-chip"
-                  @tap="quickAddPoint(point)"
-                >
-                  <view class="quick-icon">
-                    <image src="/static/tab/dashboard-active.png" mode="aspectFit" />
+            <view v-if="activePointsTab !== 'quickConfig'" class="form">
+              <view v-if="activePointsTab === 'displayPoints'" class="quick-panel">
+                <view class="quick-head">
+                  <view>
+                    <text class="quick-title">快速选择推荐数据点</text>
+                    <text class="quick-desc">点击图标按钮即可加入当前展示配置</text>
                   </view>
-                  <text>{{ point.label }}</text>
-                  <text>{{ point.identifier }}</text>
+                </view>
+                <view class="quick-grid">
+                  <view
+                    v-for="point in recommendedDisplayPoints"
+                    :key="point.identifier"
+                    class="quick-chip"
+                    @tap="quickAddPoint(point)"
+                  >
+                    <view class="quick-icon">
+                      <image src="/static/tab/dashboard-active.png" mode="aspectFit" />
+                    </view>
+                    <text>{{ point.label }}</text>
+                    <text>{{ point.identifier }}</text>
+                  </view>
                 </view>
               </view>
+
+              <view v-for="(point, index) in draft[activePointsTab]" :key="`${activePointsTab}-${index}`" class="point-row">
+                <view class="point-head">
+                  <text>数据点 {{ index + 1 }}</text>
+                  <button class="remove-btn" @tap="removePoint(index)">删除</button>
+                </view>
+                <PointFields :point="point" :threshold="activePointsTab === 'thresholdPoints'" />
+                <!-- Alarm threshold binding (display points only) -->
+                <view v-if="activePointsTab === 'displayPoints'" class="alarm-field">
+                  <text>报警阈值绑定</text>
+                  <picker
+                    :range="thresholdPickerRange"
+                    :range-key="'label'"
+                    :value="getThresholdPickerIndex(point)"
+                    @change="onAlarmThresholdChange(point, $event.detail.value)"
+                  >
+                    <view class="alarm-picker">
+                      {{ getAlarmThresholdLabel(point) }}
+                    </view>
+                  </picker>
+                </view>
+              </view>
+              <button class="secondary-btn" @tap="addPoint">新增数据点</button>
             </view>
 
-            <view v-for="(point, index) in draft[activePointsTab]" :key="`${activePointsTab}-${index}`" class="point-row">
-              <view class="point-head">
-                <text>数据点 {{ index + 1 }}</text>
-                <button class="remove-btn" @tap="removePoint(index)">删除</button>
+            <view v-else class="quick-config-tab">
+              <text class="qc-intro">
+                把云平台导出的物模型 JSON 粘贴到下方，点击「提取」自动分类填入展示 / 开关 / 阈值 三个 tab。
+              </text>
+
+              <textarea
+                class="textarea qc-textarea"
+                :value="quickConfigText"
+                @input="quickConfigText = $event.detail.value"
+                placeholder='{ "version": "1.0", "properties": [...] }'
+              />
+
+              <view class="qc-actions">
+                <button class="secondary-btn inline-btn" @tap="parseQuickConfig">提取数据点</button>
+                <button class="secondary-btn inline-btn" @tap="loadQuickConfigSample">填入示例</button>
+                <button class="secondary-btn inline-btn" :disabled="!quickConfigText" @tap="clearQuickConfig">清空</button>
               </view>
-              <PointFields :point="point" :threshold="activePointsTab === 'thresholdPoints'" />
-              <!-- Alarm threshold binding (display points only) -->
-              <view v-if="activePointsTab === 'displayPoints'" class="alarm-field">
-                <text>报警阈值绑定</text>
-                <picker
-                  :range="thresholdPickerRange"
-                  :range-key="'label'"
-                  :value="getThresholdPickerIndex(point)"
-                  @change="onAlarmThresholdChange(point, $event.detail.value)"
+
+              <view v-if="quickConfigError" class="cloud-status error">{{ quickConfigError }}</view>
+              <view v-else-if="quickConfigResult" class="qc-preview">
+                <view class="qc-summary">
+                  <text class="qc-summary-line">从物模型识别出 {{ quickConfigResult.total }} 个数据点：</text>
+                </view>
+                <view v-if="quickConfigResult.display.length" class="qc-group">
+                  <text class="qc-group-title">展示 ({{ quickConfigResult.display.length }})</text>
+                  <text class="qc-group-items">
+                    {{ quickConfigResult.display.map(p => `${p.label || p.identifier}`).join('、') }}
+                  </text>
+                </view>
+                <view v-if="quickConfigResult.switch.length" class="qc-group">
+                  <text class="qc-group-title">开关 ({{ quickConfigResult.switch.length }})</text>
+                  <text class="qc-group-items">
+                    {{ quickConfigResult.switch.map(p => `${p.label || p.identifier}`).join('、') }}
+                  </text>
+                </view>
+                <view v-if="quickConfigResult.threshold.length" class="qc-group">
+                  <text class="qc-group-title">阈值 ({{ quickConfigResult.threshold.length }})</text>
+                  <text class="qc-group-items">
+                    {{ quickConfigResult.threshold.map(p => `${p.label || p.identifier}`).join('、') }}
+                  </text>
+                </view>
+                <view v-if="quickConfigMergeResult" class="cloud-status success">
+                  {{ quickConfigMergeResult }}
+                </view>
+                <button
+                  class="primary-btn"
+                  :disabled="!quickConfigResult || quickConfigResult.total === 0"
+                  @tap="applyQuickConfig"
                 >
-                  <view class="alarm-picker">
-                    {{ getAlarmThresholdLabel(point) }}
-                  </view>
-                </picker>
+                  应用到配置
+                </button>
+              </view>
+              <view v-else class="cloud-status hint">
+                点击「提取数据点」后会在这里显示分类预览；点击「应用到配置」会追加到三个 tab，不会覆盖已有项。
               </view>
             </view>
-            <button class="secondary-btn" @tap="addPoint">新增数据点</button>
           </view>
         </scroll-view>
 
@@ -495,6 +554,7 @@ import AppTabBar from '../../components/AppTabBar.vue'
 import PointFields from '../../components/PointFields.vue'
 import { buildGetUrl, createPoint } from '../../utils/defaultConfig'
 import { generateOneNetToken } from '../../utils/onenetToken'
+import { parseThingModel, mergeParsedIntoDraft } from '../../utils/thingModel'
 import { getConfig, saveConfig, getDebugValues, saveDebugValues, clearDebugValues as clearDebugStorage } from '../../utils/storage'
 import { THEME_LIST, applyThemeToDOM } from '../../utils/themes'
 import { serializeConfig, downloadJsonFile, deserializeConfig, getExportFilename } from '../../utils/configImportExport'
@@ -510,6 +570,25 @@ const unlockTapCount = ref(0)
 const unlockTimer = ref(null)
 const activeRecommendCategory = ref('display')
 const activePointsTab = ref('displayPoints')
+
+// 快速配置 tab 的状态
+const quickConfigText = ref('')
+const quickConfigError = ref('')
+const quickConfigResult = ref(null)
+const quickConfigMergeResult = ref('')
+
+// 一份精简的物模型示例，方便用户理解 JSON 结构
+const QUICK_CONFIG_SAMPLE = `{
+  "version": "1.0",
+  "properties": [
+    { "identifier": "temp",  "name": "温度",     "accessMode": "rw", "dataType": { "type": "int32", "specs": { "max": "100", "min": "0", "step": "1", "unit": "℃" } } },
+    { "identifier": "humi",  "name": "湿度",     "accessMode": "rw", "dataType": { "type": "int32", "specs": { "max": "100", "min": "0", "step": "1", "unit": "%"  } } },
+    { "identifier": "fan",   "name": "风扇",     "accessMode": "rw", "dataType": { "type": "bool",  "specs": {} } },
+    { "identifier": "pump",  "name": "水泵",     "accessMode": "rw", "dataType": { "type": "bool",  "specs": {} } },
+    { "identifier": "tempv", "name": "温度阈值", "accessMode": "rw", "dataType": { "type": "int32", "specs": { "max": "100", "min": "0", "step": "1", "unit": "℃" } } },
+    { "identifier": "humiv", "name": "湿度阈值", "accessMode": "rw", "dataType": { "type": "int32", "specs": { "max": "100", "min": "0", "step": "1", "unit": "%"  } } }
+  ]
+}`
 const themeSectionOpen = ref(false)
 const showPasswordModal = ref(false)
 const passwordInput = ref('')
@@ -569,7 +648,8 @@ const categoryDefs = [
 const pointTabDefs = [
   { key: 'displayPoints', label: '展示' },
   { key: 'switchPoints', label: '开关' },
-  { key: 'thresholdPoints', label: '阈值' }
+  { key: 'thresholdPoints', label: '阈值' },
+  { key: 'quickConfig', label: '快速配置' }
 ]
 
 function pointTabLabel(key) {
@@ -648,9 +728,11 @@ function clearDebugValues() {
 }
 
 const modalTitle = computed(() => {
+  if (activeModal.value === 'points') {
+    return `数据点配置 · ${pointTabLabel(activePointsTab.value)}`
+  }
   const titles = {
     cloud: '云平台连接配置',
-    points: `数据点配置 · ${pointTabLabel(activePointsTab.value)}`,
     recommendations: '推荐数据点配置',
     debug: '数据调试'
   }
@@ -764,7 +846,57 @@ function openPoints(defaultTab = 'displayPoints') {
   // 若传入了合法的 tab key，使用它；否则回退到默认展示
   const validTab = pointTabDefs.some((t) => t.key === defaultTab) ? defaultTab : 'displayPoints'
   activePointsTab.value = validTab
+  // 重置快速配置 tab 的临时状态
+  quickConfigText.value = ''
+  quickConfigError.value = ''
+  quickConfigResult.value = null
+  quickConfigMergeResult.value = ''
   activeModal.value = 'points'
+}
+
+function parseQuickConfig() {
+  quickConfigError.value = ''
+  quickConfigMergeResult.value = ''
+  const result = parseThingModel(quickConfigText.value)
+  if (!result.ok) {
+    quickConfigError.value = result.error
+    quickConfigResult.value = null
+    return
+  }
+  quickConfigResult.value = result
+}
+
+function applyQuickConfig() {
+  if (!quickConfigResult.value) return
+  const merged = mergeParsedIntoDraft(draft.value, quickConfigResult.value)
+  const parts = []
+  if (merged.byKind.display) parts.push(`展示 ${merged.byKind.display}`)
+  if (merged.byKind.switch) parts.push(`开关 ${merged.byKind.switch}`)
+  if (merged.byKind.threshold) parts.push(`阈值 ${merged.byKind.threshold}`)
+  const summary = parts.length ? parts.join(' / ') : '0'
+  quickConfigMergeResult.value = `已新增 ${merged.added} 个数据点（${summary}）${merged.skipped ? `，跳过 ${merged.skipped} 个已存在的 identifier` : ''}`
+  uni.showToast({
+    title: merged.added ? `已新增 ${merged.added} 个数据点` : '没有新数据点',
+    icon: merged.added ? 'success' : 'none'
+  })
+  // 用完清掉文本和结果，避免误重复应用
+  quickConfigText.value = ''
+  quickConfigResult.value = null
+  quickConfigError.value = ''
+}
+
+function clearQuickConfig() {
+  quickConfigText.value = ''
+  quickConfigError.value = ''
+  quickConfigResult.value = null
+  quickConfigMergeResult.value = ''
+}
+
+function loadQuickConfigSample() {
+  quickConfigText.value = QUICK_CONFIG_SAMPLE
+  quickConfigError.value = ''
+  quickConfigResult.value = null
+  quickConfigMergeResult.value = ''
 }
 
 function openRecommendations() {
@@ -1591,6 +1723,85 @@ onShow(reload)
 .cloud-status.error {
   background: var(--theme-danger-bg);
   color: var(--theme-danger);
+}
+
+/* ── Quick config tab (物模型一键导入) ── */
+.quick-config-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.qc-intro {
+  display: block;
+  color: var(--theme-text-secondary);
+  font-size: 24rpx;
+  line-height: 1.5;
+}
+
+.textarea.qc-textarea {
+  min-height: 320rpx;
+  font-family: monospace;
+  font-size: 22rpx;
+  line-height: 1.4;
+  white-space: pre;
+  word-break: break-all;
+}
+
+.qc-actions {
+  display: flex;
+  gap: 12rpx;
+  flex-wrap: wrap;
+}
+
+.qc-actions .inline-btn {
+  flex: 1;
+  margin: 0;
+  min-width: 0;
+  height: 72rpx;
+  line-height: 72rpx;
+}
+
+.qc-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  padding: 18rpx 20rpx;
+  border: 1rpx solid var(--theme-divider-light);
+  border-radius: var(--theme-radius-md);
+  background: var(--theme-surface-alt);
+}
+
+.qc-summary-line {
+  display: block;
+  color: var(--theme-text-primary);
+  font-size: 25rpx;
+  font-weight: 900;
+}
+
+.qc-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+  padding: 12rpx 0;
+  border-top: 1rpx solid var(--theme-divider-light);
+}
+
+.qc-group:first-of-type {
+  border-top: 0;
+}
+
+.qc-group-title {
+  color: var(--theme-accent);
+  font-size: 23rpx;
+  font-weight: 800;
+}
+
+.qc-group-items {
+  color: var(--theme-text-secondary);
+  font-size: 23rpx;
+  line-height: 1.45;
+  word-break: break-all;
 }
 
 .switch-field,
