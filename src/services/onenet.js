@@ -61,6 +61,28 @@ function unwrapValue(value) {
   return value
 }
 
+/**
+ * OneNET 业务层错误检查。
+ * OneNET 在鉴权/参数失败时仍返回 HTTP 200，但响应体里 code / errno 非零，
+ * 必须主动抛错，否则上层 verifyAuthorization 会误判为成功。
+ *
+ * 返回：
+ *   - null 表示成功（或响应不是 JSON 对象，无法判断）
+ *   - { code, message } 表示失败
+ */
+function extractApiError(body) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return null
+  // OneNET 不同 API 同时使用 { code, msg } 与 { errno, error } 两种格式
+  const codeRaw = body.code ?? body.errno
+  const message = body.msg ?? body.error ?? ''
+  if (codeRaw === undefined || codeRaw === null) return null
+  // 兼容字符串 / 数字形式的 code（部分 API 用字符串 '0'）
+  const codeNum = Number(codeRaw)
+  const codeOk = Number.isFinite(codeNum) ? codeNum === 0 : String(codeRaw) === '0'
+  if (codeOk) return null
+  return { code: String(codeRaw), message: String(message || '').trim() }
+}
+
 export function normalizeProperties(raw) {
   const body = raw?.data ?? raw
   const data = body?.data ?? body
@@ -152,6 +174,13 @@ export async function fetchProperties(config) {
     throw new Error(`云平台读取失败：HTTP ${response.statusCode}`)
   }
 
+  // OneNET 在鉴权 / 参数错误时仍会返回 HTTP 200，但响应体里的 code/errno 非零
+  const apiError = extractApiError(response.data)
+  if (apiError) {
+    const detail = apiError.message ? `: ${apiError.message}` : ''
+    throw new Error(`云平台鉴权失败（code=${apiError.code}）${detail}`)
+  }
+
   return normalizeProperties(response.data)
 }
 
@@ -192,6 +221,13 @@ export async function setDesiredProperty(config, identifier, value) {
 
   if (response.statusCode < 200 || response.statusCode >= 300) {
     throw new Error(`指令下发失败：HTTP ${response.statusCode}`)
+  }
+
+  // 业务层错误：OneNET 返回 HTTP 200 + code 非零
+  const apiError = extractApiError(response.data)
+  if (apiError) {
+    const detail = apiError.message ? `: ${apiError.message}` : ''
+    throw new Error(`云平台指令被拒（code=${apiError.code}）${detail}`)
   }
 
   return response.data
