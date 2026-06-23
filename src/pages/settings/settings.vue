@@ -383,6 +383,7 @@
                 :value="quickConfigText"
                 @input="quickConfigText = $event.detail.value"
                 placeholder='{ "version": "1.0", "properties": [...] }'
+                maxlength="-1"
               />
 
               <view class="qc-actions">
