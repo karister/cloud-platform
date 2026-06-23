@@ -37,33 +37,15 @@
       </view>
 
       <template v-if="adminMode">
-        <view class="menu-card" @tap="openPoints('displayPoints')">
+        <view class="menu-card points-action" @tap="openPoints">
           <view class="menu-icon-wrap">
             <image class="menu-icon" src="/static/tab/dashboard-active.png" mode="aspectFit" />
           </view>
           <view class="menu-copy">
-            <text class="menu-title">展示数据点</text>
-            <text class="menu-desc">{{ config.displayPoints.length }} 个属性</text>
-          </view>
-          <text class="menu-arrow">配置</text>
-        </view>
-        <view class="menu-card" @tap="openPoints('switchPoints')">
-          <view class="menu-icon-wrap">
-            <image class="menu-icon" src="/static/tab/threshold-active.png" mode="aspectFit" />
-          </view>
-          <view class="menu-copy">
-            <text class="menu-title">开关数据点</text>
-            <text class="menu-desc">{{ config.switchPoints.length }} 个属性</text>
-          </view>
-          <text class="menu-arrow">配置</text>
-        </view>
-        <view class="menu-card" @tap="openPoints('thresholdPoints')">
-          <view class="menu-icon-wrap">
-            <image class="menu-icon" src="/static/tab/history-active.png" mode="aspectFit" />
-          </view>
-          <view class="menu-copy">
-            <text class="menu-title">阈值数据点</text>
-            <text class="menu-desc">{{ config.thresholdPoints.length }} 个属性</text>
+            <text class="menu-title">数据点配置</text>
+            <text class="menu-desc">
+              展示 {{ config.displayPoints.length }} · 开关 {{ config.switchPoints.length }} · 阈值 {{ config.thresholdPoints.length }}
+            </text>
           </view>
           <text class="menu-arrow">配置</text>
         </view>
@@ -330,8 +312,20 @@
             <button class="secondary-btn" style="margin-top: 20rpx" @tap="clearDebugValues">清空调试值</button>
           </view>
 
-          <view v-else class="form">
-            <view v-if="activeModal === 'displayPoints'" class="quick-panel">
+          <view v-else-if="activeModal === 'points'" class="form">
+            <view class="category-tabs">
+              <view
+                v-for="tab in pointTabDefs"
+                :key="tab.key"
+                class="category-tab"
+                :class="{ active: activePointsTab === tab.key }"
+                @tap="activePointsTab = tab.key"
+              >
+                {{ tab.label }} · {{ draft[tab.key].length }}
+              </view>
+            </view>
+
+            <view v-if="activePointsTab === 'displayPoints'" class="quick-panel">
               <view class="quick-head">
                 <view>
                   <text class="quick-title">快速选择推荐数据点</text>
@@ -354,14 +348,14 @@
               </view>
             </view>
 
-            <view v-for="(point, index) in draft[activeModal]" :key="index" class="point-row">
+            <view v-for="(point, index) in draft[activePointsTab]" :key="`${activePointsTab}-${index}`" class="point-row">
               <view class="point-head">
                 <text>数据点 {{ index + 1 }}</text>
                 <button class="remove-btn" @tap="removePoint(index)">删除</button>
               </view>
-              <PointFields :point="point" :threshold="activeModal === 'thresholdPoints'" />
+              <PointFields :point="point" :threshold="activePointsTab === 'thresholdPoints'" />
               <!-- Alarm threshold binding (display points only) -->
-              <view v-if="activeModal === 'displayPoints'" class="alarm-field">
+              <view v-if="activePointsTab === 'displayPoints'" class="alarm-field">
                 <text>报警阈值绑定</text>
                 <picker
                   :range="thresholdPickerRange"
@@ -515,6 +509,7 @@ const adminMode = ref(true)
 const unlockTapCount = ref(0)
 const unlockTimer = ref(null)
 const activeRecommendCategory = ref('display')
+const activePointsTab = ref('displayPoints')
 const themeSectionOpen = ref(false)
 const showPasswordModal = ref(false)
 const passwordInput = ref('')
@@ -570,6 +565,17 @@ const categoryDefs = [
   { key: 'switch', label: '开关' },
   { key: 'threshold', label: '阈值' }
 ]
+
+const pointTabDefs = [
+  { key: 'displayPoints', label: '展示' },
+  { key: 'switchPoints', label: '开关' },
+  { key: 'thresholdPoints', label: '阈值' }
+]
+
+function pointTabLabel(key) {
+  const item = pointTabDefs.find((entry) => entry.key === key)
+  return item?.label || ''
+}
 
 // Alarm threshold dropdown helpers
 const thresholdPickerRange = computed(() => {
@@ -644,9 +650,7 @@ function clearDebugValues() {
 const modalTitle = computed(() => {
   const titles = {
     cloud: '云平台连接配置',
-    displayPoints: '展示数据点配置',
-    switchPoints: '开关数据点配置',
-    thresholdPoints: '阈值数据点配置',
+    points: `数据点配置 · ${pointTabLabel(activePointsTab.value)}`,
     recommendations: '推荐数据点配置',
     debug: '数据调试'
   }
@@ -754,10 +758,13 @@ function openCloud() {
   activeModal.value = 'cloud'
 }
 
-function openPoints(type) {
+function openPoints(defaultTab = 'displayPoints') {
   draft.value = clone(config.value)
   ensureRecommendedPoints(draft.value)
-  activeModal.value = type
+  // 若传入了合法的 tab key，使用它；否则回退到默认展示
+  const validTab = pointTabDefs.some((t) => t.key === defaultTab) ? defaultTab : 'displayPoints'
+  activePointsTab.value = validTab
+  activeModal.value = 'points'
 }
 
 function openRecommendations() {
@@ -887,12 +894,12 @@ function verifyAuthorization() {
 }
 
 function addPoint() {
-  const type = activeModal.value
-  draft.value[type].push(createPoint(type === 'thresholdPoints' ? 'threshold' : 'display'))
+  const kind = activePointsTab.value === 'thresholdPoints' ? 'threshold' : 'display'
+  draft.value[activePointsTab.value].push(createPoint(kind))
 }
 
 function removePoint(index) {
-  draft.value[activeModal.value].splice(index, 1)
+  draft.value[activePointsTab.value].splice(index, 1)
 }
 
 function addRecommendedPoint() {
@@ -1349,6 +1356,12 @@ onShow(reload)
 
 .menu-card.recommended-action {
   border-color: rgba(43, 138, 239, 0.18);
+}
+
+.menu-card.points-action {
+  border-color: rgba(43, 180, 120, 0.18);
+  background: linear-gradient(135deg, var(--theme-card-accent-bg-start) 0%, var(--theme-card-accent-bg-end) 100%);
+  box-shadow: 0 18rpx 42rpx var(--theme-card-accent-shadow);
 }
 
 .menu-card:active {
