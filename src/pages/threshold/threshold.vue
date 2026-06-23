@@ -1,89 +1,69 @@
 <template>
   <view class="page">
-    <!-- Hero panel: 渐变色顶部 + 标题 + 描述 + 最近同步 -->
-    <view class="hero">
-      <view class="hero-text">
-        <text class="hero-title">阈值设置</text>
-        <text class="hero-desc">修改安全阈值并下发到设备，正在输入时不会被刷新覆盖。</text>
-        <text class="hero-meta">最近同步 {{ syncText }}</text>
-      </view>
-      <view class="hero-badge" @tap="loadFromCloud">
-        <text class="hero-badge-num">{{ refreshing ? '…' : thresholds.length }}</text>
-        <text class="hero-badge-label">{{ refreshing ? '同步中' : '项阈值' }}</text>
-      </view>
-    </view>
-
-    <!-- 传感器对比卡：3 列展示配置 + 阈值 -->
-    <view v-if="sensorCards.length" class="sensor-row">
-      <view
-        v-for="card in sensorCards"
-        :key="card.identifier"
-        class="sensor-card"
-        :class="{ 'is-alarm': card.alarm }"
-      >
-        <text class="sensor-label">{{ card.label }}</text>
-        <text class="sensor-value">
-          <text class="sensor-value-num">{{ formatNumber(card.current) }}</text>
-          <text class="sensor-value-unit">{{ card.unit }}</text>
+    <view class="header-panel">
+      <view>
+        <text class="eyebrow">设备参数</text>
+        <text class="title">阈值设置</text>
+        <text class="desc">
+          {{ config.cloud.mockMode
+            ? '当前为模拟数据模式，阈值仅本地生效。'
+            : '已绑定云平台当前值；调整后会自动下发到下位机。' }}
         </text>
-        <text class="sensor-threshold">
-          阈值 {{ formatNumber(card.threshold) }}{{ card.unit }}
+        <text v-if="lastSyncedAt && !config.cloud.mockMode" class="sync-meta">
+          最近同步：{{ formatTime(lastSyncedAt) }}
         </text>
       </view>
-    </view>
-    <view v-else-if="!config.cloud.mockMode && hasBoundSensors" class="empty-tip">
-      <text>暂无传感器数据，等待首次同步…</text>
-    </view>
-
-    <!-- 设备阈值列表 -->
-    <view class="section">
-      <view class="section-head">
-        <text class="section-title">设备阈值</text>
-        <text class="section-desc">输入新数值后点击下发</text>
+      <view class="summary-chip" @tap="loadFromCloud">
+        <text>{{ refreshing ? '…' : thresholds.length }}</text>
+        <text>{{ refreshing ? '同步中' : '项' }}</text>
       </view>
+    </view>
 
-      <view v-if="thresholds.length" class="threshold-list">
-        <view v-for="point in thresholds" :key="point.identifier" class="threshold-row">
-          <view class="row-head">
-            <view class="row-head-text">
-              <text class="row-title">{{ point.label || point.identifier }}</text>
-              <text class="row-id">{{ point.identifier }}</text>
-            </view>
-            <text class="row-current">当前 {{ formatNumber(currentValues[point.identifier]) }}{{ point.unit }}</text>
+    <view v-if="thresholds.length" class="threshold-list">
+      <view v-for="point in thresholds" :key="point.identifier" class="threshold-card">
+        <view class="card-head">
+          <view>
+            <text class="point-label">{{ point.label || point.identifier }}</text>
+            <text class="point-id">{{ point.identifier }}</text>
           </view>
-
-          <view class="row-input-row">
-            <view class="input-wrap">
-              <input
-                class="row-input"
-                type="number"
-                :value="String(point.value)"
-                :focus="focusedId === point.identifier"
-                @focus="onFocus(point.identifier)"
-                @blur="onBlur(point.identifier)"
-                @input="onAdjust(point, $event.detail.value)"
-              />
-              <text class="row-unit">{{ point.unit }}</text>
-            </view>
-            <button
-              class="send-btn"
-              :class="{ 'is-sending': sendingId === point.identifier }"
-              :disabled="sendingId === point.identifier"
-              @tap="submit(point)"
-            >
-              {{ sendingId === point.identifier ? '下发中' : '下发' }}
-            </button>
-          </view>
-
-          <view v-if="statusOf(point.identifier)" class="row-status" :class="statusClass(point.identifier)">
-            <text>{{ statusOf(point.identifier) }}</text>
+          <view class="value-badge">
+            <text>{{ formatValue(point.value) }}</text>
+            <text>{{ point.unit }}</text>
           </view>
         </view>
-      </view>
-      <view v-else class="empty-tip">
-        <text>未配置阈值数据点，请在后台配置中添加。</text>
+
+        <slider
+          class="slider"
+          :activeColor="themeAccent"
+          backgroundColor="var(--theme-divider-light)"
+          :block-color="themeAccent"
+          :min="Number(point.min)"
+          :max="Number(point.max)"
+          :step="Number(point.step) || 1"
+          :value="Number(point.value)"
+          :disabled="config.cloud.mockMode && false"
+          @changing="onAdjust(point, $event.detail.value)"
+          @change="onAdjust(point, $event.detail.value)"
+        />
+
+        <view class="range-row">
+          <text>{{ point.min }}{{ point.unit }}</text>
+          <input
+            class="value-input"
+            type="number"
+            :value="String(point.value)"
+            @input="onInputAdjust(point, $event.detail.value)"
+          />
+          <text>{{ point.max }}{{ point.unit }}</text>
+        </view>
+
+        <view class="status-row" :class="statusClass(point.identifier)">
+          <text>{{ statusText(point.identifier) }}</text>
+        </view>
       </view>
     </view>
+
+    <EmptyState v-else title="未配置阈值数据点" desc="请在后台配置中添加需要通过滑条下发的属性" />
 
     <AppTabBar current="threshold" />
   </view>
@@ -91,19 +71,48 @@
 
 <script setup>
 import { computed, reactive, ref } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { onShow, onHide } from '@dcloudio/uni-app'
 import AppTabBar from '../../components/AppTabBar.vue'
+import EmptyState from '../../components/EmptyState.vue'
 import { fetchProperties, setDesiredProperty } from '../../services/onenet'
 import { getConfig, saveConfig } from '../../utils/storage'
+import { THEME_LIST } from '../../utils/themes'
+
+// 阈值页轮询节奏：与 dashboard 保持一致，每 5 秒拉一次
+const POLL_INTERVAL_MS = 5000
 
 const config = ref(getConfig())
 const thresholds = ref([])
-const currentValues = reactive({})   // 各 threshold 当前值（云平台拉取）
-const lastSyncedAt = ref(0)
 const refreshing = ref(false)
-const sendingId = ref('')
-const rowStatus = reactive({})        // { [identifier]: 'success' | 'failed:<msg>' }
-const focusedId = ref('')             // 当前聚焦的输入框，避免刷新覆盖
+const lastSyncedAt = ref(0)
+// per-identifier status: 'idle' | 'pending' | 'sending' | 'success' | { error: string }
+const sendStatus = reactive({})
+
+// 轮询 timer 与上一次下发的时间戳 — 用于避免轮询把刚下发未确认的值覆盖掉
+let pollTimer = null
+const recentPushAt = {}  // { [identifier]: timestamp }
+
+const themeAccent = computed(() => {
+  const theme = THEME_LIST.find((t) => t.id === config.value.themeId)
+  return theme ? theme.cssVars['--theme-accent'] : '#0f6b67'
+})
+
+const debounceTimers = {}
+
+function formatTime(ts) {
+  if (!ts) return '--'
+  const d = new Date(ts)
+  return d.toLocaleTimeString('zh-CN', { hour12: false })
+}
+
+function formatValue(v) {
+  const num = Number(v)
+  return Number.isFinite(num) ? String(num) : '--'
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value))
+}
 
 function syncThresholds() {
   config.value = getConfig()
@@ -111,49 +120,22 @@ function syncThresholds() {
     ...point,
     value: Number(point.value ?? point.min ?? 0)
   }))
+  // 重置每个点的状态
+  thresholds.value.forEach((p) => {
+    sendStatus[p.identifier] = sendStatus[p.identifier] || 'idle'
+  })
 }
 
-function formatNumber(v) {
-  const num = Number(v)
-  if (!Number.isFinite(num)) return '--'
-  // 整数不带小数；浮点保留 2 位
-  return Number.isInteger(num) ? String(num) : num.toFixed(2)
+function persistThresholds() {
+  config.value.thresholdPoints = thresholds.value
+  saveConfig(config.value)
 }
 
-const syncText = computed(() => {
-  if (config.value.cloud.mockMode) return '模拟模式'
-  if (!lastSyncedAt.value) return refreshing ? '同步中…' : '--'
-  const d = new Date(lastSyncedAt.value)
-  const pad = (n) => String(n).padStart(2, '0')
-  return `${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
-})
-
-const sensorCards = computed(() => {
-  // 展示所有 displayPoints 中绑定了阈值的那些
-  const points = config.value.displayPoints || []
-  return points
-    .filter((p) => p.alarmThresholdId)
-    .map((p) => {
-      const t = (config.value.thresholdPoints || []).find((tp) => tp.identifier === p.alarmThresholdId)
-      const cur = Number(currentValues[p.identifier])
-      const thr = t ? Number(t.value) : NaN
-      const alarm = Number.isFinite(cur) && Number.isFinite(thr) && cur > thr
-      return {
-        identifier: p.identifier,
-        label: p.label || p.identifier,
-        current: currentValues[p.identifier],
-        threshold: t ? t.value : null,
-        unit: p.unit || (t ? t.unit : ''),
-        alarm
-      }
-    })
-})
-
-const hasBoundSensors = computed(() =>
-  (config.value.displayPoints || []).some((p) => p.alarmThresholdId)
-)
-
-async function loadFromCloud() {
+/**
+ * 从云平台拉取每个阈值点的当前值。仅 mockMode=false 时调用。
+ * 同一函数既用于初次加载，也用于轮询节奏。
+ */
+async function loadFromCloud({ silent = false } = {}) {
   if (config.value.cloud.mockMode) {
     lastSyncedAt.value = Date.now()
     return
@@ -162,45 +144,74 @@ async function loadFromCloud() {
   refreshing.value = true
   try {
     const values = await fetchProperties(config.value)
-    // 把所有 identifier 的当前值缓存
-    Object.keys(values).forEach((k) => {
-      if (Number.isFinite(Number(values[k]))) {
-        currentValues[k] = Number(values[k])
-      }
-    })
-    // 如果用户没在改这个输入框，更新它的本地 value（以保持一致）
+    let updated = 0
     thresholds.value.forEach((point) => {
-      if (focusedId.value === point.identifier) return
       const v = values[point.identifier]
       if (v === undefined || v === null) return
       const num = Number(v)
       if (!Number.isFinite(num)) return
+
+      // 如果刚刚下发过该点（1.5 秒内），跳过 — 避免轮询在服务器还没
+      // 同步完成前把下发前的旧值回灌过来
+      const pushedAt = recentPushAt[point.identifier] || 0
+      if (Date.now() - pushedAt < 1500) return
+
       point.value = num
+      sendStatus[point.identifier] = 'success'
+      updated += 1
     })
+    if (updated > 0) persistThresholds()
     lastSyncedAt.value = Date.now()
   } catch (error) {
-    uni.showToast({ title: error.message || '读取云平台失败', icon: 'none' })
+    if (!silent) {
+      uni.showToast({
+        title: error.message || '读取云平台失败',
+        icon: 'none'
+      })
+    }
   } finally {
     refreshing.value = false
   }
 }
 
-function persistThresholds() {
-  config.value.thresholdPoints = thresholds.value
-  saveConfig(config.value)
+function startPolling() {
+  stopPolling()
+  if (config.value.cloud.mockMode) return
+  pollTimer = setInterval(() => {
+    loadFromCloud({ silent: true })
+  }, POLL_INTERVAL_MS)
 }
 
-function clamp(value, min, max) {
-  return Math.min(max, Math.max(min, value))
+function stopPolling() {
+  if (pollTimer) {
+    clearInterval(pollTimer)
+    pollTimer = null
+  }
 }
 
-function onFocus(identifier) {
-  focusedId.value = identifier
-}
-
-function onBlur(identifier) {
-  if (focusedId.value === identifier) {
-    focusedId.value = ''
+/**
+ * 把指定阈值的最新值下发到下位机。
+ * mockMode 下仅做本地持久化（不下发）。
+ */
+async function pushToCloud(point) {
+  if (config.value.cloud.mockMode) {
+    sendStatus[point.identifier] = 'success'
+    persistThresholds()
+    return
+  }
+  sendStatus[point.identifier] = 'sending'
+  // 标记刚下发时间，1.5 秒内的轮询不会覆盖本地值（云端可能还没同步）
+  recentPushAt[point.identifier] = Date.now()
+  try {
+    await setDesiredProperty(config.value, point.identifier, Number(point.value))
+    sendStatus[point.identifier] = 'success'
+    persistThresholds()
+  } catch (error) {
+    sendStatus[point.identifier] = { error: error.message || '下发失败' }
+    uni.showToast({
+      title: error.message || '下发失败',
+      icon: 'none'
+    })
   }
 }
 
@@ -208,60 +219,60 @@ function onAdjust(point, value) {
   const next = Number(value)
   if (!Number.isFinite(next)) return
   point.value = clamp(next, Number(point.min), Number(point.max))
-  // 用户主动改了值，清掉该点的状态提示
-  delete rowStatus[point.identifier]
-}
-
-async function submit(point) {
-  if (sendingId.value) return
-  sendingId.value = point.identifier
-  delete rowStatus[point.identifier]
-
-  try {
-    if (config.value.cloud.mockMode) {
-      persistThresholds()
-      rowStatus[point.identifier] = 'success'
-      uni.showToast({ title: '模拟模式已保存', icon: 'success' })
-    } else {
-      await setDesiredProperty(config.value, point.identifier, Number(point.value))
-      currentValues[point.identifier] = Number(point.value)
-      lastSyncedAt.value = Date.now()
-      persistThresholds()
-      rowStatus[point.identifier] = 'success'
-      uni.showToast({ title: '下发成功', icon: 'success' })
-    }
-  } catch (error) {
-    rowStatus[point.identifier] = `failed:${error.message || '下发失败'}`
-    uni.showToast({ title: error.message || '下发失败', icon: 'none' })
-  } finally {
-    sendingId.value = ''
-    // 短暂显示状态后自动清理
-    setTimeout(() => {
-      if (rowStatus[point.identifier] === 'success') {
-        delete rowStatus[point.identifier]
-      }
-    }, 3000)
+  sendStatus[point.identifier] = 'pending'
+  // 防抖：用户连续拖动时只下发最后一次
+  if (debounceTimers[point.identifier]) {
+    clearTimeout(debounceTimers[point.identifier])
   }
+  debounceTimers[point.identifier] = setTimeout(() => {
+    pushToCloud(point)
+  }, 350)
 }
 
-function statusOf(identifier) {
-  const s = rowStatus[identifier]
-  if (!s) return ''
-  if (s === 'success') return '已下发到设备'
-  if (s.startsWith('failed:')) return `下发失败：${s.slice('failed:'.length)}`
-  return s
+function onInputAdjust(point, value) {
+  const next = Number(value)
+  if (!Number.isFinite(next)) return
+  point.value = clamp(next, Number(point.min), Number(point.max))
+  sendStatus[point.identifier] = 'pending'
+  // 输入框没有连续事件，短暂延迟后立即下发
+  if (debounceTimers[point.identifier]) {
+    clearTimeout(debounceTimers[point.identifier])
+  }
+  debounceTimers[point.identifier] = setTimeout(() => {
+    pushToCloud(point)
+  }, 350)
 }
 
 function statusClass(identifier) {
-  const s = rowStatus[identifier]
+  const s = sendStatus[identifier]
+  if (s === 'sending') return 'is-sending'
+  if (s === 'pending') return 'is-pending'
+  if (s && typeof s === 'object' && s.error) return 'is-error'
   if (s === 'success') return 'is-success'
-  if (s && s.startsWith('failed:')) return 'is-failed'
-  return ''
+  return 'is-idle'
+}
+
+function statusText(identifier) {
+  const s = sendStatus[identifier]
+  if (s === 'sending') return '下发中…'
+  if (s === 'pending') return '待下发…'
+  if (s && typeof s === 'object' && s.error) return `下发失败：${s.error}`
+  if (s === 'success') return config.value.cloud.mockMode
+    ? '本地已更新（模拟模式）'
+    : '已同步 · ' + formatTime(lastSyncedAt || Date.now())
+  return config.value.cloud.mockMode
+    ? '模拟模式'
+    : (lastSyncedAt ? '已绑定云平台' : '正在拉取云平台当前值…')
 }
 
 onShow(() => {
   syncThresholds()
   loadFromCloud()
+  startPolling()
+})
+
+onHide(() => {
+  stopPolling()
 })
 </script>
 
@@ -270,284 +281,163 @@ onShow(() => {
   min-height: 100vh;
   padding: 28rpx 28rpx 150rpx;
   box-sizing: border-box;
-  background: var(--theme-bg-gradient-end);
+  background: linear-gradient(180deg, var(--theme-bg-gradient-settings-start) 0%, var(--theme-bg-gradient-settings-end) 45%, var(--theme-bg-gradient-settings-end) 100%);
 }
 
-/* ── Hero 顶部渐变面板 ── */
-.hero {
-  display: flex;
-  align-items: stretch;
-  justify-content: space-between;
-  gap: 18rpx;
-  padding: 32rpx 30rpx;
-  border-radius: var(--theme-radius-lg);
-  background: linear-gradient(135deg, var(--theme-hero-bg-start) 0%, var(--theme-hero-bg-end) 100%);
-  box-shadow: 0 18rpx 36rpx rgba(15, 118, 110, 0.18);
-}
-
-.hero-text {
-  flex: 1;
-  min-width: 0;
-}
-
-.hero-title,
-.hero-desc,
-.hero-meta {
-  display: block;
-  color: var(--theme-hero-text);
-}
-
-.hero-title {
-  font-size: 44rpx;
-  font-weight: 900;
-  letter-spacing: 1rpx;
-}
-
-.hero-desc {
-  margin-top: 10rpx;
-  color: var(--theme-hero-text-muted);
-  font-size: 24rpx;
-  line-height: 1.5;
-}
-
-.hero-meta {
-  margin-top: 14rpx;
-  color: var(--theme-hero-text-muted);
-  font-size: 22rpx;
-}
-
-.hero-badge {
-  display: flex;
-  width: 116rpx;
-  flex-shrink: 0;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border-radius: 24rpx;
-  background: var(--theme-hero-btn-bg);
-  border: 1rpx solid var(--theme-hero-btn-border);
-}
-
-.hero-badge:active {
-  transform: scale(0.96);
-}
-
-.hero-badge-num {
-  color: var(--theme-hero-text);
-  font-size: 40rpx;
-  font-weight: 900;
-  line-height: 1;
-}
-
-.hero-badge-label {
-  margin-top: 6rpx;
-  color: var(--theme-hero-text-muted);
-  font-size: 20rpx;
-  font-weight: 700;
-}
-
-/* ── 传感器对比卡 ── */
-.sensor-row {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16rpx;
-  margin-top: 22rpx;
-}
-
-.sensor-card {
-  display: flex;
-  flex-direction: column;
-  gap: 6rpx;
-  padding: 22rpx 22rpx 24rpx;
+.header-panel,
+.threshold-card {
+  border: var(--theme-card-border-width) var(--theme-card-border-style) var(--theme-surface-border);
   border-radius: var(--theme-radius-lg);
   background: var(--theme-surface);
-  border: 2rpx solid var(--theme-surface-border-light);
-  box-shadow: 0 12rpx 28rpx var(--theme-shadow-sm);
-  box-sizing: border-box;
-  min-width: 0;
+  box-shadow: 0 14rpx 38rpx var(--theme-shadow-sm);
 }
 
-.sensor-card.is-alarm {
-  border-color: #ef4444;
-  background: rgba(254, 226, 226, 0.6);
-  box-shadow: 0 12rpx 28rpx rgba(239, 68, 68, 0.18);
+.header-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+  padding: 30rpx;
 }
 
-.sensor-label {
-  color: var(--theme-text-secondary);
-  font-size: 24rpx;
-  font-weight: 700;
+.eyebrow,
+.title,
+.desc,
+.sync-meta,
+.point-label,
+.point-id,
+.value-badge text {
+  display: block;
 }
 
-.sensor-value {
-  margin-top: 6rpx;
+.eyebrow {
+  color: var(--theme-accent);
+  font-size: 23rpx;
+  font-weight: 800;
 }
 
-.sensor-value-num {
+.title {
+  margin-top: 8rpx;
   color: var(--theme-text-primary);
-  font-size: 38rpx;
+  font-size: 40rpx;
   font-weight: 900;
-  line-height: 1.1;
 }
 
-.sensor-value-unit {
-  margin-left: 6rpx;
+.desc {
+  margin-top: 10rpx;
   color: var(--theme-text-secondary);
-  font-size: 22rpx;
-  font-weight: 700;
+  font-size: 25rpx;
+  line-height: 1.45;
 }
 
-.sensor-card.is-alarm .sensor-value-num {
-  color: #b91c1c;
-}
-
-.sensor-card.is-alarm .sensor-value-unit {
-  color: #ef4444;
-}
-
-.sensor-threshold {
+.sync-meta {
   margin-top: 8rpx;
   color: var(--theme-text-tertiary);
   font-size: 22rpx;
 }
 
-.sensor-card.is-alarm .sensor-threshold {
-  color: #b91c1c;
-  font-weight: 700;
+.summary-chip {
+  display: flex;
+  width: 108rpx;
+  height: 108rpx;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 28rpx;
+  background: var(--theme-summary-chip-bg);
+  color: var(--theme-summary-chip-text);
+  font-size: 22rpx;
+  font-weight: 800;
+  flex-shrink: 0;
 }
 
-/* ── 设备阈值列表 ── */
-.section {
-  margin-top: 28rpx;
+.summary-chip:active {
+  transform: scale(0.96);
 }
 
-.section-head {
-  padding: 0 4rpx;
-}
-
-.section-title {
-  display: block;
-  color: var(--theme-text-primary);
-  font-size: 34rpx;
+.summary-chip text:first-child {
+  font-size: 38rpx;
   font-weight: 900;
-}
-
-.section-desc {
-  display: block;
-  margin-top: 8rpx;
-  color: var(--theme-text-secondary);
-  font-size: 24rpx;
+  line-height: 1;
 }
 
 .threshold-list {
   display: flex;
   flex-direction: column;
-  gap: 16rpx;
-  margin-top: 18rpx;
+  gap: var(--theme-layout-section-gap);
+  margin-top: 22rpx;
 }
 
-.threshold-row {
-  padding: 22rpx 26rpx;
-  border-radius: var(--theme-radius-lg);
-  background: var(--theme-surface);
-  border: 1rpx solid var(--theme-surface-border-light);
-  box-shadow: 0 10rpx 24rpx var(--theme-shadow-sm);
-  box-sizing: border-box;
+.threshold-card {
+  padding: 24rpx;
 }
 
-.row-head {
+.card-head,
+.range-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  gap: 12rpx;
+  gap: 16rpx;
 }
 
-.row-head-text {
-  flex: 1;
-  min-width: 0;
-}
-
-.row-title {
-  display: block;
+.point-label {
   color: var(--theme-text-primary);
   font-size: 30rpx;
-  font-weight: 900;
+  font-weight: 850;
 }
 
-.row-id {
-  display: block;
-  margin-top: 6rpx;
+.point-id {
+  margin-top: 8rpx;
   color: var(--theme-text-tertiary);
   font-size: 22rpx;
 }
 
-.row-current {
-  flex-shrink: 0;
-  color: var(--theme-accent);
-  font-size: 24rpx;
-  font-weight: 800;
-}
-
-.row-input-row {
-  display: flex;
-  align-items: center;
-  gap: 14rpx;
-  margin-top: 18rpx;
-}
-
-.input-wrap {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-  padding: 0 22rpx;
-  height: 80rpx;
-  border-radius: 16rpx;
-  background: var(--theme-input-bg);
-  border: 1rpx solid var(--theme-input-border);
+.value-badge {
+  min-width: 116rpx;
+  padding: 14rpx 16rpx;
+  border-radius: var(--theme-radius-md);
+  background: var(--theme-value-badge-bg);
+  color: var(--theme-value-badge-text);
+  text-align: center;
   box-sizing: border-box;
 }
 
-.row-input {
-  flex: 1;
-  width: 100%;
-  height: 80rpx;
-  color: var(--theme-text-primary);
-  font-size: 30rpx;
-  font-weight: 800;
+.value-badge text:first-child {
+  font-size: 38rpx;
+  font-weight: 900;
+  line-height: 1;
 }
 
-.row-unit {
-  flex-shrink: 0;
-  color: var(--theme-text-secondary);
-  font-size: 24rpx;
+.value-badge text:last-child {
+  margin-top: 4rpx;
+  color: var(--theme-value-badge-unit);
+  font-size: 20rpx;
   font-weight: 700;
 }
 
-.send-btn {
-  flex-shrink: 0;
-  width: 168rpx;
-  height: 80rpx;
-  margin: 0;
-  border-radius: 16rpx;
-  background: var(--theme-accent);
-  color: var(--theme-accent-contrast);
+.slider {
+  margin: 38rpx 0 20rpx;
+}
+
+.range-row {
+  color: var(--theme-text-secondary);
+  font-size: 24rpx;
+}
+
+.value-input {
+  width: 154rpx;
+  height: 68rpx;
+  border: 1px solid var(--theme-input-border);
+  border-radius: var(--theme-input-style);
+  background: var(--theme-input-bg);
+  color: var(--theme-text-primary);
   font-size: 28rpx;
-  font-weight: 900;
-  line-height: 80rpx;
-  box-shadow: 0 8rpx 18rpx var(--theme-shadow-accent);
+  font-weight: 800;
+  text-align: center;
 }
 
-.send-btn.is-sending {
-  opacity: 0.65;
-}
-
-.send-btn:disabled {
-  opacity: 0.5;
-}
-
-.row-status {
-  margin-top: 14rpx;
+.status-row {
+  margin-top: 16rpx;
   padding: 8rpx 14rpx;
   border-radius: var(--theme-radius-input);
   font-size: 22rpx;
@@ -555,23 +445,28 @@ onShow(() => {
   line-height: 1.4;
 }
 
-.row-status.is-success {
+.status-row.is-idle {
+  background: var(--theme-category-tabs-bg);
+  color: var(--theme-text-tertiary);
+}
+
+.status-row.is-pending {
+  background: var(--theme-category-tabs-bg);
+  color: var(--theme-text-secondary);
+}
+
+.status-row.is-sending {
   background: rgba(13, 201, 176, 0.12);
   color: var(--theme-accent);
 }
 
-.row-status.is-failed {
-  background: var(--theme-danger-bg);
-  color: var(--theme-danger);
+.status-row.is-success {
+  background: rgba(13, 201, 176, 0.18);
+  color: var(--theme-accent);
 }
 
-.empty-tip {
-  margin-top: 18rpx;
-  padding: 30rpx 20rpx;
-  border-radius: var(--theme-radius-md);
-  background: var(--theme-surface-alt);
-  color: var(--theme-text-secondary);
-  font-size: 25rpx;
-  text-align: center;
+.status-row.is-error {
+  background: var(--theme-danger-bg);
+  color: var(--theme-danger);
 }
 </style>
