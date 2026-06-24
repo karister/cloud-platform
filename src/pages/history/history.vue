@@ -72,11 +72,7 @@ const history = ref([])
 const loading = ref(false)
 // 仅在历史页 tab 处于前台时跟随全局 3s 轮询自动采样，避免后台页也写历史
 const isActive = ref(false)
-})
 
-const chartDotRadius = computed(() => {
-  const theme = THEME_LIST.find((t) => t.id === config.value.themeId)
-  return theme ? Number(theme.cssVars['--theme-chart-dot-radius']) || 4.5 : 4.5
 const visibleHistory = computed(() => [...history.value].reverse().slice(0, 20))
 
 function mockNumber(identifier, index) {
