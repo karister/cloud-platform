@@ -33,7 +33,7 @@
           <text class="menu-title">云平台连接</text>
           <text class="menu-desc">Product、Device、URL、鉴权</text>
         </view>
-        <text class="menu-arrow">进入</text>
+        <text class="menu-arrow">›</text>
       </view>
 
       <template v-if="adminMode">
@@ -47,7 +47,7 @@
               展示 {{ config.displayPoints.length }} · 开关 {{ config.switchPoints.length }} · 阈值 {{ config.thresholdPoints.length }}
             </text>
           </view>
-          <text class="menu-arrow">配置</text>
+          <text class="menu-arrow">›</text>
         </view>
         <view class="menu-card recommended-action" @tap="openRecommendations">
           <view class="menu-icon-wrap">
@@ -57,7 +57,7 @@
             <text class="menu-title">推荐数据点</text>
             <text class="menu-desc">展示、开关、阈值模板</text>
           </view>
-          <text class="menu-arrow">维护</text>
+          <text class="menu-arrow">›</text>
         </view>
         <view class="menu-card theme-action" @tap="openTheme">
           <view class="menu-icon-wrap">
@@ -67,7 +67,7 @@
             <text class="menu-title">主题配置</text>
             <text class="menu-desc">{{ currentThemeName }} - 4套风格可选</text>
           </view>
-          <text class="menu-arrow">{{ themeSectionOpen ? '收起' : '展开' }}</text>
+          <text class="menu-arrow">›</text>
         </view>
         <view class="menu-card debug-action" @tap="openDebug">
           <view class="menu-icon-wrap">
@@ -77,7 +77,7 @@
             <text class="menu-title">数据调试</text>
             <text class="menu-desc">手动设置模拟数据值进行调试</text>
           </view>
-          <text class="menu-arrow">调试</text>
+          <text class="menu-arrow">›</text>
         </view>
         <view class="menu-card export-action" @tap.stop="openExportModal">
           <view class="menu-icon-wrap">
@@ -87,7 +87,7 @@
             <text class="menu-title">配置导出</text>
             <text class="menu-desc">导出为JSON文件</text>
           </view>
-          <text class="menu-arrow">导出</text>
+          <text class="menu-arrow">›</text>
         </view>
         <view class="menu-card import-action" @tap.stop="openImport">
           <view class="menu-icon-wrap">
@@ -97,7 +97,7 @@
             <text class="menu-title">配置导入</text>
             <text class="menu-desc">从JSON文件恢复配置</text>
           </view>
-          <text class="menu-arrow">导入</text>
+          <text class="menu-arrow">›</text>
         </view>
         <view class="menu-card reset-action" @tap.stop="resetToFactory">
           <view class="menu-icon-wrap">
@@ -107,7 +107,7 @@
             <text class="menu-title">恢复出厂设置</text>
             <text class="menu-desc">清除所有配置回到初始状态</text>
           </view>
-          <text class="menu-arrow danger-arrow">重置</text>
+          <text class="menu-arrow danger-arrow">›</text>
         </view>
       </template>
     </view>
@@ -137,7 +137,7 @@
             </view>
             <text class="theme-desc">{{ theme.description }}</text>
           </view>
-          <view v-if="config.themeId === theme.id" class="theme-check">Active</view>
+          <view v-if="config.themeId === theme.id" class="theme-check">✓</view>
         </view>
       </view>
     </view>
@@ -794,7 +794,7 @@ const currentThemeName = computed(() => {
 
 const debugSwitchColor = computed(() => {
   const theme = THEME_LIST.find((t) => t.id === config.value.themeId)
-  return theme ? theme.cssVars['--theme-accent'] : '#0dc9b0'
+  return theme ? theme.cssVars['--theme-accent'] : '#0071e3'
 })
 
 const recommendedDisplayPoints = computed(() => draft.value.recommendedPoints?.display || [])
@@ -985,12 +985,12 @@ function selectTheme(themeId) {
 // Theme preview helpers - extract accent/surface from THEME_LIST cssVars
 function themeAccent(id) {
   const theme = THEME_LIST.find((t) => t.id === id)
-  return theme ? theme.cssVars['--theme-accent'] : '#0dc9b0'
+  return theme ? theme.cssVars['--theme-accent'] : '#0071e3'
 }
 
 function themeBgImage(id) {
-  const theme = THEME_LIST.find((t) => t.id === id)
-  return theme ? theme.backgroundImage : 'none'
+  // 主题背景纹理在 Apple 风格改造中已停止运行时引用，文件保留仅用于配置兼容
+  return 'none'
 }
 
 function themePreviewBg(id) {
@@ -1006,7 +1006,7 @@ function themePreviewHero(id) {
 
 function themePreviewSurface(id) {
   const theme = THEME_LIST.find((t) => t.id === id)
-  return theme ? theme.cssVars['--theme-surface'] : '#122f31'
+  return theme ? theme.cssVars['--theme-surface'] : '#ffffff'
 }
 
 function themePreviewRadius(id) {
@@ -1411,17 +1411,17 @@ onShow(reload)
   min-height: 100vh;
   padding: 28rpx 28rpx 150rpx;
   box-sizing: border-box;
-  background: linear-gradient(180deg, var(--theme-bg-gradient-settings-start) 0%, var(--theme-bg-gradient-settings-end) 45%, var(--theme-bg-gradient-settings-end) 100%);
+  background: var(--theme-bg);
 }
 
 .header-panel,
 .name-panel,
 .summary-panel,
 .menu-card {
-  border: 1rpx solid var(--theme-surface-border);
+  border: 0.5px solid var(--theme-surface-border);
   border-radius: var(--theme-radius-lg);
   background: var(--theme-surface);
-  box-shadow: 0 14rpx 38rpx var(--theme-shadow-sm);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8rpx 24rpx var(--theme-shadow-sm);
 }
 
 .header-panel {
@@ -1429,7 +1429,7 @@ onShow(reload)
   align-items: flex-start;
   justify-content: space-between;
   gap: 18rpx;
-  padding: 30rpx;
+  padding: 32rpx 30rpx;
 }
 
 .eyebrow,
@@ -1445,15 +1445,18 @@ onShow(reload)
 
 .eyebrow {
   color: var(--theme-accent);
-  font-size: 23rpx;
-  font-weight: 800;
+  font-size: 22rpx;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .title {
   margin-top: 8rpx;
   color: var(--theme-text-primary);
   font-size: 40rpx;
-  font-weight: 900;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .desc {
@@ -1464,25 +1467,28 @@ onShow(reload)
 }
 
 .admin-exit {
-  width: 96rpx;
+  width: auto;
   height: 56rpx;
+  padding: 0 24rpx;
   margin: 0;
-  border-radius: var(--theme-radius-input);
-  background: var(--theme-category-tabs-bg);
+  border-radius: 999rpx;
+  background: var(--theme-divider);
   color: var(--theme-text-secondary);
   font-size: 23rpx;
+  font-weight: 500;
   line-height: 56rpx;
 }
 
 .name-panel {
   margin-top: 22rpx;
-  padding: 24rpx;
+  padding: 28rpx;
 }
 
 .panel-title {
   color: var(--theme-text-primary);
   font-size: 30rpx;
-  font-weight: 900;
+  font-weight: 700;
+  letter-spacing: -0.015em;
 }
 
 .name-row {
@@ -1494,12 +1500,19 @@ onShow(reload)
 .name-input,
 .input,
 .textarea {
-  border: 1rpx solid var(--theme-input-border);
-  border-radius: var(--theme-radius-input);
+  border: 1px solid var(--theme-input-border);
+  border-radius: 12rpx;
   background: var(--theme-input-bg);
   color: var(--theme-text-primary);
   font-size: 26rpx;
   box-sizing: border-box;
+  transition: border-color 0.18s ease;
+}
+
+.name-input:focus,
+.input:focus,
+.textarea:focus {
+  border-color: var(--theme-input-border-focus);
 }
 
 .name-input {
@@ -1513,15 +1526,16 @@ onShow(reload)
 .secondary-btn,
 .close-btn,
 .remove-btn {
-  border-radius: var(--theme-radius-input);
   font-size: 26rpx;
-  font-weight: 800;
+  font-weight: 500;
 }
 
 .save-name {
-  width: 126rpx;
+  width: auto;
   height: 76rpx;
+  padding: 0 36rpx;
   margin: 0;
+  border-radius: 999rpx;
   background: var(--theme-accent);
   color: var(--theme-accent-contrast);
   line-height: 76rpx;
@@ -1545,37 +1559,29 @@ onShow(reload)
   flex-direction: column;
   justify-content: space-between;
   padding: 22rpx;
-  border: 2rpx solid var(--theme-surface-border-light);
+  border: 0.5px solid var(--theme-surface-border);
   box-sizing: border-box;
   overflow: hidden;
+  transition: transform 0.18s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.18s ease;
 }
 
-.menu-card::after {
-  position: absolute;
-  right: 20rpx;
-  top: 20rpx;
-  width: 72rpx;
-  height: 72rpx;
-  border-radius: 50%;
-  background: var(--theme-menu-accent-bg);
-  content: "";
+/* All 7 menu-card variants share the same Apple-style neutral border —
+   Apple's Settings rows look uniform, distinguished by icon + title only. */
+.menu-card.primary-action,
+.menu-card.points-action,
+.menu-card.recommended-action,
+.menu-card.theme-action,
+.menu-card.debug-action,
+.menu-card.export-action,
+.menu-card.import-action {
+  border-color: var(--theme-surface-border);
+  background: var(--theme-surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8rpx 24rpx var(--theme-shadow-sm);
 }
 
-.menu-card.primary-action {
-  min-height: 168rpx;
-  border-color: var(--theme-card-accent-border);
-  background: linear-gradient(135deg, var(--theme-card-accent-bg-start) 0%, var(--theme-card-accent-bg-end) 100%);
-  box-shadow: 0 18rpx 42rpx var(--theme-card-accent-shadow);
-}
-
-.menu-card.recommended-action {
-  border-color: rgba(43, 138, 239, 0.18);
-}
-
-.menu-card.points-action {
-  border-color: rgba(43, 180, 120, 0.18);
-  background: linear-gradient(135deg, var(--theme-card-accent-bg-start) 0%, var(--theme-card-accent-bg-end) 100%);
-  box-shadow: 0 18rpx 42rpx var(--theme-card-accent-shadow);
+/* Danger variant: only the reset card needs a danger-tinted border */
+.menu-card.reset-action {
+  border-color: var(--theme-danger-border);
 }
 
 .menu-card:active {
@@ -1585,17 +1591,17 @@ onShow(reload)
 
 .menu-icon-wrap {
   display: flex;
-  width: 58rpx;
-  height: 58rpx;
+  width: 72rpx;
+  height: 72rpx;
   align-items: center;
   justify-content: center;
-  border-radius: var(--theme-radius-input);
+  border-radius: 50%;
   background: var(--theme-accent-light);
 }
 
 .menu-icon {
-  width: 36rpx;
-  height: 36rpx;
+  width: 40rpx;
+  height: 40rpx;
 }
 
 .menu-copy {
@@ -1605,7 +1611,8 @@ onShow(reload)
 .menu-title {
   color: var(--theme-text-primary);
   font-size: 29rpx;
-  font-weight: 900;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .menu-desc {
@@ -1615,16 +1622,21 @@ onShow(reload)
   line-height: 1.35;
 }
 
+/* iOS-style chevron — replaces the bottom-right accent pill */
 .menu-arrow {
   position: absolute;
-  right: 18rpx;
-  bottom: 18rpx;
-  padding: 8rpx 14rpx;
-  border-radius: var(--theme-radius-pill);
-  background: var(--theme-accent);
-  color: var(--theme-accent-contrast);
-  font-size: 21rpx;
-  font-weight: 800;
+  right: 24rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--theme-text-tertiary);
+  font-size: 36rpx;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.menu-arrow.danger-arrow {
+  color: var(--theme-danger);
+  background: none !important;
 }
 
 .summary-panel {
@@ -1637,10 +1649,10 @@ onShow(reload)
   justify-content: space-between;
   gap: 18rpx;
   padding: 22rpx 0;
-  border-bottom: 1rpx solid var(--theme-divider);
+  border-bottom: 1px solid var(--theme-divider);
   color: var(--theme-text-primary);
   font-size: 26rpx;
-  font-weight: 750;
+  font-weight: 500;
 }
 
 .summary-item:last-child {
@@ -1649,7 +1661,7 @@ onShow(reload)
 
 .summary-item text:first-child {
   color: var(--theme-text-secondary);
-  font-weight: 650;
+  font-weight: 500;
 }
 
 .modal-mask {
@@ -1664,7 +1676,7 @@ onShow(reload)
 .modal {
   width: 100%;
   max-height: 90vh;
-  border-radius: var(--theme-radius-lg) var(--theme-radius-lg) 0 0;
+  border-radius: 28rpx 28rpx 0 0;
   background: var(--theme-surface);
   overflow: hidden;
 }
@@ -1682,21 +1694,25 @@ onShow(reload)
 
 .modal-head {
   padding: 26rpx 28rpx;
-  border-bottom: 1rpx solid var(--theme-divider);
+  border-bottom: 1px solid var(--theme-divider);
   color: var(--theme-text-primary);
-  font-size: 31rpx;
-  font-weight: 900;
+  font-size: 32rpx;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .close-btn,
 .refresh-btn,
 .remove-btn {
-  width: 108rpx;
+  width: auto;
   height: 58rpx;
+  padding: 0 24rpx;
   margin: 0;
+  border-radius: 999rpx;
   background: var(--theme-divider);
   color: var(--theme-text-secondary);
   font-size: 24rpx;
+  font-weight: 500;
   line-height: 58rpx;
 }
 
@@ -1794,12 +1810,12 @@ onShow(reload)
 }
 
 .cloud-status.info {
-  background: rgba(13, 201, 176, 0.12);
+  background: var(--theme-accent-tint-16);
   color: var(--theme-accent);
 }
 
 .cloud-status.success {
-  background: rgba(13, 201, 176, 0.18);
+  background: var(--theme-accent-light);
   color: var(--theme-accent);
 }
 
@@ -1818,7 +1834,7 @@ onShow(reload)
 }
 
 .manual-token-field .field-tip {
-  color: var(--theme-warning, #d97706);
+  color: var(--theme-warning);
 }
 
 /* ── Quick config tab (物模型一键导入) ── */
@@ -1936,9 +1952,11 @@ onShow(reload)
 .secondary-btn {
   height: 76rpx;
   margin: 0;
-  border: 1rpx solid var(--theme-btn-secondary-border);
+  border-radius: 999rpx;
+  border: 1px solid var(--theme-btn-secondary-border);
   background: var(--theme-btn-secondary-bg);
   color: var(--theme-btn-secondary-text);
+  font-weight: 500;
   line-height: 76rpx;
 }
 
@@ -2006,47 +2024,50 @@ onShow(reload)
 .category-tabs {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12rpx;
-  padding: 8rpx;
-  border-radius: 22rpx;
+  gap: 6rpx;
+  padding: 6rpx;
+  border-radius: 999rpx;
   background: var(--theme-category-tabs-bg);
 }
 
 .category-tab {
-  height: 64rpx;
-  border-radius: var(--theme-radius-input);
+  height: 60rpx;
+  border-radius: 999rpx;
   color: var(--theme-text-secondary);
-  font-size: 25rpx;
-  font-weight: 800;
-  line-height: 64rpx;
+  font-size: 24rpx;
+  font-weight: 500;
+  line-height: 60rpx;
   text-align: center;
-  transition: transform 0.12s ease, opacity 0.12s ease;
+  transition: transform 0.18s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.18s ease;
 }
 
 .category-tab:active {
-  transform: scale(0.95);
+  transform: scale(0.96);
   opacity: 0.85;
 }
 
 .category-tab.active {
   background: var(--theme-category-tab-active-bg);
   color: var(--theme-accent);
-  box-shadow: 0 8rpx 20rpx var(--theme-category-tab-active-shadow);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  font-weight: 600;
 }
 
 .modal-footer {
   padding: 18rpx 28rpx 28rpx;
-  border-top: 1rpx solid var(--theme-divider);
+  border-top: 1px solid var(--theme-divider);
 }
 
 .primary-btn {
   width: 100%;
   height: 80rpx;
   margin: 0;
+  border-radius: 999rpx;
   background: var(--theme-accent);
   color: var(--theme-accent-contrast);
+  font-weight: 600;
   line-height: 80rpx;
-  box-shadow: 0 12rpx 28rpx var(--theme-shadow-accent);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 12rpx 28rpx var(--theme-shadow-accent);
 }
 
 /* ── Password modal ── */
@@ -2057,9 +2078,9 @@ onShow(reload)
   transform: translate(-50%, -50%);
   width: 560rpx;
   padding: 40rpx 36rpx 30rpx;
-  border-radius: var(--theme-radius-lg);
+  border-radius: 28rpx;
   background: var(--theme-surface);
-  box-shadow: 0 28rpx 68rpx var(--theme-shadow-lg);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 28rpx 68rpx rgba(0, 0, 0, 0.20);
   z-index: 50;
 }
 
@@ -2067,7 +2088,8 @@ onShow(reload)
   display: block;
   color: var(--theme-text-primary);
   font-size: 34rpx;
-  font-weight: 900;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .password-desc {
@@ -2083,7 +2105,7 @@ onShow(reload)
   margin-top: 28rpx;
   padding: 0 20rpx;
   border: 1px solid var(--theme-input-border);
-  border-radius: var(--theme-radius-input);
+  border-radius: 16rpx;
   background: var(--theme-input-bg);
   color: var(--theme-text-primary);
   font-size: 28rpx;
@@ -2101,9 +2123,9 @@ onShow(reload)
   flex: 1;
   height: 76rpx;
   margin: 0;
-  border-radius: var(--theme-radius-input);
+  border-radius: 999rpx;
   font-size: 27rpx;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 76rpx;
 }
 
@@ -2121,15 +2143,11 @@ onShow(reload)
 /* ── Theme selector (inline, not modal) ── */
 .theme-section {
   margin-top: 22rpx;
-  padding: 24rpx;
-  border: var(--theme-card-border-width) var(--theme-card-border-style) var(--theme-surface-border);
+  padding: 28rpx;
+  border: 0.5px solid var(--theme-surface-border);
   border-radius: var(--theme-radius-lg);
   background: var(--theme-surface);
-  box-shadow: 0 14rpx 38rpx var(--theme-shadow-sm);
-}
-
-.theme-action {
-  border-color: rgba(140, 100, 220, 0.18);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8rpx 24rpx var(--theme-shadow-sm);
 }
 
 .theme-intro {
@@ -2147,11 +2165,11 @@ onShow(reload)
 
 .theme-card {
   position: relative;
-  border: 2rpx solid var(--theme-input-border);
+  border: 0.5px solid var(--theme-surface-border);
   border-radius: var(--theme-radius-md);
   background: var(--theme-surface);
   overflow: hidden;
-  transition: transform 0.12s ease, opacity 0.12s ease;
+  transition: transform 0.18s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.18s ease;
 }
 
 .theme-card:active {
@@ -2161,7 +2179,7 @@ onShow(reload)
 
 .theme-card.active {
   border-color: var(--theme-accent);
-  box-shadow: 0 0 0 3rpx var(--theme-surface-border-light);
+  box-shadow: 0 0 0 3rpx var(--theme-accent-tint-16);
 }
 
 .theme-preview {
@@ -2190,7 +2208,7 @@ onShow(reload)
 
 .theme-meta {
   padding: 14rpx 16rpx 16rpx;
-  border-top: 1rpx solid var(--theme-divider);
+  border-top: 1px solid var(--theme-divider);
 }
 
 .theme-meta-row {
@@ -2209,7 +2227,8 @@ onShow(reload)
 .theme-name {
   color: var(--theme-text-primary);
   font-size: 26rpx;
-  font-weight: 800;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .theme-desc {
@@ -2217,18 +2236,22 @@ onShow(reload)
   margin-top: 8rpx;
   color: var(--theme-text-secondary);
   font-size: 21rpx;
+  font-weight: 500;
 }
 
 .theme-check {
   position: absolute;
-  top: 0;
-  right: 0;
-  padding: 6rpx 14rpx;
-  border-radius: 0 22rpx 0 18rpx;
+  top: 14rpx;
+  right: 14rpx;
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
   background: var(--theme-accent);
   color: var(--theme-accent-contrast);
-  font-size: 19rpx;
-  font-weight: 800;
+  font-size: 22rpx;
+  font-weight: 700;
+  line-height: 36rpx;
+  text-align: center;
 }
 
 /* ── Alarm threshold field ── */
@@ -2260,10 +2283,6 @@ onShow(reload)
 }
 
 /* ── Debug panel ── */
-.debug-action {
-  border-color: rgba(200, 160, 40, 0.2);
-}
-
 .debug-intro {
   display: block;
   margin-bottom: 22rpx;
@@ -2282,7 +2301,7 @@ onShow(reload)
   align-items: center;
   gap: 18rpx;
   padding: 16rpx 18rpx;
-  border: 1rpx solid var(--theme-divider-light);
+  border: 1px solid var(--theme-divider-light);
   border-radius: 16rpx;
   background: var(--theme-surface-alt);
 }
@@ -2296,7 +2315,8 @@ onShow(reload)
   display: block;
   color: var(--theme-text-primary);
   font-size: 27rpx;
-  font-weight: 800;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .debug-id {
@@ -2310,14 +2330,20 @@ onShow(reload)
   width: 160rpx;
   height: 64rpx;
   padding: 0 14rpx;
-  border: 1rpx solid var(--theme-input-border);
-  border-radius: var(--theme-radius-input);
+  border: 1px solid var(--theme-input-border);
+  border-radius: 12rpx;
   background: var(--theme-input-bg);
   color: var(--theme-accent);
   font-size: 26rpx;
-  font-weight: 800;
+  font-weight: 600;
   text-align: center;
   box-sizing: border-box;
+  font-variant-numeric: tabular-nums;
+  transition: border-color 0.18s ease;
+}
+
+.debug-input:focus {
+  border-color: var(--theme-input-border-focus);
 }
 
 .debug-empty {
@@ -2328,14 +2354,6 @@ onShow(reload)
 }
 
 /* ── Export / Import ── */
-.export-action {
-  border-color: rgba(43, 180, 120, 0.2);
-}
-
-.import-action {
-  border-color: rgba(60, 130, 220, 0.2);
-}
-
 .export-intro {
   display: block;
   margin-bottom: 18rpx;
@@ -2353,7 +2371,7 @@ onShow(reload)
 
 .export-divider-line {
   flex: 1;
-  height: 1rpx;
+  height: 1px;
   background: var(--theme-divider);
 }
 
@@ -2373,20 +2391,27 @@ onShow(reload)
   flex: 1;
   height: 76rpx;
   padding: 0 20rpx;
-  border: 1rpx solid var(--theme-input-border);
-  border-radius: var(--theme-radius-input);
+  border: 1px solid var(--theme-input-border);
+  border-radius: 12rpx;
   background: var(--theme-input-bg);
   color: var(--theme-text-primary);
   font-size: 26rpx;
   box-sizing: border-box;
+  transition: border-color 0.18s ease;
+}
+
+.export-email-input:focus {
+  border-color: var(--theme-input-border-focus);
 }
 
 .export-send-btn {
   flex-shrink: 0;
-  width: 120rpx;
+  width: auto;
   height: 76rpx;
   margin: 0;
+  padding: 0 32rpx;
   line-height: 76rpx;
+  border-radius: 999rpx;
 }
 
 .export-send-btn:disabled {
@@ -2397,7 +2422,7 @@ onShow(reload)
   display: block;
   color: var(--theme-danger);
   font-size: 23rpx;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .import-preview-title {
@@ -2405,13 +2430,14 @@ onShow(reload)
   margin-bottom: 14rpx;
   color: var(--theme-text-primary);
   font-size: 27rpx;
-  font-weight: 900;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .import-preview-card {
   padding: 4rpx 0;
-  border: 1rpx solid var(--theme-divider-light);
-  border-radius: var(--theme-radius-md);
+  border: 1px solid var(--theme-divider-light);
+  border-radius: 16rpx;
   background: var(--theme-surface-alt);
   overflow: hidden;
 }
@@ -2422,7 +2448,7 @@ onShow(reload)
   align-items: center;
   gap: 14rpx;
   padding: 18rpx 20rpx;
-  border-bottom: 1rpx solid var(--theme-divider-light);
+  border-bottom: 1px solid var(--theme-divider-light);
 }
 
 .import-preview-item:last-child {
@@ -2432,14 +2458,14 @@ onShow(reload)
 .import-preview-label {
   color: var(--theme-text-secondary);
   font-size: 25rpx;
-  font-weight: 700;
+  font-weight: 500;
   flex-shrink: 0;
 }
 
 .import-preview-value {
   color: var(--theme-text-primary);
   font-size: 25rpx;
-  font-weight: 800;
+  font-weight: 600;
   text-align: right;
   word-break: break-all;
 }
@@ -2451,12 +2477,12 @@ onShow(reload)
 
 .import-warning {
   padding: 18rpx 20rpx;
-  border: 1rpx solid rgba(225, 29, 72, 0.2);
-  border-radius: var(--theme-radius-md);
+  border: 1px solid var(--theme-danger-border);
+  border-radius: 16rpx;
   background: var(--theme-danger-bg);
   color: var(--theme-danger);
   font-size: 24rpx;
-  font-weight: 700;
+  font-weight: 500;
   text-align: center;
 }
 
@@ -2464,12 +2490,11 @@ onShow(reload)
   margin-top: 8rpx;
 }
 
-/* ── Reset to factory ── */
-.reset-action {
-  border-color: rgba(225, 29, 72, 0.2);
-}
-
+/* ── Reset to factory ──
+   Card border + chevron both use danger token via the menu-card.*-action
+   cascade. The danger-arrow chevron keeps its red text color but loses
+   the pill background (it's now a chevron, not a button). */
 .danger-arrow {
-  background: var(--theme-danger) !important;
+  color: var(--theme-danger);
 }
 </style>

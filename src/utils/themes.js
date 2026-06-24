@@ -1,634 +1,594 @@
 /**
- * Theme System v2 - Complete Visual Schemes
+ * Theme System v2 — Apple Visual Language
  *
- * Each theme is a full visual identity covering:
- *   colors, background image, card morphology, tab bar style,
- *   chart appearance, button shape, layout density.
+ * 每个主题共用一套 token 命名，只是 surface / text / accent 染色不同。
+ * 设计原则：
+ * - 单一 system-blue accent（#0071e3），所有主题共用
+ * - surface + text 决定主题气质（浅/深/暖/极简）
+ * - 阴影统一 rgba(0,0,0,0.x)，绝不用纯黑
+ * - 圆角统一 sm 10 / md 16 / lg 22 / pill 999
  *
- * Themes are applied via two HTML attributes:
- *   data-theme="id"        -> color CSS variables
- *   data-theme-layout="id" -> structural CSS (radii, borders, shadows, tab shape)
+ * 通过两个 HTML 属性应用：
+ *   data-theme="id"        -> 颜色 CSS 变量
+ *   data-theme-layout="id" -> 结构 CSS（圆角、间距、tab 形状）
  */
 
 // ---------------------------------------------------------------------------
-// Teal - Industrial IoT Command Center (Bright Edition)
+// 浅色 — Apple Standard Light
+// 系统蓝 accent + 接近 iOS Settings 的 off-white surface
 // ---------------------------------------------------------------------------
 const TEAL = {
   id: 'teal',
-  name: '工业互联指挥舱', // 工业互联指挥舱
-  description: 'Light technical blueprint background, electric teal accents, white data cards with strong status indicators',
+  name: '浅色',
+  description: 'Apple 标准浅色：off-white 背景，system-blue 单一强调色，克制留白',
   layoutPreset: 'compact',
   surfacePreset: 'sharp',
   tabPreset: 'capsule',
   chartPreset: 'angular',
-  backgroundImage: "url('/static/theme/bg-teal.svg')",
+  backgroundImage: 'none',
   heroPattern: 'solid-bright',
   cssVars: {
-    // Accent — electric teal, single source of color identity
-    '--theme-accent': '#0891a0',
-    '--theme-accent-light': '#e0f4f6',
-    '--theme-accent-dark': '#066976',
+    // Accent — Apple systemBlue
+    '--theme-accent': '#0071e3',
+    '--theme-accent-light': '#e8f1fd',
+    '--theme-accent-dark': '#0058b0',
     '--theme-accent-contrast': '#ffffff',
+    '--theme-accent-tint-16': 'rgba(0, 113, 227, 0.16)',
+    '--theme-danger-contrast': '#ffffff',
 
-    // Background — light cool teal-tinted paper
-    '--theme-bg': '#eef3f5',
-    '--theme-bg-image': "url('/static/theme/bg-teal.svg')",
-    '--theme-bg-image-opacity': '0.5',
-    '--theme-bg-gradient-start': '#e8f0f2',
-    '--theme-bg-gradient-end': '#eef3f5',
-    '--theme-bg-gradient-settings-start': '#e6eef0',
-    '--theme-bg-gradient-settings-end': '#eef3f5',
+    // Background — Apple systemGroupedBackground
+    '--theme-bg': '#f5f5f7',
+    '--theme-bg-image': 'none',
+    '--theme-bg-image-opacity': '0',
+    '--theme-bg-gradient-start': '#fbfbfd',
+    '--theme-bg-gradient-end': '#f5f5f7',
+    '--theme-bg-gradient-settings-start': '#f5f5f7',
+    '--theme-bg-gradient-settings-end': '#f5f5f7',
 
-    // Surface / Cards — pure white with teal-tinted border (off-white to avoid pure #fff tells)
+    // Surface — 纯白卡片 + 极淡 hairline 边框
     '--theme-surface': '#ffffff',
-    '--theme-surface-alt': '#f6fafb',
-    '--theme-surface-alt-2': '#eff6f7',
-    '--theme-surface-hover': '#f0f7f8',
-    '--theme-surface-border': 'rgba(8, 145, 160, 0.14)',
-    '--theme-surface-border-light': 'rgba(8, 145, 160, 0.07)',
-    '--theme-surface-border-accent': 'rgba(8, 145, 160, 0.24)',
+    '--theme-surface-alt': '#f5f5f7',
+    '--theme-surface-alt-2': '#f0f0f3',
+    '--theme-surface-hover': '#f0f6ff',
+    '--theme-surface-border': 'rgba(0, 0, 0, 0.08)',
+    '--theme-surface-border-light': 'rgba(0, 0, 0, 0.04)',
+    '--theme-surface-border-accent': 'rgba(0, 113, 227, 0.18)',
 
-    // Text — deep teal-navy (off-black, not pure #000)
-    '--theme-text-primary': '#0e2530',
-    '--theme-text-secondary': '#4a6573',
-    '--theme-text-tertiary': '#7a9099',
-    '--theme-text-heading': '#08182a',
+    // Text — Apple label / secondaryLabel / tertiaryLabel
+    '--theme-text-primary': '#1d1d1f',
+    '--theme-text-secondary': '#6e6e73',
+    '--theme-text-tertiary': '#86868b',
+    '--theme-text-heading': '#000000',
 
-    // Hero — saturated teal gradient (only place saturated color dominates)
-    '--theme-hero-bg-start': '#14b8a6',
-    '--theme-hero-bg-end': '#0e7490',
-    '--theme-hero-border': 'rgba(8, 145, 160, 0.2)',
+    // Hero — 深色对比块，作为唯一的彩色饱和点
+    '--theme-hero-bg-start': '#1d1d1f',
+    '--theme-hero-bg-end': '#000000',
+    '--theme-hero-border': 'rgba(255, 255, 255, 0.10)',
     '--theme-hero-text': '#ffffff',
-    '--theme-hero-text-muted': 'rgba(255, 255, 255, 0.78)',
-    '--theme-hero-btn-bg': 'rgba(255, 255, 255, 0.18)',
-    '--theme-hero-btn-border': 'rgba(255, 255, 255, 0.32)',
+    '--theme-hero-text-muted': 'rgba(235, 235, 245, 0.6)',
+    '--theme-hero-btn-bg': 'rgba(255, 255, 255, 0.10)',
+    '--theme-hero-btn-border': 'rgba(255, 255, 255, 0.20)',
     '--theme-hero-overlay': 'none',
 
     // Inputs
     '--theme-input-bg': '#ffffff',
-    '--theme-input-border': '#d2dee2',
-    '--theme-input-border-focus': '#0891a0',
-    '--theme-input-style': '10rpx',
-
-    // Dividers
-    '--theme-divider': '#e0e9ec',
-    '--theme-divider-light': '#eaf1f3',
-
-    // Shadows — tinted to the cool teal hue, not pure black
-    '--theme-shadow-sm': 'rgba(8, 60, 70, 0.06)',
-    '--theme-shadow-md': 'rgba(8, 60, 70, 0.1)',
-    '--theme-shadow-lg': 'rgba(8, 60, 70, 0.16)',
-    '--theme-shadow-accent': 'rgba(8, 145, 160, 0.18)',
-
-    // Semantic
-    '--theme-danger': '#e11d48',
-    '--theme-danger-bg': '#fff1f3',
-    '--theme-danger-border': '#e11d48',
-    '--theme-success': '#0891a0',
-    '--theme-warning': '#d97706',
-
-    // Radii (compact: sharp shape system)
-    '--theme-radius-sm': '8rpx',
-    '--theme-radius-md': '12rpx',
-    '--theme-radius-lg': '16rpx',
-    '--theme-radius-pill': '999rpx',
-    '--theme-radius-input': '8rpx',
-
-    // Card morphology
-    '--theme-card-border-width': '1px',
-    '--theme-card-border-style': 'solid',
-    '--theme-card-bg-opacity': '1',
-
-    // Layout
-    '--theme-layout-gap': '14rpx',
-    '--theme-layout-section-gap': '20rpx',
-
-    // Tab bar — clean capsule on light
-    '--theme-tab-active-bg': '#ffffff',
-    '--theme-tab-height': '96rpx',
-    '--theme-tab-border-radius': '28rpx',
-    '--theme-tab-wrapper-bg': 'rgba(255, 255, 255, 0.96)',
-    '--theme-tab-wrapper-border': 'rgba(8, 145, 160, 0.14)',
-    '--theme-tab-wrapper-shadow': 'rgba(8, 60, 70, 0.1)',
-    '--theme-tab-wrapper-padding': '8rpx',
-
-    // Misc
-    '--theme-metric-fill-end': '#14b8a6',
-    '--theme-card-accent-bg-start': '#ffffff',
-    '--theme-card-accent-bg-end': '#eaf6f7',
-    '--theme-card-accent-shadow': 'rgba(8, 145, 160, 0.1)',
-    '--theme-card-accent-border': 'rgba(8, 145, 160, 0.22)',
-    '--theme-badge-bg': '#e0f4f6',
-    '--theme-badge-text': '#066976',
-
-    // Chart
-    '--theme-chart-bg': '#ffffff',
-    '--theme-chart-grid': '#d8e3e6',
-    '--theme-chart-color-0': '#0891a0',
-    '--theme-chart-color-1': '#14b8a6',
-    '--theme-chart-color-2': '#d97706',
-    '--theme-chart-color-3': '#e11d48',
-    '--theme-chart-color-4': '#4f46e5',
-    '--theme-chart-line-width': '3',
-    '--theme-chart-dot-radius': '4.5',
-
-    // Modal
-    '--theme-modal-overlay': 'rgba(8, 25, 35, 0.42)',
-    '--theme-btn-secondary-bg': '#ffffff',
-    '--theme-btn-secondary-border': '#0891a0',
-    '--theme-btn-secondary-text': '#0891a0',
-    '--theme-btn-style': '8rpx',
-
-    // Tab text
-    '--theme-tab-text': '#5a7682',
-    '--theme-tab-active-text': '#0891a0',
-    '--theme-tab-shadow-inset': 'rgba(8, 145, 160, 0.06)',
-    '--theme-tab-border': 'rgba(8, 145, 160, 0.14)',
-    '--theme-tab-bg': 'rgba(255, 255, 255, 0.96)',
-    '--theme-tab-shadow': 'rgba(8, 60, 70, 0.12)',
-
-    // Settings-specific
-    '--theme-summary-chip-bg': '#e0f4f6',
-    '--theme-summary-chip-text': '#066976',
-    '--theme-value-badge-bg': '#f0f9fa',
-    '--theme-value-badge-text': '#0891a0',
-    '--theme-value-badge-unit': '#5a7682',
-    '--theme-empty-border': '#d8e3e6',
-    '--theme-category-tabs-bg': '#eaf1f3',
-    '--theme-category-tab-active-bg': '#ffffff',
-    '--theme-category-tab-active-shadow': 'rgba(8, 60, 70, 0.06)',
-    '--theme-quick-chip-border': '#d8e3e6',
-    '--theme-menu-accent-bg': 'rgba(8, 145, 160, 0.06)'
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Night - Tech Console (Bright Glass Edition · Royal Blue)
-// ---------------------------------------------------------------------------
-// Anti-AI-Tell: original NIGHT used lilac indigo (#7b9cff) which is a
-// signature LLM "AI purple-blue glow" Tell (skill section 9.A). Replaced
-// with a sober royal blue (#2563eb) on light slate. Royal blue reads as
-// premium / engineering / IBM-Carbon territory, not AI-default lilac.
-const NIGHT = {
-  id: 'night',
-  name: '暗色科技控制台', // 暗色科技控制台
-  description: 'Light slate base, royal blue electric highlights, frosted glass panels with sober engineering feel',
-  layoutPreset: 'glass',
-  surfacePreset: 'frosted',
-  tabPreset: 'glow',
-  chartPreset: 'neon',
-  backgroundImage: "url('/static/theme/bg-night.svg')",
-  heroPattern: 'gradient-bright',
-  cssVars: {
-    // Accent — royal blue, single source of color identity
-    '--theme-accent': '#2563eb',
-    '--theme-accent-light': '#eff6ff',
-    '--theme-accent-dark': '#1d4ed8',
-    '--theme-accent-contrast': '#ffffff',
-
-    // Background — light slate (not lavender, not pure white)
-    '--theme-bg': '#f1f5f9',
-    '--theme-bg-image': "url('/static/theme/bg-night.svg')",
-    '--theme-bg-image-opacity': '0.4',
-    '--theme-bg-gradient-start': '#e8edf6',
-    '--theme-bg-gradient-end': '#f1f5f9',
-    '--theme-bg-gradient-settings-start': '#e6ebf4',
-    '--theme-bg-gradient-settings-end': '#f1f5f9',
-
-    // Surface / Cards — frosted white on light slate
-    '--theme-surface': 'rgba(255, 255, 255, 0.78)',
-    '--theme-surface-alt': 'rgba(248, 250, 252, 0.82)',
-    '--theme-surface-alt-2': 'rgba(241, 245, 249, 0.76)',
-    '--theme-surface-hover': 'rgba(255, 255, 255, 0.9)',
-    '--theme-surface-border': 'rgba(37, 99, 235, 0.16)',
-    '--theme-surface-border-light': 'rgba(37, 99, 235, 0.08)',
-    '--theme-surface-border-accent': 'rgba(37, 99, 235, 0.28)',
-
-    // Text — deep slate (off-black, not pure #000)
-    '--theme-text-primary': '#0f172a',
-    '--theme-text-secondary': '#475569',
-    '--theme-text-tertiary': '#64748b',
-    '--theme-text-heading': '#020617',
-
-    // Hero — white-to-blue gradient with subtle radial glow
-    '--theme-hero-bg-start': '#ffffff',
-    '--theme-hero-bg-end': '#dbeafe',
-    '--theme-hero-border': 'rgba(37, 99, 235, 0.18)',
-    '--theme-hero-text': '#0f172a',
-    '--theme-hero-text-muted': 'rgba(15, 23, 42, 0.62)',
-    '--theme-hero-btn-bg': 'rgba(37, 99, 235, 0.08)',
-    '--theme-hero-btn-border': 'rgba(37, 99, 235, 0.22)',
-    '--theme-hero-overlay': 'radial-gradient(circle at 80% 20%, rgba(96, 165, 250, 0.16), transparent 60%)',
-
-    // Inputs
-    '--theme-input-bg': 'rgba(255, 255, 255, 0.8)',
-    '--theme-input-border': 'rgba(37, 99, 235, 0.18)',
-    '--theme-input-border-focus': '#2563eb',
+    '--theme-input-border': '#d2d2d7',
+    '--theme-input-border-focus': '#0071e3',
     '--theme-input-style': '12rpx',
 
-    // Dividers
-    '--theme-divider': 'rgba(37, 99, 235, 0.1)',
-    '--theme-divider-light': 'rgba(37, 99, 235, 0.05)',
+    // Dividers — Apple separator
+    '--theme-divider': '#e5e5ea',
+    '--theme-divider-light': '#f0f0f3',
 
-    // Shadows — tinted to the cool slate hue
-    '--theme-shadow-sm': 'rgba(15, 23, 42, 0.05)',
-    '--theme-shadow-md': 'rgba(15, 23, 42, 0.08)',
-    '--theme-shadow-lg': 'rgba(15, 23, 42, 0.14)',
-    '--theme-shadow-accent': 'rgba(37, 99, 235, 0.16)',
+    // Shadows — 统一 rgba(0,0,0,...) 透明叠层
+    '--theme-shadow-sm': 'rgba(0, 0, 0, 0.04)',
+    '--theme-shadow-md': 'rgba(0, 0, 0, 0.06)',
+    '--theme-shadow-lg': 'rgba(0, 0, 0, 0.10)',
+    '--theme-shadow-accent': 'rgba(0, 113, 227, 0.18)',
 
-    // Semantic
-    '--theme-danger': '#e11d48',
-    '--theme-danger-bg': '#fff1f3',
-    '--theme-danger-border': '#e11d48',
-    '--theme-success': '#10b981',
-    '--theme-warning': '#d97706',
+    // Semantic — Apple systemRed / systemGreen / systemOrange
+    '--theme-danger': '#ff3b30',
+    '--theme-danger-bg': '#fff5f4',
+    '--theme-danger-border': '#ff3b30',
+    '--theme-success': '#34c759',
+    '--theme-warning': '#ff9f0a',
 
-    // Radii (glass: medium)
-    '--theme-radius-sm': '12rpx',
-    '--theme-radius-md': '18rpx',
+    // Radii
+    '--theme-radius-sm': '10rpx',
+    '--theme-radius-md': '16rpx',
     '--theme-radius-lg': '22rpx',
     '--theme-radius-pill': '999rpx',
     '--theme-radius-input': '12rpx',
 
     // Card morphology
-    '--theme-card-border-width': '1px',
+    '--theme-card-border-width': '0.5px',
     '--theme-card-border-style': 'solid',
-    '--theme-card-bg-opacity': '0.82',
+    '--theme-card-bg-opacity': '1',
 
     // Layout
-    '--theme-layout-gap': '18rpx',
+    '--theme-layout-gap': '16rpx',
     '--theme-layout-section-gap': '24rpx',
 
-    // Tab bar — frosted white on slate
-    '--theme-tab-active-bg': 'rgba(37, 99, 235, 0.1)',
-    '--theme-tab-height': '98rpx',
+    // Tab bar — pill wrapper + filled active state
+    '--theme-tab-active-bg': '#0071e3',
+    '--theme-tab-active-text': '#ffffff',
+    '--theme-tab-text': '#6e6e73',
+    '--theme-tab-height': '96rpx',
     '--theme-tab-border-radius': '26rpx',
-    '--theme-tab-wrapper-bg': 'rgba(255, 255, 255, 0.88)',
-    '--theme-tab-wrapper-border': 'rgba(37, 99, 235, 0.16)',
-    '--theme-tab-wrapper-shadow': 'rgba(15, 23, 42, 0.08)',
-    '--theme-tab-wrapper-padding': '10rpx',
+    '--theme-tab-wrapper-bg': 'rgba(255, 255, 255, 0.72)',
+    '--theme-tab-wrapper-border': 'rgba(0, 0, 0, 0.08)',
+    '--theme-tab-wrapper-shadow': '0 12rpx 32rpx rgba(0, 0, 0, 0.10)',
+    '--theme-tab-wrapper-padding': '6rpx',
 
     // Misc
-    '--theme-metric-fill-end': '#60a5fa',
-    '--theme-card-accent-bg-start': 'rgba(255, 255, 255, 0.84)',
-    '--theme-card-accent-bg-end': 'rgba(219, 234, 254, 0.78)',
-    '--theme-card-accent-shadow': 'rgba(37, 99, 235, 0.1)',
-    '--theme-card-accent-border': 'rgba(37, 99, 235, 0.26)',
-    '--theme-badge-bg': '#eff6ff',
-    '--theme-badge-text': '#1d4ed8',
+    '--theme-metric-fill-end': '#0071e3',
+    '--theme-card-accent-bg-start': '#ffffff',
+    '--theme-card-accent-bg-end': '#f0f6ff',
+    '--theme-card-accent-shadow': 'rgba(0, 113, 227, 0.10)',
+    '--theme-card-accent-border': 'rgba(0, 113, 227, 0.20)',
+    '--theme-badge-bg': '#e8f1fd',
+    '--theme-badge-text': '#0058b0',
 
     // Chart
-    '--theme-chart-bg': 'rgba(255, 255, 255, 0.8)',
-    '--theme-chart-grid': 'rgba(37, 99, 235, 0.1)',
-    '--theme-chart-color-0': '#2563eb',
-    '--theme-chart-color-1': '#10b981',
-    '--theme-chart-color-2': '#d97706',
-    '--theme-chart-color-3': '#e11d48',
-    '--theme-chart-color-4': '#0ea5e9',
+    '--theme-chart-bg': '#ffffff',
+    '--theme-chart-grid': '#f0f0f3',
+    '--theme-chart-color-0': '#0071e3',
+    '--theme-chart-color-1': '#34c759',
+    '--theme-chart-color-2': '#ff9f0a',
+    '--theme-chart-color-3': '#ff3b30',
+    '--theme-chart-color-4': '#af52de',
     '--theme-chart-line-width': '2.5',
-    '--theme-chart-dot-radius': '4',
+    '--theme-chart-dot-radius': '3.5',
 
     // Modal
-    '--theme-modal-overlay': 'rgba(15, 23, 42, 0.36)',
-    '--theme-btn-secondary-bg': 'rgba(255, 255, 255, 0.88)',
-    '--theme-btn-secondary-border': '#2563eb',
-    '--theme-btn-secondary-text': '#2563eb',
+    '--theme-modal-overlay': 'rgba(0, 0, 0, 0.40)',
+    '--theme-btn-secondary-bg': '#ffffff',
+    '--theme-btn-secondary-border': '#0071e3',
+    '--theme-btn-secondary-text': '#0071e3',
     '--theme-btn-style': '12rpx',
 
-    // Tab text
-    '--theme-tab-text': '#475569',
-    '--theme-tab-active-text': '#2563eb',
-    '--theme-tab-shadow-inset': 'rgba(37, 99, 235, 0.05)',
-    '--theme-tab-border': 'rgba(37, 99, 235, 0.16)',
-    '--theme-tab-bg': 'rgba(255, 255, 255, 0.88)',
-    '--theme-tab-shadow': 'rgba(15, 23, 42, 0.1)',
+    // Tab internals
+    '--theme-tab-shadow-inset': 'rgba(0, 113, 227, 0.16)',
+    '--theme-tab-border': 'rgba(0, 0, 0, 0.06)',
+    '--theme-tab-bg': 'rgba(255, 255, 255, 0.96)',
+    '--theme-tab-shadow': 'rgba(0, 0, 0, 0.10)',
 
     // Settings-specific
-    '--theme-summary-chip-bg': '#eff6ff',
-    '--theme-summary-chip-text': '#1d4ed8',
-    '--theme-value-badge-bg': 'rgba(219, 234, 254, 0.78)',
-    '--theme-value-badge-text': '#2563eb',
-    '--theme-value-badge-unit': '#475569',
-    '--theme-empty-border': 'rgba(37, 99, 235, 0.16)',
-    '--theme-category-tabs-bg': 'rgba(219, 234, 254, 0.7)',
-    '--theme-category-tab-active-bg': 'rgba(255, 255, 255, 0.96)',
-    '--theme-category-tab-active-shadow': 'rgba(15, 23, 42, 0.06)',
-    '--theme-quick-chip-border': 'rgba(37, 99, 235, 0.18)',
-    '--theme-menu-accent-bg': 'rgba(37, 99, 235, 0.06)'
+    '--theme-summary-chip-bg': '#e8f1fd',
+    '--theme-summary-chip-text': '#0058b0',
+    '--theme-value-badge-bg': 'transparent',
+    '--theme-value-badge-text': '#0071e3',
+    '--theme-value-badge-unit': '#86868b',
+    '--theme-empty-border': '#d2d2d7',
+    '--theme-category-tabs-bg': '#f0f0f3',
+    '--theme-category-tab-active-bg': '#ffffff',
+    '--theme-category-tab-active-shadow': 'rgba(0, 0, 0, 0.08)',
+    '--theme-quick-chip-border': '#e5e5ea',
+    '--theme-menu-accent-bg': 'rgba(0, 113, 227, 0.06)'
   }
 }
 
 // ---------------------------------------------------------------------------
-// Amber - Agricultural / Environmental Monitor
+// 深色 — Apple Dark Mode
+// 同一 system-blue accent + graphite surface，文字调高对比
+// ---------------------------------------------------------------------------
+const NIGHT = {
+  id: 'night',
+  name: '深色',
+  description: 'Apple 深色模式：纯黑背景，graphite 卡片，system-blue accent，文字提亮',
+  layoutPreset: 'glass',
+  surfacePreset: 'frosted',
+  tabPreset: 'glow',
+  chartPreset: 'neon',
+  backgroundImage: 'none',
+  heroPattern: 'gradient-bright',
+  cssVars: {
+    '--theme-accent': '#0a84ff',
+    '--theme-accent-light': 'rgba(10, 132, 255, 0.18)',
+    '--theme-accent-dark': '#5ac8fa',
+    '--theme-accent-contrast': '#ffffff',
+    '--theme-accent-tint-16': 'rgba(10, 132, 255, 0.20)',
+    '--theme-danger-contrast': '#ffffff',
+
+    // Background — Apple systemBackground dark
+    '--theme-bg': '#000000',
+    '--theme-bg-image': 'none',
+    '--theme-bg-image-opacity': '0',
+    '--theme-bg-gradient-start': '#1c1c1e',
+    '--theme-bg-gradient-end': '#000000',
+    '--theme-bg-gradient-settings-start': '#1c1c1e',
+    '--theme-bg-gradient-settings-end': '#000000',
+
+    // Surface — Apple secondarySystemBackground / tertiarySystemBackground
+    '--theme-surface': '#1c1c1e',
+    '--theme-surface-alt': '#2c2c2e',
+    '--theme-surface-alt-2': '#3a3a3c',
+    '--theme-surface-hover': 'rgba(10, 132, 255, 0.12)',
+    '--theme-surface-border': 'rgba(255, 255, 255, 0.10)',
+    '--theme-surface-border-light': 'rgba(255, 255, 255, 0.06)',
+    '--theme-surface-border-accent': 'rgba(10, 132, 255, 0.30)',
+
+    '--theme-text-primary': '#f5f5f7',
+    '--theme-text-secondary': '#a1a1a6',
+    '--theme-text-tertiary': '#6e6e73',
+    '--theme-text-heading': '#ffffff',
+
+    // Hero — 深色模式下 hero 改为浅色玻璃质，作为页内最亮点
+    '--theme-hero-bg-start': '#1c1c1e',
+    '--theme-hero-bg-end': '#2c2c2e',
+    '--theme-hero-border': 'rgba(255, 255, 255, 0.10)',
+    '--theme-hero-text': '#ffffff',
+    '--theme-hero-text-muted': 'rgba(235, 235, 245, 0.6)',
+    '--theme-hero-btn-bg': 'rgba(255, 255, 255, 0.10)',
+    '--theme-hero-btn-border': 'rgba(255, 255, 255, 0.20)',
+    '--theme-hero-overlay': 'none',
+
+    '--theme-input-bg': '#1c1c1e',
+    '--theme-input-border': 'rgba(255, 255, 255, 0.15)',
+    '--theme-input-border-focus': '#0a84ff',
+    '--theme-input-style': '12rpx',
+
+    '--theme-divider': 'rgba(255, 255, 255, 0.10)',
+    '--theme-divider-light': 'rgba(255, 255, 255, 0.06)',
+
+    '--theme-shadow-sm': 'rgba(0, 0, 0, 0.30)',
+    '--theme-shadow-md': 'rgba(0, 0, 0, 0.40)',
+    '--theme-shadow-lg': 'rgba(0, 0, 0, 0.55)',
+    '--theme-shadow-accent': 'rgba(10, 132, 255, 0.30)',
+
+    '--theme-danger': '#ff453a',
+    '--theme-danger-bg': 'rgba(255, 69, 58, 0.15)',
+    '--theme-danger-border': '#ff453a',
+    '--theme-success': '#30d158',
+    '--theme-warning': '#ff9f0a',
+
+    '--theme-radius-sm': '10rpx',
+    '--theme-radius-md': '16rpx',
+    '--theme-radius-lg': '22rpx',
+    '--theme-radius-pill': '999rpx',
+    '--theme-radius-input': '12rpx',
+
+    '--theme-card-border-width': '0.5px',
+    '--theme-card-border-style': 'solid',
+    '--theme-card-bg-opacity': '1',
+
+    '--theme-layout-gap': '16rpx',
+    '--theme-layout-section-gap': '24rpx',
+
+    '--theme-tab-active-bg': '#0a84ff',
+    '--theme-tab-active-text': '#ffffff',
+    '--theme-tab-text': '#a1a1a6',
+    '--theme-tab-height': '96rpx',
+    '--theme-tab-border-radius': '26rpx',
+    '--theme-tab-wrapper-bg': 'rgba(28, 28, 30, 0.72)',
+    '--theme-tab-wrapper-border': 'rgba(255, 255, 255, 0.10)',
+    '--theme-tab-wrapper-shadow': '0 12rpx 32rpx rgba(0, 0, 0, 0.55)',
+    '--theme-tab-wrapper-padding': '6rpx',
+
+    '--theme-metric-fill-end': '#0a84ff',
+    '--theme-card-accent-bg-start': '#2c2c2e',
+    '--theme-card-accent-bg-end': '#1c1c1e',
+    '--theme-card-accent-shadow': 'rgba(0, 0, 0, 0.40)',
+    '--theme-card-accent-border': 'rgba(10, 132, 255, 0.28)',
+    '--theme-badge-bg': 'rgba(10, 132, 255, 0.18)',
+    '--theme-badge-text': '#5ac8fa',
+
+    '--theme-chart-bg': '#1c1c1e',
+    '--theme-chart-grid': 'rgba(255, 255, 255, 0.08)',
+    '--theme-chart-color-0': '#0a84ff',
+    '--theme-chart-color-1': '#30d158',
+    '--theme-chart-color-2': '#ff9f0a',
+    '--theme-chart-color-3': '#ff453a',
+    '--theme-chart-color-4': '#bf5af2',
+    '--theme-chart-line-width': '2.5',
+    '--theme-chart-dot-radius': '3.5',
+
+    '--theme-modal-overlay': 'rgba(0, 0, 0, 0.60)',
+    '--theme-btn-secondary-bg': '#2c2c2e',
+    '--theme-btn-secondary-border': '#0a84ff',
+    '--theme-btn-secondary-text': '#5ac8fa',
+    '--theme-btn-style': '12rpx',
+
+    '--theme-tab-shadow-inset': 'rgba(10, 132, 255, 0.20)',
+    '--theme-tab-border': 'rgba(255, 255, 255, 0.10)',
+    '--theme-tab-bg': 'rgba(28, 28, 30, 0.88)',
+    '--theme-tab-shadow': 'rgba(0, 0, 0, 0.55)',
+
+    '--theme-summary-chip-bg': 'rgba(10, 132, 255, 0.18)',
+    '--theme-summary-chip-text': '#5ac8fa',
+    '--theme-value-badge-bg': 'transparent',
+    '--theme-value-badge-text': '#5ac8fa',
+    '--theme-value-badge-unit': '#a1a1a6',
+    '--theme-empty-border': 'rgba(255, 255, 255, 0.15)',
+    '--theme-category-tabs-bg': '#2c2c2e',
+    '--theme-category-tab-active-bg': '#3a3a3c',
+    '--theme-category-tab-active-shadow': 'rgba(0, 0, 0, 0.40)',
+    '--theme-quick-chip-border': 'rgba(255, 255, 255, 0.10)',
+    '--theme-menu-accent-bg': 'rgba(10, 132, 255, 0.10)'
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 暖色 — Apple Warm Light (True Tone)
+// 暖 cream surface + graphite 文字，accent 仍为 system-blue（保持品牌）
 // ---------------------------------------------------------------------------
 const AMBER = {
   id: 'amber',
-  name: '农业环境监测', // 农业环境监测
-  description: 'Warm cream background, green-amber accents, generous spacing, rounded organic cards',
+  name: '暖色',
+  description: 'Apple 暖屏色感：cream 背景，graphite 文字，system-blue 强调，舒适不刺眼',
   layoutPreset: 'organic',
   surfacePreset: 'soft',
   tabPreset: 'natural',
   chartPreset: 'earth',
-  backgroundImage: "url('/static/theme/bg-amber.svg')",
+  backgroundImage: 'none',
   heroPattern: 'warm-gradient',
   cssVars: {
-    // Accent
-    '--theme-accent': '#c8782b',
-    '--theme-accent-light': '#fdf2e6',
-    '--theme-accent-dark': '#b06820',
+    '--theme-accent': '#0071e3',
+    '--theme-accent-light': '#f0e6d2',
+    '--theme-accent-dark': '#0058b0',
     '--theme-accent-contrast': '#ffffff',
+    '--theme-accent-tint-16': 'rgba(0, 113, 227, 0.14)',
+    '--theme-danger-contrast': '#ffffff',
 
-    // Background
-    '--theme-bg': '#faf6f0',
-    '--theme-bg-image': "url('/static/theme/bg-amber.svg')",
-    '--theme-bg-image-opacity': '0.35',
-    '--theme-bg-gradient-start': '#f7efe2',
-    '--theme-bg-gradient-end': '#faf6f0',
-    '--theme-bg-gradient-settings-start': '#f4ecdd',
-    '--theme-bg-gradient-settings-end': '#faf6f0',
+    '--theme-bg': '#fbf7ee',
+    '--theme-bg-image': 'none',
+    '--theme-bg-image-opacity': '0',
+    '--theme-bg-gradient-start': '#fbf7ee',
+    '--theme-bg-gradient-end': '#f5efe0',
+    '--theme-bg-gradient-settings-start': '#f5efe0',
+    '--theme-bg-gradient-settings-end': '#fbf7ee',
 
-    // Surface / Cards
-    '--theme-surface': '#fffdf8',
-    '--theme-surface-alt': '#fdf9f2',
-    '--theme-surface-alt-2': '#fcf6ed',
-    '--theme-surface-hover': '#fef8ef',
-    '--theme-surface-border': 'rgba(180, 140, 100, 0.18)',
-    '--theme-surface-border-light': 'rgba(200, 120, 40, 0.07)',
-    '--theme-surface-border-accent': 'rgba(200, 120, 40, 0.22)',
+    '--theme-surface': '#fffdf6',
+    '--theme-surface-alt': '#f7f0de',
+    '--theme-surface-alt-2': '#efe5cc',
+    '--theme-surface-hover': '#fdf3df',
+    '--theme-surface-border': 'rgba(150, 110, 50, 0.12)',
+    '--theme-surface-border-light': 'rgba(150, 110, 50, 0.06)',
+    '--theme-surface-border-accent': 'rgba(0, 113, 227, 0.20)',
 
-    // Text
-    '--theme-text-primary': '#2d2218',
-    '--theme-text-secondary': '#8c7458',
-    '--theme-text-tertiary': '#a69078',
-    '--theme-text-heading': '#3d2e20',
+    '--theme-text-primary': '#2c2c2e',
+    '--theme-text-secondary': '#7a6f5d',
+    '--theme-text-tertiary': '#a89878',
+    '--theme-text-heading': '#1a1a1c',
 
-    // Hero
-    '--theme-hero-bg-start': '#6b8c3a',
-    '--theme-hero-bg-end': '#3d2a18',
-    '--theme-hero-border': 'rgba(255, 255, 255, 0.18)',
-    '--theme-hero-text': '#fffaf2',
-    '--theme-hero-text-muted': 'rgba(255, 245, 230, 0.72)',
-    '--theme-hero-btn-bg': 'rgba(255, 255, 255, 0.12)',
-    '--theme-hero-btn-border': 'rgba(255, 255, 255, 0.18)',
+    '--theme-hero-bg-start': '#3a3022',
+    '--theme-hero-bg-end': '#1f1810',
+    '--theme-hero-border': 'rgba(255, 245, 220, 0.18)',
+    '--theme-hero-text': '#fffaf0',
+    '--theme-hero-text-muted': 'rgba(255, 245, 220, 0.65)',
+    '--theme-hero-btn-bg': 'rgba(255, 250, 240, 0.10)',
+    '--theme-hero-btn-border': 'rgba(255, 245, 220, 0.22)',
     '--theme-hero-overlay': 'none',
 
-    // Inputs
-    '--theme-input-bg': '#fdf9f2',
-    '--theme-input-border': '#e0d4c0',
-    '--theme-input-border-focus': '#c8782b',
-    '--theme-input-style': '16rpx',
+    '--theme-input-bg': '#fffdf6',
+    '--theme-input-border': '#e0d4b8',
+    '--theme-input-border-focus': '#0071e3',
+    '--theme-input-style': '12rpx',
 
-    // Dividers
-    '--theme-divider': '#f4ecdd',
-    '--theme-divider-light': '#e8dcc8',
+    '--theme-divider': '#ebe3d3',
+    '--theme-divider-light': '#f0e8d8',
 
-    // Shadows
-    '--theme-shadow-sm': 'rgba(80, 50, 20, 0.06)',
+    '--theme-shadow-sm': 'rgba(80, 50, 20, 0.05)',
     '--theme-shadow-md': 'rgba(80, 50, 20, 0.08)',
-    '--theme-shadow-lg': 'rgba(60, 35, 10, 0.14)',
-    '--theme-shadow-accent': 'rgba(200, 120, 40, 0.16)',
+    '--theme-shadow-lg': 'rgba(60, 35, 10, 0.12)',
+    '--theme-shadow-accent': 'rgba(0, 113, 227, 0.18)',
 
-    // Semantic
-    '--theme-danger': '#c04540',
-    '--theme-danger-bg': '#fef5f4',
-    '--theme-danger-border': '#c04540',
-    '--theme-success': '#5da870',
-    '--theme-warning': '#d9a040',
+    '--theme-danger': '#d70015',
+    '--theme-danger-bg': '#fff0f0',
+    '--theme-danger-border': '#d70015',
+    '--theme-success': '#34c759',
+    '--theme-warning': '#ff9f0a',
 
-    // Radii (organic: soft rounded)
-    '--theme-radius-sm': '16rpx',
-    '--theme-radius-md': '24rpx',
-    '--theme-radius-lg': '32rpx',
+    '--theme-radius-sm': '12rpx',
+    '--theme-radius-md': '18rpx',
+    '--theme-radius-lg': '24rpx',
     '--theme-radius-pill': '999rpx',
-    '--theme-radius-input': '16rpx',
+    '--theme-radius-input': '14rpx',
 
-    // Card morphology
-    '--theme-card-border-width': '1px',
+    '--theme-card-border-width': '0.5px',
     '--theme-card-border-style': 'solid',
     '--theme-card-bg-opacity': '1',
 
-    // Layout
-    '--theme-layout-gap': '22rpx',
+    '--theme-layout-gap': '18rpx',
     '--theme-layout-section-gap': '28rpx',
 
-    // Tab bar
-    '--theme-tab-active-bg': '#fdf2e6',
-    '--theme-tab-height': '100rpx',
-    '--theme-tab-border-radius': '30rpx',
-    '--theme-tab-wrapper-bg': 'rgba(255, 253, 248, 0.96)',
-    '--theme-tab-wrapper-border': 'rgba(180, 140, 100, 0.16)',
-    '--theme-tab-wrapper-shadow': 'rgba(60, 35, 10, 0.1)',
-    '--theme-tab-wrapper-padding': '12rpx',
+    '--theme-tab-active-bg': '#0071e3',
+    '--theme-tab-active-text': '#ffffff',
+    '--theme-tab-text': '#7a6f5d',
+    '--theme-tab-height': '96rpx',
+    '--theme-tab-border-radius': '26rpx',
+    '--theme-tab-wrapper-bg': 'rgba(255, 253, 246, 0.78)',
+    '--theme-tab-wrapper-border': 'rgba(150, 110, 50, 0.12)',
+    '--theme-tab-wrapper-shadow': '0 12rpx 32rpx rgba(80, 50, 20, 0.12)',
+    '--theme-tab-wrapper-padding': '6rpx',
 
-    // Misc
-    '--theme-metric-fill-end': '#e8a858',
-    '--theme-card-accent-bg-start': '#fffdf8',
-    '--theme-card-accent-bg-end': '#fef6ed',
-    '--theme-card-accent-shadow': 'rgba(200, 120, 40, 0.1)',
-    '--theme-card-accent-border': 'rgba(200, 120, 40, 0.24)',
-    '--theme-badge-bg': '#fdf2e6',
-    '--theme-badge-text': '#c8782b',
+    '--theme-metric-fill-end': '#0071e3',
+    '--theme-card-accent-bg-start': '#fffdf6',
+    '--theme-card-accent-bg-end': '#f7f0de',
+    '--theme-card-accent-shadow': 'rgba(150, 110, 50, 0.10)',
+    '--theme-card-accent-border': 'rgba(0, 113, 227, 0.20)',
+    '--theme-badge-bg': '#f0e6d2',
+    '--theme-badge-text': '#0058b0',
 
-    // Chart
-    '--theme-chart-bg': '#fdf9f2',
-    '--theme-chart-grid': '#e8dcc8',
-    '--theme-chart-color-0': '#c8782b',
-    '--theme-chart-color-1': '#5da870',
-    '--theme-chart-color-2': '#4a90c4',
-    '--theme-chart-color-3': '#c04540',
-    '--theme-chart-color-4': '#8b5fc0',
-    '--theme-chart-line-width': '3',
-    '--theme-chart-dot-radius': '5',
+    '--theme-chart-bg': '#fffdf6',
+    '--theme-chart-grid': '#ebe3d3',
+    '--theme-chart-color-0': '#0071e3',
+    '--theme-chart-color-1': '#34c759',
+    '--theme-chart-color-2': '#ff9f0a',
+    '--theme-chart-color-3': '#d70015',
+    '--theme-chart-color-4': '#af52de',
+    '--theme-chart-line-width': '2.5',
+    '--theme-chart-dot-radius': '3.5',
 
-    // Modal
-    '--theme-modal-overlay': 'rgba(30, 20, 10, 0.45)',
-    '--theme-btn-secondary-bg': '#fdf9f2',
-    '--theme-btn-secondary-border': '#c8782b',
-    '--theme-btn-secondary-text': '#c8782b',
-    '--theme-btn-style': '16rpx',
+    '--theme-modal-overlay': 'rgba(40, 25, 10, 0.40)',
+    '--theme-btn-secondary-bg': '#fffdf6',
+    '--theme-btn-secondary-border': '#0071e3',
+    '--theme-btn-secondary-text': '#0058b0',
+    '--theme-btn-style': '14rpx',
 
-    // Tab text
-    '--theme-tab-text': '#8c7458',
-    '--theme-tab-active-text': '#c8782b',
-    '--theme-tab-shadow-inset': 'rgba(200, 120, 40, 0.05)',
-    '--theme-tab-border': 'rgba(180, 140, 100, 0.16)',
-    '--theme-tab-bg': 'rgba(255, 253, 248, 0.96)',
-    '--theme-tab-shadow': 'rgba(60, 35, 10, 0.1)',
+    '--theme-tab-shadow-inset': 'rgba(0, 113, 227, 0.14)',
+    '--theme-tab-border': 'rgba(150, 110, 50, 0.12)',
+    '--theme-tab-bg': 'rgba(255, 253, 246, 0.96)',
+    '--theme-tab-shadow': 'rgba(80, 50, 20, 0.10)',
 
-    // Settings-specific
-    '--theme-summary-chip-bg': '#fdf2e6',
-    '--theme-summary-chip-text': '#c8782b',
-    '--theme-value-badge-bg': '#fdf6ed',
-    '--theme-value-badge-text': '#c8782b',
-    '--theme-value-badge-unit': '#8c7458',
-    '--theme-empty-border': '#e0d4c0',
-    '--theme-category-tabs-bg': '#f4ecdd',
-    '--theme-category-tab-active-bg': '#fffdf8',
-    '--theme-category-tab-active-shadow': 'rgba(80, 50, 20, 0.05)',
-    '--theme-quick-chip-border': '#e0d4c0',
-    '--theme-menu-accent-bg': 'rgba(200, 120, 40, 0.06)'
+    '--theme-summary-chip-bg': '#f0e6d2',
+    '--theme-summary-chip-text': '#0058b0',
+    '--theme-value-badge-bg': 'transparent',
+    '--theme-value-badge-text': '#0071e3',
+    '--theme-value-badge-unit': '#7a6f5d',
+    '--theme-empty-border': '#e0d4b8',
+    '--theme-category-tabs-bg': '#f0e6d2',
+    '--theme-category-tab-active-bg': '#fffdf6',
+    '--theme-category-tab-active-shadow': 'rgba(80, 50, 20, 0.06)',
+    '--theme-quick-chip-border': '#ebe3d3',
+    '--theme-menu-accent-bg': 'rgba(0, 113, 227, 0.06)'
   }
 }
 
 // ---------------------------------------------------------------------------
-// Steel - Enterprise Operations Briefing
+// 极简 — Pure Mono
+// 单色灰阶 + 一抹 system-blue（GitHub Primer 风），高对比、克制、文档感
 // ---------------------------------------------------------------------------
 const STEEL = {
   id: 'steel',
-  name: '企业运维简报', // 企业运维简报
-  description: 'White and navy, thin borders, high information density, sharp professional feel',
+  name: '极简',
+  description: '单色灰阶 + system-blue 高对比，类 GitHub Primer 风，适合阅读密集场景',
   layoutPreset: 'dense',
   surfacePreset: 'crisp',
   tabPreset: 'corporate',
   chartPreset: 'precise',
-  backgroundImage: "url('/static/theme/bg-steel.svg')",
+  backgroundImage: 'none',
   heroPattern: 'navy-solid',
   cssVars: {
-    // Accent
-    '--theme-accent': '#2c5282',
-    '--theme-accent-light': '#e8eff8',
-    '--theme-accent-dark': '#1e3d64',
+    '--theme-accent': '#0071e3',
+    '--theme-accent-light': '#eef4fa',
+    '--theme-accent-dark': '#0058b0',
     '--theme-accent-contrast': '#ffffff',
+    '--theme-accent-tint-16': 'rgba(0, 113, 227, 0.14)',
+    '--theme-danger-contrast': '#ffffff',
 
-    // Background
-    '--theme-bg': '#f4f6f9',
-    '--theme-bg-image': "url('/static/theme/bg-steel.svg')",
-    '--theme-bg-image-opacity': '0.3',
-    '--theme-bg-gradient-start': '#eaedf2',
-    '--theme-bg-gradient-end': '#f4f6f9',
-    '--theme-bg-gradient-settings-start': '#e8ecf2',
-    '--theme-bg-gradient-settings-end': '#f4f6f9',
+    '--theme-bg': '#f6f7f8',
+    '--theme-bg-image': 'none',
+    '--theme-bg-image-opacity': '0',
+    '--theme-bg-gradient-start': '#f6f7f8',
+    '--theme-bg-gradient-end': '#f6f7f8',
+    '--theme-bg-gradient-settings-start': '#f6f7f8',
+    '--theme-bg-gradient-settings-end': '#f6f7f8',
 
-    // Surface / Cards
     '--theme-surface': '#ffffff',
-    '--theme-surface-alt': '#f7f9fc',
-    '--theme-surface-alt-2': '#f5f7fb',
-    '--theme-surface-hover': '#f2f5fa',
-    '--theme-surface-border': 'rgba(44, 60, 90, 0.1)',
-    '--theme-surface-border-light': 'rgba(44, 82, 130, 0.05)',
-    '--theme-surface-border-accent': 'rgba(44, 82, 130, 0.18)',
+    '--theme-surface-alt': '#f6f7f8',
+    '--theme-surface-alt-2': '#eceef0',
+    '--theme-surface-hover': '#eef4fa',
+    '--theme-surface-border': 'rgba(31, 35, 40, 0.10)',
+    '--theme-surface-border-light': 'rgba(31, 35, 40, 0.05)',
+    '--theme-surface-border-accent': 'rgba(0, 113, 227, 0.20)',
 
-    // Text
-    '--theme-text-primary': '#1a2332',
-    '--theme-text-secondary': '#4a5a72',
-    '--theme-text-tertiary': '#6b7a95',
-    '--theme-text-heading': '#15202f',
+    '--theme-text-primary': '#1f2328',
+    '--theme-text-secondary': '#59636e',
+    '--theme-text-tertiary': '#818b98',
+    '--theme-text-heading': '#0d1117',
 
-    // Hero
-    '--theme-hero-bg-start': '#1a3650',
-    '--theme-hero-bg-end': '#0f2438',
-    '--theme-hero-border': 'rgba(255, 255, 255, 0.15)',
+    '--theme-hero-bg-start': '#1f2328',
+    '--theme-hero-bg-end': '#0d1117',
+    '--theme-hero-border': 'rgba(255, 255, 255, 0.10)',
     '--theme-hero-text': '#ffffff',
-    '--theme-hero-text-muted': 'rgba(255, 255, 255, 0.65)',
-    '--theme-hero-btn-bg': 'rgba(255, 255, 255, 0.1)',
-    '--theme-hero-btn-border': 'rgba(255, 255, 255, 0.14)',
+    '--theme-hero-text-muted': 'rgba(230, 237, 243, 0.6)',
+    '--theme-hero-btn-bg': 'rgba(255, 255, 255, 0.10)',
+    '--theme-hero-btn-border': 'rgba(255, 255, 255, 0.20)',
     '--theme-hero-overlay': 'none',
 
-    // Inputs
-    '--theme-input-bg': '#f7f9fc',
-    '--theme-input-border': '#d0d6e0',
-    '--theme-input-border-focus': '#2c5282',
+    '--theme-input-bg': '#ffffff',
+    '--theme-input-border': '#d0d7de',
+    '--theme-input-border-focus': '#0071e3',
     '--theme-input-style': '6rpx',
 
-    // Dividers
-    '--theme-divider': '#e8ecf2',
-    '--theme-divider-light': '#dde3ed',
+    '--theme-divider': '#d0d7de',
+    '--theme-divider-light': '#eaeef2',
 
-    // Shadows
-    '--theme-shadow-sm': 'rgba(20, 30, 50, 0.04)',
-    '--theme-shadow-md': 'rgba(20, 30, 50, 0.06)',
-    '--theme-shadow-lg': 'rgba(15, 25, 45, 0.12)',
-    '--theme-shadow-accent': 'rgba(44, 82, 130, 0.12)',
+    '--theme-shadow-sm': 'rgba(31, 35, 40, 0.04)',
+    '--theme-shadow-md': 'rgba(31, 35, 40, 0.06)',
+    '--theme-shadow-lg': 'rgba(31, 35, 40, 0.10)',
+    '--theme-shadow-accent': 'rgba(0, 113, 227, 0.18)',
 
-    // Semantic
-    '--theme-danger': '#c43840',
-    '--theme-danger-bg': '#fef5f6',
-    '--theme-danger-border': '#c43840',
-    '--theme-success': '#4a8a60',
-    '--theme-warning': '#c88828',
+    '--theme-danger': '#cf222e',
+    '--theme-danger-bg': '#ffebe9',
+    '--theme-danger-border': '#cf222e',
+    '--theme-success': '#1a7f37',
+    '--theme-warning': '#9a6700',
 
-    // Radii (dense: sharp)
-    '--theme-radius-sm': '4rpx',
-    '--theme-radius-md': '8rpx',
-    '--theme-radius-lg': '12rpx',
+    '--theme-radius-sm': '6rpx',
+    '--theme-radius-md': '10rpx',
+    '--theme-radius-lg': '14rpx',
     '--theme-radius-pill': '999rpx',
-    '--theme-radius-input': '4rpx',
+    '--theme-radius-input': '6rpx',
 
-    // Card morphology
     '--theme-card-border-width': '1px',
     '--theme-card-border-style': 'solid',
     '--theme-card-bg-opacity': '1',
 
-    // Layout
-    '--theme-layout-gap': '10rpx',
-    '--theme-layout-section-gap': '16rpx',
+    '--theme-layout-gap': '12rpx',
+    '--theme-layout-section-gap': '18rpx',
 
-    // Tab bar
-    '--theme-tab-active-bg': '#e8eff8',
-    '--theme-tab-height': '88rpx',
-    '--theme-tab-border-radius': '12rpx',
-    '--theme-tab-wrapper-bg': '#ffffff',
-    '--theme-tab-wrapper-border': 'rgba(44, 60, 90, 0.1)',
-    '--theme-tab-wrapper-shadow': 'rgba(20, 30, 50, 0.08)',
+    '--theme-tab-active-bg': '#1f2328',
+    '--theme-tab-active-text': '#ffffff',
+    '--theme-tab-text': '#59636e',
+    '--theme-tab-height': '92rpx',
+    '--theme-tab-border-radius': '20rpx',
+    '--theme-tab-wrapper-bg': 'rgba(255, 255, 255, 0.78)',
+    '--theme-tab-wrapper-border': 'rgba(31, 35, 40, 0.10)',
+    '--theme-tab-wrapper-shadow': '0 8rpx 24rpx rgba(31, 35, 40, 0.08)',
     '--theme-tab-wrapper-padding': '4rpx',
 
-    // Misc
-    '--theme-metric-fill-end': '#5a8cc0',
+    '--theme-metric-fill-end': '#0071e3',
     '--theme-card-accent-bg-start': '#ffffff',
-    '--theme-card-accent-bg-end': '#f5f8fc',
-    '--theme-card-accent-shadow': 'rgba(44, 82, 130, 0.08)',
-    '--theme-card-accent-border': 'rgba(44, 82, 130, 0.2)',
-    '--theme-badge-bg': '#e8eff8',
-    '--theme-badge-text': '#2c5282',
+    '--theme-card-accent-bg-end': '#f6f7f8',
+    '--theme-card-accent-shadow': 'rgba(31, 35, 40, 0.06)',
+    '--theme-card-accent-border': 'rgba(0, 113, 227, 0.18)',
+    '--theme-badge-bg': '#eef4fa',
+    '--theme-badge-text': '#0058b0',
 
-    // Chart
-    '--theme-chart-bg': '#f7f9fc',
-    '--theme-chart-grid': '#dde4ef',
-    '--theme-chart-color-0': '#2c5282',
-    '--theme-chart-color-1': '#4a8a60',
-    '--theme-chart-color-2': '#c88828',
-    '--theme-chart-color-3': '#c43840',
-    '--theme-chart-color-4': '#6c50b0',
+    '--theme-chart-bg': '#ffffff',
+    '--theme-chart-grid': '#eaeef2',
+    '--theme-chart-color-0': '#0071e3',
+    '--theme-chart-color-1': '#1a7f37',
+    '--theme-chart-color-2': '#9a6700',
+    '--theme-chart-color-3': '#cf222e',
+    '--theme-chart-color-4': '#8250df',
     '--theme-chart-line-width': '2',
-    '--theme-chart-dot-radius': '3.5',
+    '--theme-chart-dot-radius': '3',
 
-    // Modal
-    '--theme-modal-overlay': 'rgba(10, 18, 32, 0.4)',
-    '--theme-btn-secondary-bg': '#f5f7fb',
-    '--theme-btn-secondary-border': '#2c5282',
-    '--theme-btn-secondary-text': '#2c5282',
-    '--theme-btn-style': '4rpx',
+    '--theme-modal-overlay': 'rgba(13, 17, 23, 0.50)',
+    '--theme-btn-secondary-bg': '#ffffff',
+    '--theme-btn-secondary-border': '#d0d7de',
+    '--theme-btn-secondary-text': '#1f2328',
+    '--theme-btn-style': '6rpx',
 
-    // Tab text
-    '--theme-tab-text': '#4a5a72',
-    '--theme-tab-active-text': '#2c5282',
-    '--theme-tab-shadow-inset': 'rgba(44, 82, 130, 0.04)',
-    '--theme-tab-border': 'rgba(44, 60, 90, 0.08)',
-    '--theme-tab-bg': '#ffffff',
-    '--theme-tab-shadow': 'rgba(20, 30, 50, 0.08)',
+    '--theme-tab-shadow-inset': 'rgba(31, 35, 40, 0.08)',
+    '--theme-tab-border': 'rgba(31, 35, 40, 0.08)',
+    '--theme-tab-bg': 'rgba(255, 255, 255, 0.96)',
+    '--theme-tab-shadow': 'rgba(31, 35, 40, 0.08)',
 
-    // Settings-specific
-    '--theme-summary-chip-bg': '#e8eff8',
-    '--theme-summary-chip-text': '#2c5282',
-    '--theme-value-badge-bg': '#f0f3f8',
-    '--theme-value-badge-text': '#2c5282',
-    '--theme-value-badge-unit': '#4a5a72',
-    '--theme-empty-border': '#d0d6e0',
-    '--theme-category-tabs-bg': '#e8ecf2',
+    '--theme-summary-chip-bg': '#eef4fa',
+    '--theme-summary-chip-text': '#0058b0',
+    '--theme-value-badge-bg': 'transparent',
+    '--theme-value-badge-text': '#0071e3',
+    '--theme-value-badge-unit': '#59636e',
+    '--theme-empty-border': '#d0d7de',
+    '--theme-category-tabs-bg': '#eceef0',
     '--theme-category-tab-active-bg': '#ffffff',
-    '--theme-category-tab-active-shadow': 'rgba(20, 30, 50, 0.04)',
-    '--theme-quick-chip-border': '#d0d6e0',
-    '--theme-menu-accent-bg': 'rgba(44, 82, 130, 0.04)'
+    '--theme-category-tab-active-shadow': 'rgba(31, 35, 40, 0.06)',
+    '--theme-quick-chip-border': '#d0d7de',
+    '--theme-menu-accent-bg': 'rgba(0, 113, 227, 0.06)'
   }
 }
 
 // ---------------------------------------------------------------------------
-// Public API
+// Public API（保持不变 —— 加载逻辑 / rpx→px 转换 / resize 监听）
 // ---------------------------------------------------------------------------
 
 export const THEME_LIST = [TEAL, NIGHT, AMBER, STEEL]
 
-export const DEFAULT_THEME_ID = 'amber'
+export const DEFAULT_THEME_ID = 'teal'
 
 /** Look up a theme by its id. Returns the teal default if not found. */
 export function getThemeById(id) {
@@ -652,23 +612,17 @@ function getThemeTargets() {
 // ---------------------------------------------------------------------------
 // rpx → px conversion for CSS variables
 // ---------------------------------------------------------------------------
-// uni-app's `rpx` is a runtime unit (750rpx = screen width). The Vue compiler
-// converts rpx → rem for static CSS, but it CAN'T inspect the value of a
-// CSS custom property (--var-name) because that value is set at runtime.
-// As a result, `height: var(--theme-tab-height)` resolves to `height: 96rpx`,
-// which the browser silently rejects — the rule is dropped, and the element
-// falls back to its content height. This is why the tab bar shrinks to a flat
-// rectangle after a theme switch and only "recovers" when the surrounding
-// page is rebuilt by a tab navigation.
+// uni-app 的 `rpx` 是运行时单位（750rpx = 屏幕宽度）。Vue 编译器能把静态
+// CSS 里的 rpx 转成 rem，但无法在运行时检查 CSS 自定义属性值。所以
+// `height: var(--theme-tab-height)` 会解析为 `height: 96rpx`，浏览器会静默
+// 拒绝这条规则，元素塌缩到内容高度。这就是为什么切主题后 tab 栏会缩成扁平
+// 矩形，只有在切回 tab 时页面重建才「恢复」。
 //
-// We fix it by translating every rpx in the CSS-var payload into a concrete
-// `px` value before writing it to the DOM. We also re-apply on resize so
-// the conversion tracks the actual viewport width.
+// 修复方法：写入 DOM 前把 cssVars 里所有 rpx 翻译成 px，并监听 resize 重算。
 const RPX_RE = /(-?\d+(?:\.\d+)?)rpx\b/gi
 
 function viewportRpxRatio() {
   if (typeof window === 'undefined' || !window.innerWidth) return 0
-  // uni-app defaults: 750rpx = full screen width
   return window.innerWidth / 750
 }
 
@@ -688,7 +642,6 @@ function convertVars(vars) {
   return out
 }
 
-// Cache the last-applied theme id so resize can re-run the same write.
 let lastAppliedThemeId = null
 let resizeBound = false
 

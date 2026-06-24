@@ -20,7 +20,7 @@
         </view>
         <text class="count-badge">{{ history.length }} 条</text>
       </view>
-      <HistoryChart canvas-id="historyCanvasMain" :history="history" :points="config.displayPoints" :chartColors="chartColors" :chartBgColor="chartBgColor" :chartGridColor="chartGridColor" :chartLineWidth="chartLineWidth" :chartDotRadius="chartDotRadius" />
+      <HistoryChart canvas-id="historyCanvasMain" :history="history" :points="config.displayPoints" />
       <view v-if="config.displayPoints.length" class="legend">
         <view
           v-for="(point, index) in config.displayPoints"
@@ -66,41 +66,17 @@ import HistoryChart from '../../components/HistoryChart.vue'
 import { dataStore } from '../../stores/dataStore'
 import { appendHistory, clearHistory, getConfig, getHistory, saveHistory } from '../../utils/storage'
 import { formatTime, formatValue } from '../../utils/format'
-import { THEME_LIST } from '../../utils/themes'
 
 const config = ref(getConfig())
 const history = ref([])
 const loading = ref(false)
 // 仅在历史页 tab 处于前台时跟随全局 3s 轮询自动采样，避免后台页也写历史
 const isActive = ref(false)
-
-const chartColors = computed(() => {
-  const theme = THEME_LIST.find((t) => t.id === config.value.themeId)
-  if (!theme) return ['#0dc9b0', '#0df0d0', '#e0b040', '#f06070', '#60a0f0']
-  // Read individual --theme-chart-color-N variables (bug fix: was reading non-existent singular --theme-chart-color)
-  return [0, 1, 2, 3, 4].map((i) => theme.cssVars[`--theme-chart-color-${i}`] || '#0dc9b0')
-})
-
-const chartBgColor = computed(() => {
-  const theme = THEME_LIST.find((t) => t.id === config.value.themeId)
-  return theme ? theme.cssVars['--theme-chart-bg'] : '#16383a'
-})
-
-const chartGridColor = computed(() => {
-  const theme = THEME_LIST.find((t) => t.id === config.value.themeId)
-  return theme ? theme.cssVars['--theme-chart-grid'] : '#1a4840'
-})
-
-const chartLineWidth = computed(() => {
-  const theme = THEME_LIST.find((t) => t.id === config.value.themeId)
-  return theme ? Number(theme.cssVars['--theme-chart-line-width']) || 3 : 3
 })
 
 const chartDotRadius = computed(() => {
   const theme = THEME_LIST.find((t) => t.id === config.value.themeId)
   return theme ? Number(theme.cssVars['--theme-chart-dot-radius']) || 4.5 : 4.5
-})
-
 const visibleHistory = computed(() => [...history.value].reverse().slice(0, 20))
 
 function mockNumber(identifier, index) {
@@ -190,16 +166,16 @@ onHide(() => {
   min-height: 100vh;
   padding: 28rpx 28rpx 150rpx;
   box-sizing: border-box;
-  background: linear-gradient(180deg, var(--theme-bg-gradient-settings-start) 0%, var(--theme-bg-gradient-settings-end) 45%, var(--theme-bg-gradient-settings-end) 100%);
+  background: var(--theme-bg);
 }
 
 .header-panel,
 .chart-card,
 .record-card {
-  border: var(--theme-card-border-width) var(--theme-card-border-style) var(--theme-surface-border);
+  border: 0.5px solid var(--theme-surface-border);
   border-radius: var(--theme-radius-lg);
   background: var(--theme-surface);
-  box-shadow: 0 14rpx 38rpx var(--theme-shadow-sm);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8rpx 24rpx var(--theme-shadow-sm);
 }
 
 .header-panel {
@@ -207,7 +183,7 @@ onHide(() => {
   align-items: center;
   justify-content: space-between;
   gap: 20rpx;
-  padding: 30rpx;
+  padding: 32rpx 30rpx;
 }
 
 .eyebrow,
@@ -220,15 +196,18 @@ onHide(() => {
 
 .eyebrow {
   color: var(--theme-accent);
-  font-size: 23rpx;
-  font-weight: 800;
+  font-size: 22rpx;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .title {
   margin-top: 8rpx;
   color: var(--theme-text-primary);
   font-size: 40rpx;
-  font-weight: 900;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .desc {
@@ -243,16 +222,16 @@ onHide(() => {
 }
 
 .ghost-btn {
-  width: 108rpx;
-  height: 64rpx;
   margin: 0;
+  height: 64rpx;
+  padding: 0 28rpx;
+  line-height: 64rpx;
   border: 1px solid var(--theme-btn-secondary-border);
-  border-radius: var(--theme-btn-style);
+  border-radius: 999rpx;
   background: var(--theme-btn-secondary-bg);
   color: var(--theme-btn-secondary-text);
   font-size: 24rpx;
-  font-weight: 800;
-  line-height: 64rpx;
+  font-weight: 500;
 }
 
 .ghost-btn.danger {
@@ -263,7 +242,7 @@ onHide(() => {
 
 .chart-card {
   margin-top: 22rpx;
-  padding: 24rpx;
+  padding: 28rpx 24rpx;
 }
 
 .section-head {
@@ -281,7 +260,8 @@ onHide(() => {
 .section-title {
   color: var(--theme-text-primary);
   font-size: 31rpx;
-  font-weight: 900;
+  font-weight: 700;
+  letter-spacing: -0.015em;
 }
 
 .section-desc {
@@ -291,12 +271,12 @@ onHide(() => {
 }
 
 .count-badge {
-  padding: 10rpx 16rpx;
-  border-radius: var(--theme-radius-pill);
-  background: var(--theme-badge-bg);
-  color: var(--theme-badge-text);
+  padding: 8rpx 16rpx;
+  border-radius: 999rpx;
+  background: var(--theme-divider);
+  color: var(--theme-text-secondary);
   font-size: 23rpx;
-  font-weight: 800;
+  font-weight: 500;
 }
 
 .legend {
@@ -315,9 +295,9 @@ onHide(() => {
 }
 
 .legend-dot {
-  width: 16rpx;
-  height: 16rpx;
-  border-radius: 50%;
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 4rpx;
 }
 
 .dot-0 { background: var(--theme-chart-color-0); }
@@ -333,13 +313,14 @@ onHide(() => {
 }
 
 .record-card {
-  padding: 22rpx;
+  padding: 22rpx 24rpx;
+  border: 0.5px solid var(--theme-surface-border);
 }
 
 .record-time {
   color: var(--theme-text-secondary);
   font-size: 24rpx;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .record-values {
@@ -352,11 +333,12 @@ onHide(() => {
   padding: 10rpx 0;
   color: var(--theme-text-primary);
   font-size: 26rpx;
-  font-weight: 700;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 
 .record-value text:first-child {
   color: var(--theme-text-secondary);
-  font-weight: 600;
+  font-weight: 500;
 }
 </style>

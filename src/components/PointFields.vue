@@ -51,7 +51,7 @@ function onField(key, event, isNumber = false) {
 .point-fields {
   display: flex;
   flex-direction: column;
-  gap: 14rpx;
+  gap: 18rpx;
 }
 
 .field {
@@ -61,26 +61,35 @@ function onField(key, event, isNumber = false) {
 .field text {
   display: block;
   margin-bottom: 10rpx;
-  color: var(--theme-text-secondary);
-  font-size: 24rpx;
-  font-weight: 800;
+  color: var(--theme-text-tertiary);
+  font-size: 22rpx;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .input {
   width: 100%;
   height: 72rpx;
   padding: 0 18rpx;
-  border: 1rpx solid var(--theme-input-border);
-  border-radius: var(--theme-radius-input);
+  border: 1px solid var(--theme-input-border);
+  border-radius: 12rpx;
   background: var(--theme-input-bg);
   color: var(--theme-text-primary);
   font-size: 26rpx;
+  font-weight: 500;
   box-sizing: border-box;
+  transition: border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.input:focus {
+  border-color: var(--theme-input-border-focus);
+  background: var(--theme-surface);
 }
 
 .threshold-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14rpx;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18rpx;
 }
 </style>

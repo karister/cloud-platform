@@ -65,20 +65,20 @@ function switchPage(item) {
 <style scoped>
 .tab-shell {
   position: fixed;
-  left: 24rpx;
-  right: 24rpx;
+  left: 16rpx;
+  right: 16rpx;
   bottom: calc(18rpx + env(safe-area-inset-bottom));
   z-index: 30;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 4rpx;
   padding: var(--theme-tab-wrapper-padding);
-  border: 1px solid var(--theme-tab-wrapper-border);
-  border-radius: var(--theme-tab-border-radius);
+  border: 0.5px solid var(--theme-tab-wrapper-border);
+  border-radius: 999rpx;
   background: var(--theme-tab-wrapper-bg);
   box-shadow: 0 18rpx 54rpx var(--theme-tab-wrapper-shadow);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
 }
 
 .tab-item {
@@ -89,41 +89,52 @@ function switchPage(item) {
   align-items: center;
   justify-content: center;
   gap: 8rpx;
-  border-radius: calc(var(--theme-tab-border-radius) - 8rpx);
+  border-radius: 999rpx;
   color: var(--theme-tab-text);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.18s cubic-bezier(0.32, 0.72, 0, 1),
+              opacity 0.18s ease,
+              background-color 0.18s ease,
+              color 0.18s ease;
 }
 
 .tab-item:active {
-  transform: scale(0.94);
-  opacity: 0.85;
+  transform: scale(0.96);
+  opacity: 0.78;
 }
 
+/* Filled-pill active state — replaces the inset-ring capsule.
+   Apple Settings tab bar uses a solid color fill for the selected tab. */
 .tab-item.active {
   background: var(--theme-tab-active-bg);
   color: var(--theme-tab-active-text);
-  box-shadow: inset 0 0 0 1px var(--theme-tab-shadow-inset);
+  box-shadow: 0 2rpx 8rpx var(--theme-tab-shadow-inset);
 }
 
 .icon-wrap {
   display: flex;
-  width: 42rpx;
-  height: 42rpx;
+  width: 46rpx;
+  height: 46rpx;
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
 }
 
 .tab-icon {
-  width: 38rpx;
-  height: 38rpx;
+  width: 44rpx;
+  height: 44rpx;
+  transition: transform 0.18s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.tab-item.active .tab-icon {
+  transform: scale(1.06);
 }
 
 .tab-text {
   overflow: hidden;
-  font-size: 23rpx;
-  font-weight: 700;
+  font-size: 22rpx;
+  font-weight: 600;
   line-height: 1;
+  letter-spacing: -0.005em;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
