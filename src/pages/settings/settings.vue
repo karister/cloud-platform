@@ -218,6 +218,18 @@
               <text class="field-tip">验证通过后会生成对应有效期的 token，到期前无需重新计算。</text>
             </label>
 
+            <label class="field">
+              <text>数据刷新间隔（秒）</text>
+              <input
+                class="input"
+                type="number"
+                :value="draft.cloud.pollIntervalSeconds"
+                @input="onPollIntervalChange($event.detail.value)"
+                placeholder="3"
+              />
+              <text class="field-tip">全局轮询节奏，所有页面共用。最短 1 秒，过小会被云平台限流。</text>
+            </label>
+
             <!--
               TODO: 临时手动 token 输入框
               当前自动计算的 token 算法与 OneNET 实际返回的 token 不一致，
@@ -582,6 +594,7 @@ import { THEME_LIST, applyThemeToDOM } from '../../utils/themes'
 import { serializeConfig, downloadJsonFile, deserializeConfig, getExportFilename } from '../../utils/configImportExport'
 import { sendConfigEmail, isEmailConfigured } from '../../services/emailService'
 import { fetchProperties } from '../../services/onenet'
+import { dataStore } from '../../stores/dataStore'
 
 const config = ref(getConfig())
 const draft = ref(getConfig())
@@ -649,6 +662,14 @@ function onTokenTtlChange(value) {
     authError.value = ''
     authVerifyResult.value = ''
   }
+}
+
+function onPollIntervalChange(value) {
+  // 解析用户输入的秒数；非法或小于 1 时回退到默认 3 秒
+  const seconds = Number(value)
+  draft.value.cloud.pollIntervalSeconds = Number.isFinite(seconds) && seconds >= 1
+    ? Math.min(3600, Math.floor(seconds))
+    : 3
 }
 
 function formatExpiresAt(expiresAtSeconds) {
@@ -860,6 +881,10 @@ function openCloud() {
   }
   if (!draft.value.cloud.signMethod) {
     draft.value.cloud.signMethod = 'md5'
+  }
+  // 默认轮询间隔 3 秒；老 config 没有这个字段时给个补默认值
+  if (!Number.isFinite(draft.value.cloud.pollIntervalSeconds) || draft.value.cloud.pollIntervalSeconds < 1) {
+    draft.value.cloud.pollIntervalSeconds = 3
   }
   // TODO: 临时调试字段 — token 算法修好后删除
   if (typeof draft.value.cloud.manualToken !== 'string') {
@@ -1145,6 +1170,11 @@ function saveModal() {
   // token 有效期：缺失或非法值时回退到 365 天
   const ttlDays = Number(nextConfig.cloud.tokenTtlDays)
   nextConfig.cloud.tokenTtlDays = Number.isFinite(ttlDays) && ttlDays > 0 ? Math.floor(ttlDays) : 365
+  // 轮询间隔：缺失或非法值时回退到 3 秒，最大 1 小时
+  const pollSec = Number(nextConfig.cloud.pollIntervalSeconds)
+  nextConfig.cloud.pollIntervalSeconds = Number.isFinite(pollSec) && pollSec >= 1
+    ? Math.min(3600, Math.floor(pollSec))
+    : 3
   // 必须已经验证通过才允许保存（canSave 已经在按钮 disabled 上把关）
   if (!nextConfig.cloud.token || !nextConfig.cloud.tokenExpiresAt) {
     uni.showToast({ title: '请先验证 token', icon: 'none' })
@@ -1167,6 +1197,8 @@ function saveModal() {
   }
   saveConfig(nextConfig)
   config.value = getConfig()
+  // 重新拉一次轮询，让新间隔立即生效（start 内部会先 stop 再按新间隔启动）
+  dataStore.start()
   closeModal()
   uni.showToast({
     title: '配置已保存',
@@ -1303,6 +1335,9 @@ function handleConfirmImport() {
       accessKey: src.cloud?.accessKey || '',
       signMethod: src.cloud?.signMethod || 'md5',
       tokenTtlDays: Number.isFinite(src.cloud?.tokenTtlDays) ? src.cloud.tokenTtlDays : 365,
+      pollIntervalSeconds: Number.isFinite(src.cloud?.pollIntervalSeconds) && src.cloud.pollIntervalSeconds >= 1
+        ? Math.min(3600, Math.floor(src.cloud.pollIntervalSeconds))
+        : 3,
       getUrl: src.cloud?.getUrl || buildGetUrl({
         productId: src.cloud?.productId || '',
         deviceName: src.cloud?.deviceName || ''
@@ -1327,6 +1362,8 @@ function handleConfirmImport() {
 
   saveConfig(imported)
   config.value = getConfig()
+  // 让导入的新轮询间隔立即生效
+  dataStore.start()
 
   const themeId = imported.themeId || 'amber'
   applyThemeToDOM(themeId)
@@ -1543,6 +1580,7 @@ onShow(reload)
 
 .menu-card:active {
   transform: scale(0.985);
+  opacity: 0.9;
 }
 
 .menu-icon-wrap {
@@ -1936,6 +1974,12 @@ onShow(reload)
   color: var(--theme-text-primary);
   font-size: 23rpx;
   font-weight: 800;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+
+.quick-chip:active {
+  transform: scale(0.96);
+  opacity: 0.85;
 }
 
 .quick-chip text:last-child {
@@ -1976,6 +2020,12 @@ onShow(reload)
   font-weight: 800;
   line-height: 64rpx;
   text-align: center;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+
+.category-tab:active {
+  transform: scale(0.95);
+  opacity: 0.85;
 }
 
 .category-tab.active {
@@ -2101,6 +2151,12 @@ onShow(reload)
   border-radius: var(--theme-radius-md);
   background: var(--theme-surface);
   overflow: hidden;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+
+.theme-card:active {
+  transform: scale(0.97);
+  opacity: 0.88;
 }
 
 .theme-card.active {

@@ -528,6 +528,18 @@ button::after {
   border: 0;
 }
 
+/* ── Button press feedback (all pages) ──
+   Apply a subtle scale + fade on touch/click so users get immediate
+   "the press registered" feedback. Disabled buttons are excluded. */
+button {
+  transition: transform 0.12s ease, opacity 0.12s ease, background-color 0.12s ease;
+}
+
+button:not([disabled]):active {
+  transform: scale(0.96);
+  opacity: 0.82;
+}
+
 uni-tabbar {
   display: none !important;
 }

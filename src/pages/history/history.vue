@@ -58,8 +58,8 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { computed, ref, watch } from 'vue'
+import { onShow, onHide } from '@dcloudio/uni-app'
 import AppTabBar from '../../components/AppTabBar.vue'
 import EmptyState from '../../components/EmptyState.vue'
 import HistoryChart from '../../components/HistoryChart.vue'
@@ -71,6 +71,8 @@ import { THEME_LIST } from '../../utils/themes'
 const config = ref(getConfig())
 const history = ref([])
 const loading = ref(false)
+// 仅在历史页 tab 处于前台时跟随全局 3s 轮询自动采样，避免后台页也写历史
+const isActive = ref(false)
 
 const chartColors = computed(() => {
   const theme = THEME_LIST.find((t) => t.id === config.value.themeId)
@@ -135,13 +137,12 @@ async function sampleNow() {
   loading.value = true
   try {
     // 全局 3s 轮询已经在跑，sampleNow 只是触发一次手动刷新
-    // 然后把此刻的实时值追加进历史
+    // 新的样本由下方 watch(lastSyncedAt) 监听到刷新完成后追加，避免双写
     const result = await dataStore.refresh()
     if (!result) {
       uni.showToast({ title: dataStore.lastError.value || '采样失败', icon: 'none' })
       return
     }
-    history.value = appendHistory(dataStore.latestValues, config.value.displayPoints)
     uni.showToast({ title: '采样完成', icon: 'success' })
   } catch (error) {
     uni.showToast({ title: error.message || '采样失败', icon: 'none' })
@@ -149,6 +150,18 @@ async function sampleNow() {
     loading.value = false
   }
 }
+
+/**
+ * 全局 3s 轮询完成时，把当前的实时值追加到历史。
+ * 仅在历史页 tab 处于前台时执行；切到其他 tab 后暂停写入。
+ */
+function autoSampleOnPoll() {
+  if (!isActive.value) return
+  if (!config.value.displayPoints.length) return
+  history.value = appendHistory(dataStore.latestValues, config.value.displayPoints)
+}
+
+watch(() => dataStore.lastSyncedAt.value, autoSampleOnPoll)
 
 function clearAll() {
   uni.showModal({
@@ -163,7 +176,13 @@ function clearAll() {
   })
 }
 
-onShow(load)
+onShow(() => {
+  isActive.value = true
+  load()
+})
+onHide(() => {
+  isActive.value = false
+})
 </script>
 
 <style scoped>

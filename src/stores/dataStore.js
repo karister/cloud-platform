@@ -105,17 +105,20 @@ async function setDesired(identifier, value) {
 }
 
 /**
- * 启动 3s 轮询。已启动则先停。
+ * 启动轮询。已启动则先停。
+ * 间隔从 config.cloud.pollIntervalSeconds 读，非法值回退到默认值。
  */
 function start() {
   stop()
   const config = getConfig()
   if (config.cloud.mockMode) return
+  const seconds = Number(config.cloud.pollIntervalSeconds)
+  const intervalMs = (Number.isFinite(seconds) && seconds > 0 ? Math.floor(seconds) : POLL_INTERVAL_MS / 1000) * 1000
   // 立刻拉一次再开始计时
   refresh({ silent: true })
   pollTimer = setInterval(() => {
     refresh({ silent: true })
-  }, POLL_INTERVAL_MS)
+  }, intervalMs)
 }
 
 /**

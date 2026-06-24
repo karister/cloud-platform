@@ -14,8 +14,8 @@
         </text>
       </view>
       <view class="summary-chip" @tap="loadFromCloud">
-        <text>{{ refreshing ? '…' : thresholds.length }}</text>
-        <text>{{ refreshing ? '同步中' : '项' }}</text>
+        <text>{{ thresholds.length }}</text>
+        <text>项</text>
       </view>
     </view>
 
@@ -87,7 +87,6 @@ const sendStatus = reactive({})
 const debounceTimers = {}
 
 // 暴露 store 派生状态给模板使用
-const refreshing = computed(() => dataStore.refreshing.value)
 const lastSyncedAt = computed(() => dataStore.lastSyncedAt.value)
 const currentValues = dataStore.latestValues  // reactive 全局实时值字典
 
@@ -282,10 +281,12 @@ onShow(() => {
   font-size: 22rpx;
   font-weight: 800;
   flex-shrink: 0;
+  transition: transform 0.12s ease, opacity 0.12s ease;
 }
 
 .summary-chip:active {
-  transform: scale(0.96);
+  transform: scale(0.92);
+  opacity: 0.85;
 }
 
 .summary-chip text:first-child {

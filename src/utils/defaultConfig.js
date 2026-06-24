@@ -15,6 +15,8 @@ export const DEFAULT_CONFIG = {
     getUrl:
       'https://iot-api.heclouds.com/thingmodel/query-device-property?product_id=85zH3LlDLF&device_name=device',
     postUrl: 'https://iot-api.heclouds.com/thingmodel/set-device-desired-property',
+    // 全局轮询间隔（秒）。dataStore.start() 读这个值；非法值时回退到 3
+    pollIntervalSeconds: 3,
     mockMode: true
   },
   displayPoints: [

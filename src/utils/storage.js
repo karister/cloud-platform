@@ -30,6 +30,9 @@ function mergeConfig(saved = {}) {
   // 兜底 getUrl / postUrl
   if (!cloud.getUrl) cloud.getUrl = DEFAULT_CONFIG.cloud.getUrl
   if (!cloud.postUrl) cloud.postUrl = DEFAULT_CONFIG.cloud.postUrl
+  // 全局轮询间隔：缺失或非法值时回退到默认 3 秒
+  const pollSec = Number(cloud.pollIntervalSeconds)
+  cloud.pollIntervalSeconds = Number.isFinite(pollSec) && pollSec > 0 ? Math.floor(pollSec) : (DEFAULT_CONFIG.cloud.pollIntervalSeconds || 3)
   return {
     ...deepClone(DEFAULT_CONFIG),
     ...saved,

@@ -33,7 +33,7 @@
           <text class="section-title">实时数据</text>
           <text class="section-desc">读取已配置的云平台属性</text>
         </view>
-        <button class="refresh-btn" :loading="loading" @tap="loadData">刷新</button>
+        <button class="refresh-btn" @tap="loadData">刷新</button>
       </view>
 
       <view v-if="config.displayPoints.length" class="metric-grid">
@@ -41,23 +41,23 @@
           v-for="point in config.displayPoints"
           :key="point.identifier"
           class="metric-card"
-          :class="{ 'metric-alarm': isAlarming(point, values[point.identifier]) }"
+          :class="{ 'metric-alarm': alarmIds.has(point.identifier) }"
         >
           <view class="metric-top">
             <text class="metric-label">{{ point.label || point.identifier }}</text>
             <text class="metric-id">{{ point.identifier }}</text>
           </view>
-          <text class="metric-value" :class="{ 'value-alarm': isAlarming(point, values[point.identifier]) }">
+          <text class="metric-value" :class="{ 'value-alarm': alarmIds.has(point.identifier) }">
             {{ formatValue(values[point.identifier], point.unit) }}
           </text>
           <view v-if="point.alarmThresholdId" class="metric-track">
             <view
               class="metric-fill"
-              :class="{ 'fill-alarm': isAlarming(point, values[point.identifier]) }"
+              :class="{ 'fill-alarm': alarmIds.has(point.identifier) }"
               :style="{ width: metricWidth(point, values[point.identifier]) }"
             />
           </view>
-          <text v-if="isAlarming(point, values[point.identifier])" class="alarm-tag">告警</text>
+          <text v-if="alarmIds.has(point.identifier)" class="alarm-tag">告警</text>
         </view>
       </view>
       <EmptyState v-else title="未配置展示数据点" desc="请在后台配置中添加需要读取的云平台属性" />
@@ -96,7 +96,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import AppTabBar from '../../components/AppTabBar.vue'
 import EmptyState from '../../components/EmptyState.vue'
@@ -107,7 +107,6 @@ import { THEME_LIST } from '../../utils/themes'
 
 const config = ref(getConfig())
 const status = computed(() => (dataStore.lastError.value ? 'error' : (dataStore.lastSyncedAt.value ? 'online' : 'idle')))
-const loading = computed(() => dataStore.refreshing.value)
 const lastUpdate = computed(() => dataStore.lastSyncedAt.value)
 
 // 在 setup 内声明此模板引用的顶层标识，避免外层 ref 已删除后报 undefined
@@ -131,19 +130,66 @@ function getThresholdForPoint(point) {
   return (config.value.thresholdPoints || []).find((t) => t.identifier === point.alarmThresholdId) || null
 }
 
-function isAlarming(point, value) {
-  const threshold = getThresholdForPoint(point)
-  if (!threshold) return false
-  return Number(value) > Number(threshold.value)
+/**
+ * 取出该阈值点当前应该用于比较的数值。
+ * 优先用 dataStore 里的最新云端值（每次 3s 轮询都会刷新），
+ * 没有再回退到本地持久化的 threshold.value（首次进入 / 云端尚未下发时）。
+ */
+function getThresholdValue(threshold) {
+  if (!threshold) return null
+  const live = dataStore.latestValues[threshold.identifier]
+  if (live !== undefined && live !== null && live !== '') {
+    const num = Number(live)
+    if (Number.isFinite(num)) return num
+  }
+  return Number(threshold.value)
 }
+
+function isAlarming(point, value) {
+  const thresholdValue = getThresholdValue(getThresholdForPoint(point))
+  if (thresholdValue === null) return false
+  const num = Number(value)
+  if (!Number.isFinite(num)) return false
+  return num > thresholdValue
+}
+
+/**
+ * 当前处于报警状态的数据点 identifier 集合。
+ * 每次全局 3s 轮询完成（lastSyncedAt 变化）就重判一次，
+ * 且判定时使用最新的云端阈值（latestValues），不是 config 里的本地旧值。
+ */
+const alarmIds = ref(new Set())
+
+function evaluateAlarms() {
+  const next = new Set()
+  config.value.displayPoints.forEach((point) => {
+    if (isAlarming(point, dataStore.latestValues[point.identifier])) {
+      next.add(point.identifier)
+    }
+  })
+  alarmIds.value = next
+}
+
+// 显式与全局 3s 轮询绑定：每次 lastSyncedAt 变化（refresh 成功）就重判一次报警
+watch(() => dataStore.lastSyncedAt.value, evaluateAlarms, { immediate: true })
+
+// 单独再监听最新云端阈值的变化：轮询/乐观下发都会更新 latestValues，
+// 立即触发一次重判，避免「阈值刚变、轮询还没完成下一个 tick」的延迟感
+watch(
+  () => config.value.displayPoints.map((p) => {
+    const t = getThresholdForPoint(p)
+    return t ? dataStore.latestValues[t.identifier] : undefined
+  }),
+  evaluateAlarms
+)
 
 function metricWidth(point, value) {
   const number = Number(value)
   if (!Number.isFinite(number)) return '18%'
-  const threshold = getThresholdForPoint(point)
+  const thresholdValue = getThresholdValue(getThresholdForPoint(point))
   // If threshold is bound, use threshold.value as the full scale
-  if (threshold) {
-    const max = Number(threshold.value) || 100
+  if (thresholdValue !== null) {
+    const max = thresholdValue || 100
     const pct = (number / max) * 100
     return `${Math.max(8, Math.min(100, pct))}%`
   }

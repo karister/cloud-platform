@@ -94,6 +94,11 @@ function switchPage(item) {
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.tab-item:active {
+  transform: scale(0.94);
+  opacity: 0.85;
+}
+
 .tab-item.active {
   background: var(--theme-tab-active-bg);
   color: var(--theme-tab-active-text);
