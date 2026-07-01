@@ -13,19 +13,41 @@ $H5Dist = Join-Path $ProjectRoot "dist\build\h5"
 $HBuilderXRoot = Join-Path $ProjectRoot "work\hbuilderx\HBuilderX"
 $CliExe = Join-Path $HBuilderXRoot "cli.exe"
 $HBuilderXExe = Join-Path $HBuilderXRoot "HBuilderX.exe"
+$EnvFile = Join-Path $ProjectRoot ".env"
 
 function Write-Step($Step, $Total, $Message) {
   Write-Host "$Step/$Total $Message"
 }
 
-# --- Login mode ---
-if ($Login) {
-  if (-not $Username -or -not $Password) {
-    Write-Host "Usage: .\deploy-h5.ps1 -Login -Username YOUR_ACCOUNT -Password YOUR_PASSWORD"
-    Write-Host "  First-time setup: login once, then deploy anytime."
-    exit 1
+function Import-DotEnv($Path) {
+  if (-not (Test-Path $Path)) {
+    return
   }
 
+  Get-Content $Path | ForEach-Object {
+    $line = $_.Trim()
+    if (-not $line -or $line.StartsWith("#")) {
+      return
+    }
+
+    $idx = $line.IndexOf("=")
+    if ($idx -le 0) {
+      return
+    }
+
+    $key = $line.Substring(0, $idx).Trim()
+    $value = $line.Substring($idx + 1).Trim()
+    if (($value.StartsWith('"') -and $value.EndsWith('"')) -or ($value.StartsWith("'") -and $value.EndsWith("'"))) {
+      $value = $value.Substring(1, $value.Length - 2)
+    }
+
+    if (-not [Environment]::GetEnvironmentVariable($key, "Process")) {
+      [Environment]::SetEnvironmentVariable($key, $value, "Process")
+    }
+  }
+}
+
+function Ensure-HBuilderXRunning() {
   if (-not (Test-Path $CliExe)) {
     Write-Host "HBuilderX CLI not found at: $CliExe"
     Write-Host "Download HBuilderX zip and extract to: $HBuilderXRoot"
@@ -33,13 +55,53 @@ if ($Login) {
     exit 1
   }
 
-  # Start HBuilderX first, then login
   if (-not (Get-Process -Name "HBuilderX" -ErrorAction SilentlyContinue)) {
     Write-Host "Starting HBuilderX..."
-    Start-Process -FilePath $HBuilderXExe -WindowStyle Minimized
+    & $CliExe open
     Write-Host "Waiting for HBuilderX to initialize..."
     Start-Sleep -Seconds 10
   }
+}
+
+function Ensure-HBuilderXPlugin($Name) {
+  $pluginPath = Join-Path $HBuilderXRoot "plugins\$Name"
+  if (Test-Path $pluginPath) {
+    return
+  }
+
+  Write-Host "Installing HBuilderX plugin: $Name..."
+  & $CliExe installPlugin --name $Name --force true
+  if ($LASTEXITCODE -ne 0 -or -not (Test-Path $pluginPath)) {
+    throw "Failed to install HBuilderX plugin: $Name"
+  }
+}
+
+Import-DotEnv $EnvFile
+
+if (-not $Username) {
+  $Username = $env:DCLOUD_USERNAME
+}
+if (-not $Password) {
+  $Password = $env:DCLOUD_PASSWORD
+}
+if ($env:DCLOUD_SPACE_ID) {
+  $Space = $env:DCLOUD_SPACE_ID
+}
+if ($env:DCLOUD_PROVIDER) {
+  $Provider = $env:DCLOUD_PROVIDER
+}
+
+$url = "https://static-mp-70459e72-3958-42a0-9743-4e80b54716cd.next.bspapp.com"
+
+# --- Login mode ---
+if ($Login) {
+  if (-not $Username -or -not $Password) {
+    Write-Host "Usage: .\deploy-h5.ps1 -Login -Username YOUR_ACCOUNT -Password YOUR_PASSWORD"
+    Write-Host "  Or set DCLOUD_USERNAME and DCLOUD_PASSWORD in .env."
+    exit 1
+  }
+
+  Ensure-HBuilderXRunning
 
   Write-Host "Logging into DCloud..."
   & $CliExe user login --username $Username --password $Password
@@ -69,18 +131,21 @@ $useCli = $false
 if (Test-Path $CliExe) {
   Write-Step 2 3 "Deploy to uniCloud hosting via HBuilderX CLI..."
 
-  # Start HBuilderX if not running
-  if (-not (Get-Process -Name "HBuilderX" -ErrorAction SilentlyContinue)) {
-    Write-Host "Starting HBuilderX in background..."
-    Start-Process -FilePath $HBuilderXExe -WindowStyle Minimized
-    Write-Host "Waiting for HBuilderX to initialize (10s)..."
-    Start-Sleep -Seconds 10
+  Ensure-HBuilderXRunning
+  Ensure-HBuilderXPlugin "unicloud"
+  if ($Username -and $Password) {
+    Write-Host "Logging into DCloud from local credentials..."
+    & $CliExe user login --username $Username --password $Password
   }
 
   Push-Location $ProjectRoot
   try {
-    & $CliExe hosting deploy --provider $Provider --space $Space --source $H5Dist --prefix /
-    if ($LASTEXITCODE -eq 0) {
+    & $CliExe project open --path $ProjectRoot
+    $publishOutput = & $CliExe publish web --project $ProjectRoot --platform Web --webTitle "云平台数据通信" --webHosting true --provider $Provider --spaceId $Space 2>&1
+    $publishExitCode = $LASTEXITCODE
+    $publishOutput | ForEach-Object { Write-Host $_ }
+    $publishText = $publishOutput -join "`n"
+    if ($publishExitCode -eq 0 -and $publishText.Contains($url)) {
       $useCli = $true
     }
     else {
@@ -117,9 +182,13 @@ if (-not $useCli) {
   Start-Process "explorer.exe" -ArgumentList $H5Dist
 }
 
-$url = "https://static-mp-70459e72-3958-42a0-9743-4e80b54716cd.next.bspapp.com"
 Write-Host ""
-Write-Host "Deploy ready!"
+if ($useCli) {
+  Write-Host "Deploy complete!"
+}
+else {
+  Write-Host "Build ready for manual upload."
+}
 Write-Host "URL: $url"
 
 if ($useCli) {
