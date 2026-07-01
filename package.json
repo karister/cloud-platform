@@ -12,6 +12,7 @@
     "build:app": "uni build -p app",
     "build:apk": "powershell -ExecutionPolicy Bypass -File scripts/build-apk.ps1",
     "release:apk": "node scripts/release-apk.mjs",
+    "send:apk": "node scripts/release-apk.mjs --skip-build",
     "release:history": "node scripts/release-apk.mjs --list",
     "deploy:h5": "powershell -ExecutionPolicy Bypass -File scripts/deploy-h5.ps1"
   },

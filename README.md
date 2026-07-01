@@ -170,8 +170,8 @@ npm run release:apk
 # 指定收件人与更新说明
 npm run release:apk -- --email qa@example.com --desc "修复已知问题,优化页面显示"
 
-# 跳过 Gradle 重新打包，仅上传已存在的 APK
-npm run release:apk -- --skip-build --email qa@example.com
+# 仅发送已存在的 APK：上传蒲公英 + 发送邮件 + 写发布记录，不重新打包
+npm run send:apk -- --email qa@example.com
 
 # 查看最近 20 条发布记录
 npm run release:history

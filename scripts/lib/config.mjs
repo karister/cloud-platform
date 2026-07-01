@@ -13,6 +13,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
+import { fileURLToPath } from 'node:url'
 
 /**
  * Minimal .env parser (no extra dependency).
@@ -47,7 +48,7 @@ function parseDotEnv(filePath) {
 
 const PROJECT_ROOT = (() => {
   // scripts/lib/config.mjs → ../../  is the project root
-  const here = path.dirname(new URL(import.meta.url).pathname)
+  const here = path.dirname(fileURLToPath(import.meta.url))
   return path.resolve(here, '..', '..')
 })()
 

@@ -38,6 +38,14 @@ function formatBytes(bytes) {
   return `${value.toFixed(value >= 10 || unit === 0 ? 0 : 2)} ${units[unit]}`
 }
 
+function normalizeDownloadUrl(value) {
+  const raw = String(value || '').trim()
+  if (!raw) return ''
+  if (/^https?:\/\//i.test(raw)) return raw
+  if (/^www\./i.test(raw) || /^pgyer\.com\//i.test(raw)) return `https://${raw}`
+  return `https://www.pgyer.com/${raw.replace(/^\/+/, '')}`
+}
+
 /**
  * Escape user-controlled text for safe inclusion in HTML.
  * @param {string} value
@@ -60,6 +68,7 @@ function escapeHtml(value) {
  * }} vars
  */
 function renderText(vars) {
+  const downloadUrl = normalizeDownloadUrl(vars.downloadUrl)
   const lines = [
     `【应用内测包】${vars.appName} v${vars.versionName} 已生成`,
     '',
@@ -67,7 +76,7 @@ function renderText(vars) {
     `版本号  : ${vars.versionName}`,
     `构建版本: ${vars.versionCode}`,
     `包大小  : ${formatBytes(vars.fileSize)}`,
-    `下载地址: ${vars.downloadUrl}`,
+    `下载地址: ${downloadUrl}`,
     `安装密码: ${vars.installPassword || '(无)'}`,
     `有效期  : ${vars.expireDays} 天`,
     '',
@@ -87,12 +96,13 @@ function renderText(vars) {
  * @param {ReturnType<typeof renderText> extends string ? Parameters<typeof renderText>[0] : never} vars
  */
 function renderHtml(vars) {
+  const downloadUrl = normalizeDownloadUrl(vars.downloadUrl)
   const safe = {
     appName: escapeHtml(vars.appName),
     versionName: escapeHtml(vars.versionName),
     versionCode: escapeHtml(vars.versionCode),
     fileSize: escapeHtml(formatBytes(vars.fileSize)),
-    downloadUrl: escapeHtml(vars.downloadUrl),
+    downloadUrl: escapeHtml(downloadUrl),
     installPassword: escapeHtml(vars.installPassword || '(无)'),
     updateDescription: escapeHtml(vars.updateDescription || '(无)'),
     expireDays: escapeHtml(String(vars.expireDays))
@@ -171,11 +181,12 @@ export async function sendReleaseEmail(params) {
     versionName,
     versionCode,
     fileSize,
-    downloadUrl,
+    downloadUrl: rawDownloadUrl,
     installPassword,
     updateDescription,
     expireDays
   } = params || {}
+  const downloadUrl = normalizeDownloadUrl(rawDownloadUrl)
 
   if (!publicKey || !serviceId || !templateId) {
     return { success: false, error: 'EmailJS credentials are incomplete' }
@@ -282,4 +293,4 @@ export async function sendReleaseEmail(params) {
   }
 }
 
-export { EMAILJS_ENDPOINT, REQUEST_TIMEOUT_MS, formatBytes, renderText, renderHtml }
+export { EMAILJS_ENDPOINT, REQUEST_TIMEOUT_MS, formatBytes, normalizeDownloadUrl, renderText, renderHtml }
