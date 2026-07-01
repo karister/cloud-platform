@@ -522,6 +522,47 @@
       </view>
     </view>
 
+    <!-- ── Import modal ── -->
+    <view v-if="showImportModal" class="modal-mask" @tap="closeImportModal">
+      <view class="modal" @tap.stop>
+        <view class="modal-head">
+          <text>导入配置</text>
+          <button class="close-btn" @tap="closeImportModal">关闭</button>
+        </view>
+
+        <scroll-view scroll-y class="modal-body">
+          <view class="form">
+            <text class="import-intro">
+              可直接粘贴导出的 JSON 配置内容，也可以选择本地 .json 配置文件。解析成功后会先进入确认页。
+            </text>
+
+            <textarea
+              class="textarea import-textarea"
+              :value="importText"
+              maxlength="-1"
+              placeholder="请粘贴配置 JSON 内容"
+              @input="onImportTextInput"
+            />
+            <text v-if="importTextError" class="import-error">{{ importTextError }}</text>
+
+            <button class="primary-btn" @tap="handleImportText">
+              解析配置内容
+            </button>
+
+            <view class="export-divider">
+              <view class="export-divider-line"></view>
+              <text class="export-divider-text">或导入配置文件</text>
+              <view class="export-divider-line"></view>
+            </view>
+
+            <button class="secondary-btn" @tap="handleImportFile">
+              选择 JSON 文件
+            </button>
+          </view>
+        </scroll-view>
+      </view>
+    </view>
+
     <!-- ── Import confirmation modal ── -->
     <view v-if="showImportConfirm" class="modal-mask" @tap="cancelImport">
       <view class="modal" @tap.stop>
@@ -591,7 +632,7 @@ import { generateOneNetToken } from '../../utils/onenetToken'
 import { parseThingModel, mergeParsedIntoDraft } from '../../utils/thingModel'
 import { getConfig, saveConfig, getDebugValues, saveDebugValues, clearDebugValues as clearDebugStorage } from '../../utils/storage'
 import { THEME_LIST, applyThemeToDOM } from '../../utils/themes'
-import { serializeConfig, downloadJsonFile, deserializeConfig, getExportFilename } from '../../utils/configImportExport'
+import { serializeConfig, downloadJsonFile, deserializeConfig, getExportFilename, buildImportPreviewData } from '../../utils/configImportExport'
 import { sendConfigEmail, isEmailConfigured } from '../../services/emailService'
 import { fetchProperties } from '../../services/onenet'
 import { dataStore } from '../../stores/dataStore'
@@ -683,6 +724,9 @@ const showExportModal = ref(false)
 const exportEmailAddress = ref('')
 const exportEmailError = ref('')
 const emailSending = ref(false)
+const showImportModal = ref(false)
+const importText = ref('')
+const importTextError = ref('')
 const showImportConfirm = ref(false)
 const importPreviewData = ref({})
 const pendingImportData = ref(null)
@@ -1258,6 +1302,59 @@ async function handleExportEmail() {
 }
 
 function openImport() {
+  importText.value = ''
+  importTextError.value = ''
+  showImportModal.value = true
+}
+
+function closeImportModal() {
+  showImportModal.value = false
+  importTextError.value = ''
+}
+
+function onImportTextInput(event) {
+  importText.value = event.detail.value
+  importTextError.value = ''
+}
+
+function parseImportContent(text, emptyMessage = '配置内容为空') {
+  const content = String(text || '').trim()
+  if (!content) {
+    return { valid: false, data: null, error: emptyMessage }
+  }
+
+  const parsed = deserializeConfig(content)
+  if (!parsed.valid) {
+    return { valid: false, data: null, error: '导入失败: ' + parsed.errors[0] }
+  }
+
+  return { valid: true, data: parsed.data, error: '' }
+}
+
+function stageImportData(importData) {
+  pendingImportData.value = importData
+  importPreviewData.value = buildImportPreviewData(importData, THEME_LIST)
+  showImportModal.value = false
+  showImportConfirm.value = true
+}
+
+function handleImportText() {
+  const parsed = parseImportContent(importText.value, '请输入配置内容')
+  if (!parsed.valid) {
+    importTextError.value = parsed.error
+    uni.showToast({ title: parsed.error, icon: 'none', duration: 3000 })
+    return
+  }
+
+  stageImportData(parsed.data)
+}
+
+function handleImportFile() {
+  if (typeof document === 'undefined' || !document.createElement) {
+    uni.showToast({ title: '当前平台不支持文件导入', icon: 'none' })
+    return
+  }
+
   const input = document.createElement('input')
   input.type = 'file'
   input.accept = '.json,application/json'
@@ -1275,30 +1372,14 @@ function openImport() {
     reader.onload = (ev) => {
       try {
         const text = ev.target.result
-        const parsed = deserializeConfig(text)
+        const parsed = parseImportContent(text)
         if (!parsed.valid) {
-          uni.showToast({ title: '导入失败: ' + parsed.errors[0], icon: 'none', duration: 3000 })
+          importTextError.value = parsed.error
+          uni.showToast({ title: parsed.error, icon: 'none', duration: 3000 })
           return
         }
 
-        const importData = parsed.data
-        const theme = THEME_LIST.find((t) => t.id === importData.themeId)
-
-        pendingImportData.value = importData
-        importPreviewData.value = {
-          appName: importData.appName || '--',
-          themeName: theme ? theme.name : (importData.themeId || '默认'),
-          productId: importData.cloud?.productId || '--',
-          mockMode: importData.cloud?.mockMode !== false,
-          displayCount: importData.displayPoints?.length || 0,
-          switchCount: importData.switchPoints?.length || 0,
-          thresholdCount: importData.thresholdPoints?.length || 0,
-          exportedAt: importData.exportedAt,
-          formattedTime: importData.exportedAt
-            ? new Date(importData.exportedAt).toLocaleString('zh-CN', { hour12: false })
-            : ''
-        }
-        showImportConfirm.value = true
+        stageImportData(parsed.data)
       } catch (err) {
         uni.showToast({ title: '文件解析失败', icon: 'none' })
       } finally {
@@ -2342,6 +2423,30 @@ onShow(reload)
   color: var(--theme-text-secondary);
   font-size: 25rpx;
   line-height: 1.5;
+}
+
+.import-intro {
+  display: block;
+  color: var(--theme-text-secondary);
+  font-size: 25rpx;
+  line-height: 1.5;
+}
+
+.textarea.import-textarea {
+  min-height: 300rpx;
+  font-family: monospace;
+  font-size: 22rpx;
+  line-height: 1.45;
+  white-space: pre;
+  word-break: break-all;
+}
+
+.import-error {
+  display: block;
+  color: var(--theme-danger);
+  font-size: 23rpx;
+  font-weight: 700;
+  line-height: 1.4;
 }
 
 .export-divider {

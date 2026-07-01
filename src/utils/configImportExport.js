@@ -117,6 +117,29 @@ export function validateImportData(data) {
 }
 
 /**
+ * Build the confirmation preview shown before applying an imported config.
+ * @param {object} importData validated config data from deserializeConfig()
+ * @param {Array<{ id: string, name: string }>} themes available theme list
+ * @returns {object} import preview view model
+ */
+export function buildImportPreviewData(importData, themes = []) {
+  const theme = themes.find((t) => t.id === importData.themeId)
+  return {
+    appName: importData.appName || '--',
+    themeName: theme ? theme.name : (importData.themeId || '默认'),
+    productId: importData.cloud?.productId || '--',
+    mockMode: importData.cloud?.mockMode !== false,
+    displayCount: importData.displayPoints?.length || 0,
+    switchCount: importData.switchPoints?.length || 0,
+    thresholdCount: importData.thresholdPoints?.length || 0,
+    exportedAt: importData.exportedAt,
+    formattedTime: importData.exportedAt
+      ? new Date(importData.exportedAt).toLocaleString('zh-CN', { hour12: false })
+      : ''
+  }
+}
+
+/**
  * Generate a filename for the exported config.
  * @returns {string} e.g. cloud-config-20260617143000.json
  */
