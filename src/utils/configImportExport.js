@@ -13,17 +13,25 @@ const EXPORT_VERSION = 1
  * @returns {string} pretty-printed JSON string
  */
 export function serializeConfig(config) {
+  const displayPoints = normalizeExportList(config.displayPoints)
+  const switchPoints = normalizeExportList(config.switchPoints)
+  const thresholdPoints = normalizeExportList(config.thresholdPoints)
+
   const payload = {
     version: EXPORT_VERSION,
     exportedAt: Date.now(),
     appName: config.appName || '',
     themeId: config.themeId || '',
     cloud: { ...(config.cloud || {}) },
-    displayPoints: (config.displayPoints || []).map(normalizeExportPoint),
-    switchPoints: (config.switchPoints || []).map(normalizeExportPoint),
-    thresholdPoints: (config.thresholdPoints || []).map(normalizeExportThreshold)
+    displayPoints: displayPoints.map(normalizeExportPoint),
+    switchPoints: switchPoints.map(normalizeExportPoint),
+    thresholdPoints: thresholdPoints.map(normalizeExportThreshold)
   }
   return JSON.stringify(payload, null, 2)
+}
+
+function normalizeExportList(value) {
+  return Array.isArray(value) ? value : []
 }
 
 function normalizeExportPoint(p) {

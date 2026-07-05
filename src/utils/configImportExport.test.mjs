@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 
-import { buildImportPreviewData } from './configImportExport.js'
+import { buildImportPreviewData, serializeConfig } from './configImportExport.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -37,10 +37,39 @@ test('buildImportPreviewData summarizes imported config for confirmation', () =>
   assert.notEqual(preview.formattedTime, '')
 })
 
+test('serializeConfig preserves accessKey when point lists are malformed', () => {
+  const exported = JSON.parse(serializeConfig({
+    appName: 'Greenhouse Console',
+    themeId: 'forest',
+    cloud: {
+      productId: 'product-1',
+      deviceName: 'device-1',
+      accessKey: 'one-net-access-key'
+    },
+    displayPoints: 'config.displayPoints is not iterable',
+    switchPoints: null,
+    thresholdPoints: { identifier: 'threshold' }
+  }))
+
+  assert.equal(exported.cloud.accessKey, 'one-net-access-key')
+  assert.deepEqual(exported.displayPoints, [])
+  assert.deepEqual(exported.switchPoints, [])
+  assert.deepEqual(exported.thresholdPoints, [])
+})
+
 test('settings import textarea allows full JSON config content', () => {
   const settingsVue = readFileSync(resolve(__dirname, '../pages/settings/settings.vue'), 'utf8')
   const importTextarea = settingsVue.match(/<textarea\b(?=[^>]*class="textarea import-textarea")[^>]*>/)
 
   assert.ok(importTextarea, 'import textarea should exist')
   assert.match(importTextarea[0], /maxlength="-1"/)
+})
+
+test('settings export email shows an animated sending state', () => {
+  const settingsVue = readFileSync(resolve(__dirname, '../pages/settings/settings.vue'), 'utf8')
+
+  assert.match(settingsVue, /:disabled="emailSending"/)
+  assert.match(settingsVue, /class="send-loader"/)
+  assert.match(settingsVue, /class="export-send-progress"/)
+  assert.match(settingsVue, /@keyframes sendPulse/)
 })

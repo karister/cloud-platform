@@ -230,27 +230,6 @@
               <text class="field-tip">全局轮询节奏，所有页面共用。最短 1 秒，过小会被云平台限流。</text>
             </label>
 
-            <!--
-              TODO: 临时手动 token 输入框
-              当前自动计算的 token 算法与 OneNET 实际返回的 token 不一致，
-              临时让用户可以从 OneNET 控制台 / 官方 token 生成工具粘贴一个
-              已知的有效 token，覆盖自动计算结果。等算法修好后删除此区块
-              以及 buildAuthorization 中的 manualToken 优先逻辑。
-            -->
-            <label class="field manual-token-field">
-              <text>手动 Token（临时调试用）</text>
-              <textarea
-                class="textarea auth-input"
-                :value="draft.cloud.manualToken"
-                @input="draft.cloud.manualToken = $event.detail.value"
-                placeholder="version=2018-10-31&res=...&et=...&method=md5&sign=..."
-              />
-              <text class="field-tip">
-                临时调试项：填入后会直接作为 Authorization 头发送给 OneNET，
-                跳过本地 HMAC 计算。等 token 算法问题修复后此字段会被移除。
-              </text>
-            </label>
-
             <view class="cloud-actions">
               <button class="secondary-btn" :disabled="verifying || !canVerify" @tap="verifyAuthorization">
                 {{ verifying ? '验证中...' : '验证 token' }}
@@ -500,21 +479,31 @@
               <view class="export-divider-line"></view>
             </view>
 
-            <view class="export-email-row">
+            <view class="export-email-row" :class="{ sending: emailSending }">
               <input
                 class="export-email-input"
                 type="text"
                 v-model="exportEmailAddress"
                 placeholder="请输入邮箱地址"
+                :disabled="emailSending"
                 @input="exportEmailError = ''"
               />
               <button
                 class="secondary-btn export-send-btn"
+                :class="{ sending: emailSending }"
                 :disabled="emailSending || !exportEmailAddress"
                 @tap="handleExportEmail"
               >
-                {{ emailSending ? '发送中...' : '发送' }}
+                <view v-if="emailSending" class="send-loader"></view>
+                <text>{{ emailSending ? '发送中' : '发送' }}</text>
               </button>
+            </view>
+            <view v-if="emailSending" class="export-send-progress">
+              <view class="send-beam"></view>
+              <view class="send-progress-copy">
+                <text class="send-progress-title">正在投递配置邮件</text>
+                <text class="send-progress-desc">正在加密配置 JSON 并连接 EmailJS 服务</text>
+              </view>
             </view>
             <text v-if="exportEmailError" class="export-error">{{ exportEmailError }}</text>
           </view>
@@ -675,14 +664,10 @@ const verifying = ref(false)
 const authError = ref('')
 const authVerifyResult = ref('')
 
-// 表单是否足够发起一次验证请求（手动 token 时可以只填 token + URL 参数）
+// 表单是否足够发起一次验证请求
 const canVerify = computed(() => {
   const c = draft.value.cloud
   if (!c) return false
-  // TODO: 临时允许只填 manualToken 完成验证；算法修好后移除此分支
-  if (typeof c.manualToken === 'string' && c.manualToken.trim()) {
-    return Boolean(c.productId && c.deviceName)
-  }
   return Boolean(c?.productId && c?.deviceName && c?.accessKey)
 })
 
@@ -930,10 +915,6 @@ function openCloud() {
   if (!Number.isFinite(draft.value.cloud.pollIntervalSeconds) || draft.value.cloud.pollIntervalSeconds < 1) {
     draft.value.cloud.pollIntervalSeconds = 3
   }
-  // TODO: 临时调试字段 — token 算法修好后删除
-  if (typeof draft.value.cloud.manualToken !== 'string') {
-    draft.value.cloud.manualToken = ''
-  }
   // 清除上一次的验证状态
   authError.value = ''
   authVerifyResult.value = ''
@@ -1069,8 +1050,6 @@ function syncGetUrl() {
 /**
  * 用当前 draft 配置打一个最小验证请求，检验 token 是否能被 OneNET 接受。
  * 验证成功后将 token 与过期时间写入 draft，等待用户在保存配置时持久化。
- *
- * TODO: 临时支持 manualToken 字段，算法修好后移除该分支
  */
 function verifyAuthorization() {
   if (!canVerify.value || verifying.value) return
@@ -1078,34 +1057,22 @@ function verifyAuthorization() {
   authError.value = ''
   authVerifyResult.value = ''
 
-  // 解析 manualToken 中的 et；如果没有就用当前时间 + tokenTtlDays
-  const manualToken = (draft.value.cloud.manualToken || '').trim()
   let probeToken = ''
-  let tokenExpiresAt = 0
-
-  if (manualToken) {
-    // TODO: 临时从 manualToken 解析 et；算法修好后整段移除
-    const etMatch = manualToken.match(/et=(\d+)/)
-    tokenExpiresAt = etMatch ? Number(etMatch[1]) : Math.floor(Date.now() / 1000) + 365 * 86400
-    probeToken = manualToken
-  } else {
-    // 正常路径：用 draft.cloud 的参数生成 token
-    const ttlDays = Number(draft.value.cloud.tokenTtlDays) || 365
-    tokenExpiresAt = Math.floor(Date.now() / 1000) + Math.floor(ttlDays * 86400)
-    try {
-      probeToken = generateOneNetToken({
-        productId: draft.value.cloud.productId,
-        deviceName: draft.value.cloud.deviceName,
-        accessKey: draft.value.cloud.accessKey,
-        expirationSeconds: tokenExpiresAt,
-        method: draft.value.cloud.signMethod || 'md5'
-      })
-    } catch (err) {
-      verifying.value = false
-      authError.value = err?.message || 'token 生成失败，请检查 Access Key 是否合法'
-      uni.showToast({ title: 'token 生成失败', icon: 'error' })
-      return
-    }
+  const ttlDays = Number(draft.value.cloud.tokenTtlDays) || 365
+  const tokenExpiresAt = Math.floor(Date.now() / 1000) + Math.floor(ttlDays * 86400)
+  try {
+    probeToken = generateOneNetToken({
+      productId: draft.value.cloud.productId,
+      deviceName: draft.value.cloud.deviceName,
+      accessKey: draft.value.cloud.accessKey,
+      expirationSeconds: tokenExpiresAt,
+      method: draft.value.cloud.signMethod || 'md5'
+    })
+  } catch (err) {
+    verifying.value = false
+    authError.value = err?.message || 'token 生成失败，请检查 Access Key 是否合法'
+    uni.showToast({ title: 'token 生成失败', icon: 'error' })
+    return
   }
 
   // 构造一份仅替换 cloud 字段的临时配置（保持其它字段以满足 fetchProperties 的全量入参）
@@ -1224,7 +1191,6 @@ function saveModal() {
     uni.showToast({ title: '请先验证 token', icon: 'none' })
     return
   }
-  // manualToken 字段已经在 draft.cloud 上保留（saveModal 直接 clone）
   // 自动同步 getUrl（与 productId/deviceName 对齐），postUrl 保留默认
   try {
     nextConfig.cloud.getUrl = buildGetUrl(nextConfig.cloud)
@@ -1427,8 +1393,6 @@ function handleConfirmImport() {
       // 旧版导入不带 token，强制清空以避免误用过期/伪造值
       token: '',
       tokenExpiresAt: 0,
-      // TODO: 临时调试字段 — token 算法修好后删除
-      manualToken: '',
       mockMode: src.cloud?.mockMode !== false
     },
     displayPoints: Array.isArray(src.displayPoints) ? src.displayPoints : [],
@@ -1887,19 +1851,6 @@ onShow(reload)
 .cloud-status.error {
   background: var(--theme-danger-bg);
   color: var(--theme-danger);
-}
-
-/* TODO: 临时手动 token 输入框样式 — 算法修好后删除整块 */
-.manual-token-field .textarea.auth-input {
-  min-height: 96rpx;
-  font-family: monospace;
-  font-size: 22rpx;
-  line-height: 1.4;
-  word-break: break-all;
-}
-
-.manual-token-field .field-tip {
-  color: var(--theme-warning, #d97706);
 }
 
 /* ── Quick config tab (物模型一键导入) ── */
@@ -2474,6 +2425,10 @@ onShow(reload)
   align-items: center;
 }
 
+.export-email-row.sending {
+  align-items: stretch;
+}
+
 .export-email-input {
   flex: 1;
   height: 76rpx;
@@ -2486,16 +2441,91 @@ onShow(reload)
   box-sizing: border-box;
 }
 
+.export-email-input:disabled {
+  opacity: 0.72;
+}
+
+.export-email-row.sending .export-email-input {
+  border-color: var(--theme-accent);
+  box-shadow: 0 0 0 4rpx var(--theme-accent-light);
+}
+
 .export-send-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
   flex-shrink: 0;
-  width: 120rpx;
+  width: 136rpx;
   height: 76rpx;
   margin: 0;
-  line-height: 76rpx;
+  line-height: 1;
+  overflow: hidden;
+  position: relative;
 }
 
 .export-send-btn:disabled {
   opacity: 0.45;
+}
+
+.export-send-btn.sending {
+  opacity: 1;
+  border-color: var(--theme-accent);
+  background:
+    linear-gradient(110deg, transparent 0%, var(--theme-accent-light) 46%, transparent 74%),
+    var(--theme-btn-secondary-bg);
+  background-size: 220% 100%, 100% 100%;
+  animation: sendPulse 1.35s ease-in-out infinite;
+}
+
+.send-loader {
+  width: 24rpx;
+  height: 24rpx;
+  border: 3rpx solid var(--theme-divider);
+  border-top-color: var(--theme-accent);
+  border-radius: 999rpx;
+  animation: sendSpin 0.76s linear infinite;
+}
+
+.export-send-progress {
+  position: relative;
+  overflow: hidden;
+  min-height: 86rpx;
+  padding: 18rpx 20rpx 16rpx 24rpx;
+  border: 1rpx solid var(--theme-divider-light);
+  border-radius: var(--theme-radius-input);
+  background:
+    linear-gradient(135deg, var(--theme-surface-alt) 0%, var(--theme-surface) 100%);
+  box-sizing: border-box;
+}
+
+.send-beam {
+  position: absolute;
+  left: -35%;
+  top: 0;
+  bottom: 0;
+  width: 42%;
+  background: linear-gradient(90deg, transparent 0%, var(--theme-accent-light) 50%, transparent 100%);
+  animation: sendBeam 1.6s ease-in-out infinite;
+}
+
+.send-progress-copy {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.send-progress-title {
+  color: var(--theme-text-primary);
+  font-size: 25rpx;
+  font-weight: 900;
+}
+
+.send-progress-desc {
+  color: var(--theme-text-secondary);
+  font-size: 22rpx;
+  line-height: 1.35;
 }
 
 .export-error {
@@ -2503,6 +2533,44 @@ onShow(reload)
   color: var(--theme-danger);
   font-size: 23rpx;
   font-weight: 700;
+}
+
+@keyframes sendPulse {
+  0% {
+    background-position: 180% 0, 0 0;
+  }
+  100% {
+    background-position: -40% 0, 0 0;
+  }
+}
+
+@keyframes sendSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes sendBeam {
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  18%,
+  72% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(325%);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .export-send-btn.sending,
+  .send-loader,
+  .send-beam {
+    animation: none;
+  }
 }
 
 .import-preview-title {
