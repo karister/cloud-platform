@@ -57,7 +57,7 @@ export default {
   --theme-accent-contrast: #ffffff;
   /* Background — light cool teal-tinted paper */
   --theme-bg: #eef3f5;
-  --theme-bg-image: url('/static/theme/bg-teal.svg');
+  --theme-bg-image: url('./static/theme/bg-teal.svg');
   --theme-bg-image-opacity: 0.5;
   --theme-bg-gradient-start: #e8f0f2;
   --theme-bg-gradient-end: #eef3f5;
@@ -176,7 +176,7 @@ export default {
   --theme-accent-dark: #1d4ed8;
   --theme-accent-contrast: #ffffff;
   --theme-bg: #f1f5f9;
-  --theme-bg-image: url('/static/theme/bg-night.svg');
+  --theme-bg-image: url('./static/theme/bg-night.svg');
   --theme-bg-image-opacity: 0.4;
   --theme-bg-gradient-start: #e8edf6;
   --theme-bg-gradient-end: #f1f5f9;
@@ -280,7 +280,7 @@ export default {
   --theme-accent-dark: #b06820;
   --theme-accent-contrast: #ffffff;
   --theme-bg: #faf6f0;
-  --theme-bg-image: url('/static/theme/bg-amber.svg');
+  --theme-bg-image: url('./static/theme/bg-amber.svg');
   --theme-bg-image-opacity: 0.35;
   --theme-bg-gradient-start: #f7efe2;
   --theme-bg-gradient-end: #faf6f0;
@@ -384,7 +384,7 @@ export default {
   --theme-accent-dark: #1e3d64;
   --theme-accent-contrast: #ffffff;
   --theme-bg: #f4f6f9;
-  --theme-bg-image: url('/static/theme/bg-steel.svg');
+  --theme-bg-image: url('./static/theme/bg-steel.svg');
   --theme-bg-image-opacity: 0.3;
   --theme-bg-gradient-start: #eaedf2;
   --theme-bg-gradient-end: #f4f6f9;

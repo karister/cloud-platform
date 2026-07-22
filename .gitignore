@@ -24,7 +24,6 @@ android-webview/app/src/main/assets/www/
 
 # Android SDK / build tools
 work/android-build-tools/
-work/hbuilderx/
 work/*.keystore
 work/*.jks
 

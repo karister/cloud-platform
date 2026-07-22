@@ -10,6 +10,8 @@
  *   data-theme-layout="id" -> structural CSS (radii, borders, shadows, tab shape)
  */
 
+import { staticUrl } from './staticUrl'
+
 // ---------------------------------------------------------------------------
 // Teal - Industrial IoT Command Center (Bright Edition)
 // ---------------------------------------------------------------------------
@@ -21,7 +23,7 @@ const TEAL = {
   surfacePreset: 'sharp',
   tabPreset: 'capsule',
   chartPreset: 'angular',
-  backgroundImage: "url('/static/theme/bg-teal.svg')",
+  backgroundImage: `url('${staticUrl('theme/bg-teal.svg')}')`,
   heroPattern: 'solid-bright',
   cssVars: {
     // Accent — electric teal, single source of color identity
@@ -32,7 +34,7 @@ const TEAL = {
 
     // Background — light cool teal-tinted paper
     '--theme-bg': '#eef3f5',
-    '--theme-bg-image': "url('/static/theme/bg-teal.svg')",
+    '--theme-bg-image': `url('${staticUrl('theme/bg-teal.svg')}')`,
     '--theme-bg-image-opacity': '0.5',
     '--theme-bg-gradient-start': '#e8f0f2',
     '--theme-bg-gradient-end': '#eef3f5',
@@ -177,7 +179,7 @@ const NIGHT = {
   surfacePreset: 'frosted',
   tabPreset: 'glow',
   chartPreset: 'neon',
-  backgroundImage: "url('/static/theme/bg-night.svg')",
+  backgroundImage: `url('${staticUrl('theme/bg-night.svg')}')`,
   heroPattern: 'gradient-bright',
   cssVars: {
     // Accent — royal blue, single source of color identity
@@ -188,7 +190,7 @@ const NIGHT = {
 
     // Background — light slate (not lavender, not pure white)
     '--theme-bg': '#f1f5f9',
-    '--theme-bg-image': "url('/static/theme/bg-night.svg')",
+    '--theme-bg-image': `url('${staticUrl('theme/bg-night.svg')}')`,
     '--theme-bg-image-opacity': '0.4',
     '--theme-bg-gradient-start': '#e8edf6',
     '--theme-bg-gradient-end': '#f1f5f9',
@@ -329,7 +331,7 @@ const AMBER = {
   surfacePreset: 'soft',
   tabPreset: 'natural',
   chartPreset: 'earth',
-  backgroundImage: "url('/static/theme/bg-amber.svg')",
+  backgroundImage: `url('${staticUrl('theme/bg-amber.svg')}')`,
   heroPattern: 'warm-gradient',
   cssVars: {
     // Accent
@@ -340,7 +342,7 @@ const AMBER = {
 
     // Background
     '--theme-bg': '#faf6f0',
-    '--theme-bg-image': "url('/static/theme/bg-amber.svg')",
+    '--theme-bg-image': `url('${staticUrl('theme/bg-amber.svg')}')`,
     '--theme-bg-image-opacity': '0.35',
     '--theme-bg-gradient-start': '#f7efe2',
     '--theme-bg-gradient-end': '#faf6f0',
@@ -481,7 +483,7 @@ const STEEL = {
   surfacePreset: 'crisp',
   tabPreset: 'corporate',
   chartPreset: 'precise',
-  backgroundImage: "url('/static/theme/bg-steel.svg')",
+  backgroundImage: `url('${staticUrl('theme/bg-steel.svg')}')`,
   heroPattern: 'navy-solid',
   cssVars: {
     // Accent
@@ -492,7 +494,7 @@ const STEEL = {
 
     // Background
     '--theme-bg': '#f4f6f9',
-    '--theme-bg-image': "url('/static/theme/bg-steel.svg')",
+    '--theme-bg-image': `url('${staticUrl('theme/bg-steel.svg')}')`,
     '--theme-bg-image-opacity': '0.3',
     '--theme-bg-gradient-start': '#eaedf2',
     '--theme-bg-gradient-end': '#f4f6f9',

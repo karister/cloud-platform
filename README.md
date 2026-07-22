@@ -2,7 +2,7 @@
 
 这是一个基于 uni-app + Vue 3 的云平台数据通信应用，用于连接 OneNET / 物联网云平台设备，展示设备属性、下发开关指令、设置阈值并查看本地历史数据。
 
-项目同时包含 H5、小程序、App 构建脚本，以及 APK 内测发布、蒲公英上传、EmailJS 邮件通知和 uniCloud 前端网页托管部署脚本。
+项目同时包含 H5、小程序、App 构建脚本，以及 APK 内测发布、蒲公英上传、EmailJS 邮件通知和 GitHub Pages 自动部署工作流。
 
 ## 功能概览
 
@@ -17,8 +17,7 @@
 
 - Node.js 18+
 - npm
-- HBuilderX / DCloud CLI：用于 App 和 uniCloud 托管部署，项目已内置便携版到 `work/hbuilderx/`
-- Windows PowerShell：用于 `build:apk` 和 `deploy:h5` 脚本
+- Windows PowerShell：用于 `build:apk` 脚本
 
 ## 安装与本地运行
 
@@ -51,7 +50,7 @@ npm run build:app
 
 ## 本地 `.env` 配置
 
-发布 APK、发送邮件和部署 H5 使用项目根目录的 `.env`。先复制示例文件：
+发布 APK、发送邮件使用项目根目录的 `.env`。先复制示例文件：
 
 ```bash
 cp .env.example .env
@@ -98,15 +97,6 @@ body_text
 ```
 
 注意：APK 发布通知模板不要复用「配置导出」邮件模板。配置导出模板用于应用内导出配置，APK 发布通知模板用于发送蒲公英下载链接。
-
-### H5 部署配置
-
-| 变量 | 必填 | 说明 |
-| --- | --- | --- |
-| `DCLOUD_USERNAME` | 是 | DCloud 登录账号 |
-| `DCLOUD_PASSWORD` | 是 | DCloud 登录密码 |
-| `DCLOUD_PROVIDER` | 否 | 默认 `aliyun` |
-| `DCLOUD_SPACE_ID` | 是 | uniCloud 服务空间 ID |
 
 ## APK 构建与发布
 
@@ -157,27 +147,17 @@ npm run release:history
 --help                  查看帮助
 ```
 
-## H5 托管部署
+## GitHub Pages 部署
 
-首次使用时登录 DCloud：
+推送到 `master` 后，`.github/workflows/deploy-pages.yml` 会自动安装依赖、构建 H5 并发布到 GitHub Pages。也可以在 GitHub 仓库的 Actions 页面手动运行该工作流。
 
-```bash
-.\scripts\deploy-h5.ps1 -Login -Username <DCloud账号> -Password <密码>
-```
-
-之后可直接部署：
-
-```bash
-npm run deploy:h5
-```
-
-脚本会构建 H5 产物，调用 HBuilderX CLI 上传到 uniCloud 前端网页托管，并在完成后打开托管地址。
-
-当前托管地址：
+站点地址：
 
 ```text
-https://static-mp-70459e72-3958-42a0-9743-4e80b54716cd.next.bspapp.com
+https://karister.github.io/cloud-platform/
 ```
+
+H5 使用 hash 路由，构建时会自动根据 GitHub 仓库名设置资源基路径，因此可直接部署在 Pages 的仓库子路径下。
 
 ## 常见问题
 
@@ -187,7 +167,7 @@ https://static-mp-70459e72-3958-42a0-9743-4e80b54716cd.next.bspapp.com
 | `APK not found` | 先执行 `npm run build:apk`，或用 `--apk` 指定已有 APK |
 | EmailJS 返回 400 / 401 / 403 | 核对 Public Key、Service ID、Template ID 和模板变量 |
 | 邮件按钮无法下载 | 确认使用的是 APK 发布通知模板，脚本会把蒲公英短码转换为完整下载链接 |
-| H5 没有上传最新产物 | 确认 `npm run deploy:h5` 成功执行，并检查 DCloud 账号、空间 ID 和 HBuilderX CLI |
+| GitHub Pages 没有更新 | 在仓库 Actions 页面检查 `Deploy H5 to GitHub Pages` 工作流，并确认 Pages 发布源为 GitHub Actions |
 
 ## 开发验证
 

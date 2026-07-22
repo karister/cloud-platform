@@ -16,6 +16,8 @@
 </template>
 
 <script setup>
+import { staticUrl } from '../utils/staticUrl'
+
 const props = defineProps({
   current: {
     type: String,
@@ -28,29 +30,29 @@ const tabs = [
     key: 'dashboard',
     text: '数据展示',
     url: '/pages/dashboard/dashboard',
-    icon: '/static/tab/dashboard.png',
-    activeIcon: '/static/tab/dashboard-active.png'
+    icon: staticUrl('tab/dashboard.png'),
+    activeIcon: staticUrl('tab/dashboard-active.png')
   },
   {
     key: 'threshold',
     text: '阈值设置',
     url: '/pages/threshold/threshold',
-    icon: '/static/tab/threshold.png',
-    activeIcon: '/static/tab/threshold-active.png'
+    icon: staticUrl('tab/threshold.png'),
+    activeIcon: staticUrl('tab/threshold-active.png')
   },
   {
     key: 'history',
     text: '历史数据',
     url: '/pages/history/history',
-    icon: '/static/tab/history.png',
-    activeIcon: '/static/tab/history-active.png'
+    icon: staticUrl('tab/history.png'),
+    activeIcon: staticUrl('tab/history-active.png')
   },
   {
     key: 'settings',
     text: '后台配置',
     url: '/pages/settings/settings',
-    icon: '/static/tab/settings.png',
-    activeIcon: '/static/tab/settings-active.png'
+    icon: staticUrl('tab/settings.png'),
+    activeIcon: staticUrl('tab/settings-active.png')
   }
 ]
 
