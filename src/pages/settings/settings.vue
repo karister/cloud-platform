@@ -1080,6 +1080,8 @@ function verifyAuthorization() {
     ...draft.value,
     cloud: {
       ...draft.value.cloud,
+      // productId/deviceName 可能刚在表单中修改过，不能继续使用已保存的旧 getUrl
+      getUrl: buildGetUrl(draft.value.cloud),
       mockMode: false,
       token: probeToken,
       tokenExpiresAt
