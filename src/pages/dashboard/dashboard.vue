@@ -79,7 +79,6 @@
             <text class="switch-id">{{ point.identifier }}</text>
           </view>
           <view class="switch-state">
-            <text>{{ values[point.identifier] ? '开启' : '关闭' }}</text>
             <switch
               :color="themeAccent"
               :checked="Boolean(values[point.identifier])"
@@ -207,8 +206,8 @@ async function loadData() {
 async function onSwitchChange(point, checked) {
   const previous = dataStore.latestValues[point.identifier]
   try {
-    await dataStore.setDesired(point.identifier, checked ? 1 : 0)
-    uni.showToast({ title: '指令已下发', icon: 'success' })
+    await dataStore.setDesired(point.identifier, checked ? '1' : '0')
+    uni.showToast({ title: '指令已下发', icon: 'success', duration: 1000, mask: true })
   } catch (error) {
     dataStore.latestValues[point.identifier] = previous
     uni.showToast({ title: error.message || '下发失败', icon: 'none' })
