@@ -137,7 +137,7 @@ async function loadFromCloud() {
 async function pushToCloud(point) {
   sendStatus[point.identifier] = 'sending'
   try {
-    await dataStore.setDesired(point.identifier, Number(point.value))
+    await dataStore.setDesired(point.identifier, String(Number(point.value)))
     sendStatus[point.identifier] = 'success'
     persistThresholds()
   } catch (error) {

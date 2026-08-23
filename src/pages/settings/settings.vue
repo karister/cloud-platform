@@ -338,16 +338,16 @@
             </view>
 
             <view v-if="activePointsTab !== 'quickConfig'" class="form">
-              <view v-if="activePointsTab === 'displayPoints'" class="quick-panel">
+              <view class="quick-panel">
                 <view class="quick-head">
                   <view>
                     <text class="quick-title">快速选择推荐数据点</text>
-                    <text class="quick-desc">点击图标按钮即可加入当前展示配置</text>
+                    <text class="quick-desc">点击图标按钮即可加入当前{{ activePointCategoryName }}配置</text>
                   </view>
                 </view>
                 <view class="quick-grid">
                   <view
-                    v-for="point in recommendedDisplayPoints"
+                    v-for="point in activeRecommendedPoints"
                     :key="point.identifier"
                     class="quick-chip"
                     @tap="quickAddPoint(point)"
@@ -826,7 +826,13 @@ const debugSwitchColor = computed(() => {
   return theme ? theme.cssVars['--theme-accent'] : '#0dc9b0'
 })
 
-const recommendedDisplayPoints = computed(() => draft.value.recommendedPoints?.display || [])
+const activePointCategory = computed(() => ({
+  displayPoints: 'display',
+  switchPoints: 'switch',
+  thresholdPoints: 'threshold'
+}[activePointsTab.value] || 'display'))
+const activePointCategoryName = computed(() => categoryName(activePointCategory.value))
+const activeRecommendedPoints = computed(() => draft.value.recommendedPoints?.[activePointCategory.value] || [])
 const currentRecommendedPoints = computed(() => draft.value.recommendedPoints?.[activeRecommendCategory.value] || [])
 
 function clone(value) {
@@ -1125,7 +1131,8 @@ function removeRecommendedPoint(index) {
 
 function quickAddPoint(point) {
   if (!point.identifier) return
-  const exists = draft.value.displayPoints.some((item) => item.identifier === point.identifier)
+  const targetPoints = draft.value[activePointsTab.value]
+  const exists = targetPoints.some((item) => item.identifier === point.identifier)
   if (exists) {
     uni.showToast({
       title: '已存在该数据点',
@@ -1133,7 +1140,7 @@ function quickAddPoint(point) {
     })
     return
   }
-  draft.value.displayPoints.push(clone(point))
+  targetPoints.push(clone(point))
   uni.showToast({
     title: '已加入配置',
     icon: 'success'
@@ -1188,8 +1195,8 @@ function saveModal() {
   nextConfig.cloud.pollIntervalSeconds = Number.isFinite(pollSec) && pollSec >= 1
     ? Math.min(3600, Math.floor(pollSec))
     : 3
-  // 必须已经验证通过才允许保存（canSave 已经在按钮 disabled 上把关）
-  if (!nextConfig.cloud.token || !nextConfig.cloud.tokenExpiresAt) {
+  // 仅云平台连接配置需要先验证 token；其他配置可直接保存
+  if (activeModal.value === 'cloud' && (!nextConfig.cloud.token || !nextConfig.cloud.tokenExpiresAt)) {
     uni.showToast({ title: '请先验证 token', icon: 'none' })
     return
   }
@@ -1511,9 +1518,11 @@ onShow(reload)
 }
 
 .admin-exit {
-  width: 96rpx;
+  width: 112rpx;
+  min-width: 112rpx;
   height: 56rpx;
   margin: 0;
+  padding: 0;
   border-radius: var(--theme-radius-input);
   background: var(--theme-category-tabs-bg);
   color: var(--theme-text-secondary);
