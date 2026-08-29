@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 
-import { buildImportPreviewData, serializeConfig } from './configImportExport.js'
+import { buildImportPreviewData, serializeConfig, validateImportData } from './configImportExport.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -32,10 +32,34 @@ test('buildImportPreviewData summarizes imported config for confirmation', () =>
   assert.equal(preview.displayCount, 1)
   assert.equal(preview.switchCount, 2)
   assert.equal(preview.thresholdCount, 0)
+  assert.equal(preview.recommendedCount, 0)
   assert.equal(preview.exportedAt, 1782873600000)
   assert.equal(typeof preview.formattedTime, 'string')
   assert.notEqual(preview.formattedTime, '')
 })
+
+test('buildImportPreviewData counts recommended points across categories', () => {
+  const preview = buildImportPreviewData({
+    cloud: { productId: 'product-1' },
+    recommendedPoints: {
+      display: [{ identifier: 'temp' }, { identifier: 'humi' }],
+      switch: [{ identifier: 'switch' }],
+      threshold: [{ identifier: 'temp_threshold' }]
+    }
+  })
+
+  assert.equal(preview.recommendedCount, 4)
+})
+
+test('buildImportPreviewData tolerates malformed recommendedPoints', () => {
+  expectZeroRecommended(buildImportPreviewData({ recommendedPoints: 'oops' }))
+  expectZeroRecommended(buildImportPreviewData({ recommendedPoints: { display: 'oops' } }))
+  expectZeroRecommended(buildImportPreviewData({}))
+})
+
+function expectZeroRecommended(preview) {
+  assert.equal(preview.recommendedCount, 0)
+}
 
 test('serializeConfig preserves accessKey when point lists are malformed', () => {
   const exported = JSON.parse(serializeConfig({
@@ -55,6 +79,67 @@ test('serializeConfig preserves accessKey when point lists are malformed', () =>
   assert.deepEqual(exported.displayPoints, [])
   assert.deepEqual(exported.switchPoints, [])
   assert.deepEqual(exported.thresholdPoints, [])
+})
+
+test('serializeConfig exports normalized recommended points', () => {
+  const exported = JSON.parse(serializeConfig({
+    appName: 'Greenhouse Console',
+    themeId: 'forest',
+    cloud: { productId: 'product-1', deviceName: 'device-1' },
+    recommendedPoints: {
+      display: [{ label: '温度', identifier: 'temp', unit: 'C', extra: 'drop-me' }],
+      switch: [{ label: '风机开关', identifier: 'fan', unit: '' }],
+      threshold: [{ label: '温度阈值', identifier: 'temp_threshold', unit: 'C', min: 0, max: 100, step: 1, value: 35 }]
+    }
+  }))
+
+  assert.deepEqual(exported.recommendedPoints.display, [
+    { label: '温度', identifier: 'temp', unit: 'C' }
+  ])
+  assert.deepEqual(exported.recommendedPoints.switch, [
+    { label: '风机开关', identifier: 'fan', unit: '' }
+  ])
+  assert.deepEqual(exported.recommendedPoints.threshold, [
+    { label: '温度阈值', identifier: 'temp_threshold', unit: 'C', min: 0, max: 100, step: 1, value: 35 }
+  ])
+})
+
+test('serializeConfig fills empty recommended categories when malformed', () => {
+  const exported = JSON.parse(serializeConfig({
+    cloud: { productId: 'product-1', deviceName: 'device-1' },
+    recommendedPoints: 'not-an-object'
+  }))
+  assert.deepEqual(exported.recommendedPoints, { display: [], switch: [], threshold: [] })
+
+  const partial = JSON.parse(serializeConfig({
+    cloud: { productId: 'product-1', deviceName: 'device-1' },
+    recommendedPoints: { display: null }
+  }))
+  assert.deepEqual(partial.recommendedPoints, { display: [], switch: [], threshold: [] })
+})
+
+test('validateImportData accepts optional recommendedPoints and rejects malformed ones', () => {
+  const base = {
+    cloud: { productId: 'product-1', deviceName: 'device-1' }
+  }
+
+  assert.equal(validateImportData({ ...base }).valid, true)
+
+  const withRecommended = validateImportData({
+    ...base,
+    recommendedPoints: {
+      display: [{ label: '温度', identifier: 'temp' }],
+      switch: [],
+      threshold: [{ label: '温度阈值', identifier: 'temp_threshold' }]
+    }
+  })
+  assert.equal(withRecommended.valid, true)
+
+  assert.equal(validateImportData({ ...base, recommendedPoints: 'oops' }).valid, false)
+  assert.equal(
+    validateImportData({ ...base, recommendedPoints: { display: 'oops' } }).valid,
+    false
+  )
 })
 
 test('settings import textarea allows full JSON config content', () => {

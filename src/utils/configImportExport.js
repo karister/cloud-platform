@@ -17,6 +17,8 @@ export function serializeConfig(config) {
   const switchPoints = normalizeExportList(config.switchPoints)
   const thresholdPoints = normalizeExportList(config.thresholdPoints)
 
+  const recommended = normalizeExportRecommended(config.recommendedPoints)
+
   const payload = {
     version: EXPORT_VERSION,
     exportedAt: Date.now(),
@@ -25,13 +27,27 @@ export function serializeConfig(config) {
     cloud: { ...(config.cloud || {}) },
     displayPoints: displayPoints.map(normalizeExportPoint),
     switchPoints: switchPoints.map(normalizeExportPoint),
-    thresholdPoints: thresholdPoints.map(normalizeExportThreshold)
+    thresholdPoints: thresholdPoints.map(normalizeExportThreshold),
+    recommendedPoints: {
+      display: recommended.display.map(normalizeExportPoint),
+      switch: recommended.switch.map(normalizeExportPoint),
+      threshold: recommended.threshold.map(normalizeExportThreshold)
+    }
   }
   return JSON.stringify(payload, null, 2)
 }
 
 function normalizeExportList(value) {
   return Array.isArray(value) ? value : []
+}
+
+function normalizeExportRecommended(value) {
+  const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {}
+  return {
+    display: normalizeExportList(source.display),
+    switch: normalizeExportList(source.switch),
+    threshold: normalizeExportList(source.threshold)
+  }
 }
 
 function normalizeExportPoint(p) {
@@ -117,6 +133,20 @@ export function validateImportData(data) {
     }
   })
 
+  // recommendedPoints — optional; when present must group three arrays
+  if (data.recommendedPoints !== undefined) {
+    const rp = data.recommendedPoints
+    if (!rp || typeof rp !== 'object' || Array.isArray(rp)) {
+      errors.push('recommendedPoints 格式错误，应为对象')
+    } else {
+      ;['display', 'switch', 'threshold'].forEach((key) => {
+        if (rp[key] !== undefined && !Array.isArray(rp[key])) {
+          errors.push(`recommendedPoints.${key} 格式错误，应为数组`)
+        }
+      })
+    }
+  }
+
   if (errors.length) {
     return { valid: false, data: null, errors }
   }
@@ -132,6 +162,10 @@ export function validateImportData(data) {
  */
 export function buildImportPreviewData(importData, themes = []) {
   const theme = themes.find((t) => t.id === importData.themeId)
+  const rp = importData.recommendedPoints && typeof importData.recommendedPoints === 'object'
+    ? importData.recommendedPoints
+    : {}
+  const countList = (list) => (Array.isArray(list) ? list.length : 0)
   return {
     appName: importData.appName || '--',
     themeName: theme ? theme.name : (importData.themeId || '默认'),
@@ -140,6 +174,7 @@ export function buildImportPreviewData(importData, themes = []) {
     displayCount: importData.displayPoints?.length || 0,
     switchCount: importData.switchPoints?.length || 0,
     thresholdCount: importData.thresholdPoints?.length || 0,
+    recommendedCount: countList(rp.display) + countList(rp.switch) + countList(rp.threshold),
     exportedAt: importData.exportedAt,
     formattedTime: importData.exportedAt
       ? new Date(importData.exportedAt).toLocaleString('zh-CN', { hour12: false })

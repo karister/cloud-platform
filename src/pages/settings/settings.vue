@@ -593,6 +593,10 @@
                 <text class="import-preview-label">阈值数据点</text>
                 <text class="import-preview-value">{{ importPreviewData.thresholdCount }} 个</text>
               </view>
+              <view class="import-preview-item">
+                <text class="import-preview-label">推荐数据点</text>
+                <text class="import-preview-value">{{ importPreviewData.recommendedCount }} 个</text>
+              </view>
               <view v-if="importPreviewData.exportedAt" class="import-preview-item">
                 <text class="import-preview-label">导出时间</text>
                 <text class="import-preview-value import-preview-meta">{{ importPreviewData.formattedTime }}</text>
@@ -1407,11 +1411,16 @@ function handleConfirmImport() {
     displayPoints: Array.isArray(src.displayPoints) ? src.displayPoints : [],
     switchPoints: Array.isArray(src.switchPoints) ? src.switchPoints : [],
     thresholdPoints: Array.isArray(src.thresholdPoints) ? src.thresholdPoints : [],
-    recommendedPoints: {
-      display: [],
-      switch: [],
-      threshold: []
-    }
+    // 旧版导出文件没有 recommendedPoints：不写字段，让 storage 层 mergeConfig 回填出厂推荐点
+    ...(src.recommendedPoints && typeof src.recommendedPoints === 'object' && !Array.isArray(src.recommendedPoints)
+      ? {
+          recommendedPoints: {
+            display: Array.isArray(src.recommendedPoints.display) ? src.recommendedPoints.display : [],
+            switch: Array.isArray(src.recommendedPoints.switch) ? src.recommendedPoints.switch : [],
+            threshold: Array.isArray(src.recommendedPoints.threshold) ? src.recommendedPoints.threshold : []
+          }
+        }
+      : {})
   }
 
   saveConfig(imported)
