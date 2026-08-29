@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class MainActivity extends Activity {
+    private static final String LOCAL_ASSET_HOST = "appassets.androidplatform.net";
     private WebView webView;
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -38,12 +39,16 @@ public class MainActivity extends Activity {
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                String path = request.getUrl().getPath();
-                return serveAsset(path);
+                if (!LOCAL_ASSET_HOST.equals(request.getUrl().getHost())) {
+                    return null;
+                }
+                return serveAsset(request.getUrl().getPath());
             }
         });
         setContentView(webView);
-        webView.loadUrl("file:///android_asset/www/index.html");
+        // 通过本地 HTTPS 域名加载，而不是 file://。Android WebView 会阻止 file://
+        // 页面加载 ES Module 资源，导致页面脚本无法执行并白屏。
+        webView.loadUrl("https://" + LOCAL_ASSET_HOST + "/index.html");
     }
 
     private WebResourceResponse serveAsset(String path) {
