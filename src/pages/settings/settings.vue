@@ -27,7 +27,7 @@
     <view class="menu-grid" :class="{ public: !adminMode }">
       <view class="menu-card primary-action" @tap="openCloud">
         <view class="menu-icon-wrap">
-          <image class="menu-icon" src="/static/tab/settings-active.png" mode="aspectFit" />
+          <AppIcon name="cloud-arrow-up" :size="34" />
         </view>
         <view class="menu-copy">
           <text class="menu-title">云平台连接</text>
@@ -39,7 +39,7 @@
       <template v-if="adminMode">
         <view class="menu-card points-action" @tap="openPoints">
           <view class="menu-icon-wrap">
-            <image class="menu-icon" src="/static/tab/dashboard-active.png" mode="aspectFit" />
+            <AppIcon name="sliders-horizontal" :size="34" />
           </view>
           <view class="menu-copy">
             <text class="menu-title">数据点配置</text>
@@ -51,7 +51,7 @@
         </view>
         <view class="menu-card recommended-action" @tap="openRecommendations">
           <view class="menu-icon-wrap">
-            <image class="menu-icon" src="/static/tab/dashboard-active.png" mode="aspectFit" />
+            <AppIcon name="star" :size="34" />
           </view>
           <view class="menu-copy">
             <text class="menu-title">推荐数据点</text>
@@ -61,7 +61,7 @@
         </view>
         <view class="menu-card theme-action" @tap="openTheme">
           <view class="menu-icon-wrap">
-            <image class="menu-icon" src="/static/tab/settings-active.png" mode="aspectFit" />
+            <AppIcon name="palette" :size="34" />
           </view>
           <view class="menu-copy">
             <text class="menu-title">主题配置</text>
@@ -71,7 +71,7 @@
         </view>
         <view class="menu-card debug-action" @tap="openDebug">
           <view class="menu-icon-wrap">
-            <image class="menu-icon" src="/static/tab/threshold-active.png" mode="aspectFit" />
+            <AppIcon name="terminal-window" :size="34" />
           </view>
           <view class="menu-copy">
             <text class="menu-title">数据调试</text>
@@ -81,7 +81,7 @@
         </view>
         <view class="menu-card export-action" @tap.stop="openExportModal">
           <view class="menu-icon-wrap">
-            <image class="menu-icon" src="/static/tab/settings-active.png" mode="aspectFit" />
+            <AppIcon name="download-simple" :size="34" />
           </view>
           <view class="menu-copy">
             <text class="menu-title">配置导出</text>
@@ -91,7 +91,7 @@
         </view>
         <view class="menu-card import-action" @tap.stop="openImport">
           <view class="menu-icon-wrap">
-            <image class="menu-icon" src="/static/tab/threshold-active.png" mode="aspectFit" />
+            <AppIcon name="upload-simple" :size="34" />
           </view>
           <view class="menu-copy">
             <text class="menu-title">配置导入</text>
@@ -100,8 +100,8 @@
           <text class="menu-arrow">导入</text>
         </view>
         <view class="menu-card reset-action" @tap.stop="resetToFactory">
-          <view class="menu-icon-wrap">
-            <image class="menu-icon" src="/static/tab/threshold-active.png" mode="aspectFit" />
+          <view class="menu-icon-wrap danger">
+            <AppIcon name="arrow-counter-clockwise" :size="34" />
           </view>
           <view class="menu-copy">
             <text class="menu-title">恢复出厂设置</text>
@@ -137,7 +137,7 @@
             </view>
             <text class="theme-desc">{{ theme.description }}</text>
           </view>
-          <view v-if="config.themeId === theme.id" class="theme-check">Active</view>
+          <view v-if="config.themeId === theme.id" class="theme-check">使用中</view>
         </view>
       </view>
     </view>
@@ -353,10 +353,10 @@
                     @tap="quickAddPoint(point)"
                   >
                     <view class="quick-icon">
-                      <image src="/static/tab/dashboard-active.png" mode="aspectFit" />
+                      <AppIcon name="plus" :size="26" />
                     </view>
                     <text>{{ point.label }}</text>
-                    <text>{{ point.identifier }}</text>
+                    <text class="code">{{ point.identifier }}</text>
                   </view>
                 </view>
               </view>
@@ -618,6 +618,7 @@
 <script setup>
 import { computed, reactive, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
+import AppIcon from '../../components/AppIcon.vue'
 import AppTabBar from '../../components/AppTabBar.vue'
 import PointFields from '../../components/PointFields.vue'
 import { buildGetUrl, createPoint } from '../../utils/defaultConfig'
@@ -1472,7 +1473,7 @@ onShow(reload)
 <style scoped>
 .page {
   min-height: 100vh;
-  padding: 28rpx 28rpx 150rpx;
+  padding: 28rpx 28rpx 176rpx;
   box-sizing: border-box;
   background: linear-gradient(180deg, var(--theme-bg-gradient-settings-start) 0%, var(--theme-bg-gradient-settings-end) 45%, var(--theme-bg-gradient-settings-end) 100%);
 }
@@ -1508,15 +1509,17 @@ onShow(reload)
 
 .eyebrow {
   color: var(--theme-accent);
-  font-size: 23rpx;
-  font-weight: 800;
+  font-size: 22rpx;
+  font-weight: 600;
+  letter-spacing: 3rpx;
 }
 
 .title {
   margin-top: 8rpx;
   color: var(--theme-text-primary);
   font-size: 40rpx;
-  font-weight: 900;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .desc {
@@ -1547,7 +1550,7 @@ onShow(reload)
 .panel-title {
   color: var(--theme-text-primary);
   font-size: 30rpx;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .name-row {
@@ -1580,7 +1583,7 @@ onShow(reload)
 .remove-btn {
   border-radius: var(--theme-radius-input);
   font-size: 26rpx;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .save-name {
@@ -1633,16 +1636,6 @@ onShow(reload)
   box-shadow: 0 18rpx 42rpx var(--theme-card-accent-shadow);
 }
 
-.menu-card.recommended-action {
-  border-color: rgba(43, 138, 239, 0.18);
-}
-
-.menu-card.points-action {
-  border-color: rgba(43, 180, 120, 0.18);
-  background: linear-gradient(135deg, var(--theme-card-accent-bg-start) 0%, var(--theme-card-accent-bg-end) 100%);
-  box-shadow: 0 18rpx 42rpx var(--theme-card-accent-shadow);
-}
-
 .menu-card:active {
   transform: scale(0.985);
   opacity: 0.9;
@@ -1656,11 +1649,12 @@ onShow(reload)
   justify-content: center;
   border-radius: var(--theme-radius-input);
   background: var(--theme-accent-light);
+  color: var(--theme-accent-dark);
 }
 
-.menu-icon {
-  width: 36rpx;
-  height: 36rpx;
+.menu-icon-wrap.danger {
+  background: var(--theme-danger-bg);
+  color: var(--theme-danger);
 }
 
 .menu-copy {
@@ -1669,14 +1663,17 @@ onShow(reload)
 
 .menu-title {
   color: var(--theme-text-primary);
-  font-size: 29rpx;
-  font-weight: 900;
+  font-size: 28rpx;
+  font-weight: 700;
 }
 
 .menu-desc {
+  /* 右下角有动作徽标，文本让出空间避免压字 */
+  padding-right: 116rpx;
   margin-top: 8rpx;
   color: var(--theme-text-secondary);
   font-size: 22rpx;
+  font-weight: 500;
   line-height: 1.35;
 }
 
@@ -1689,7 +1686,12 @@ onShow(reload)
   background: var(--theme-accent);
   color: var(--theme-accent-contrast);
   font-size: 21rpx;
-  font-weight: 800;
+  font-weight: 600;
+}
+
+/* 恢复出厂：危险语义徽标 */
+.danger-arrow {
+  background: var(--theme-danger);
 }
 
 .summary-panel {
@@ -1705,7 +1707,7 @@ onShow(reload)
   border-bottom: 1rpx solid var(--theme-divider);
   color: var(--theme-text-primary);
   font-size: 26rpx;
-  font-weight: 750;
+  font-weight: 600;
 }
 
 .summary-item:last-child {
@@ -1714,7 +1716,7 @@ onShow(reload)
 
 .summary-item text:first-child {
   color: var(--theme-text-secondary);
-  font-weight: 650;
+  font-weight: 500;
 }
 
 .modal-mask {
@@ -1749,8 +1751,8 @@ onShow(reload)
   padding: 26rpx 28rpx;
   border-bottom: 1rpx solid var(--theme-divider);
   color: var(--theme-text-primary);
-  font-size: 31rpx;
-  font-weight: 900;
+  font-size: 30rpx;
+  font-weight: 700;
 }
 
 .close-btn,
@@ -1788,7 +1790,7 @@ onShow(reload)
   margin-bottom: 10rpx;
   color: var(--theme-text-secondary);
   font-size: 24rpx;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .field-desc {
@@ -1823,7 +1825,7 @@ onShow(reload)
 }
 
 .auth-input {
-  font-family: monospace;
+  font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
   letter-spacing: 1rpx;
 }
 
@@ -1848,7 +1850,7 @@ onShow(reload)
   padding: 14rpx 18rpx;
   border-radius: var(--theme-radius-input);
   font-size: 23rpx;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.4;
   word-break: break-all;
 }
@@ -1859,13 +1861,13 @@ onShow(reload)
 }
 
 .cloud-status.info {
-  background: rgba(13, 201, 176, 0.12);
-  color: var(--theme-accent);
+  background: var(--theme-accent-light);
+  color: var(--theme-accent-dark);
 }
 
 .cloud-status.success {
-  background: rgba(13, 201, 176, 0.18);
-  color: var(--theme-accent);
+  background: var(--theme-accent-light);
+  color: var(--theme-accent-dark);
 }
 
 .cloud-status.error {
@@ -1889,7 +1891,7 @@ onShow(reload)
 
 .textarea.qc-textarea {
   min-height: 320rpx;
-  font-family: monospace;
+  font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
   font-size: 22rpx;
   line-height: 1.4;
   white-space: pre;
@@ -1924,7 +1926,7 @@ onShow(reload)
   display: block;
   color: var(--theme-text-primary);
   font-size: 25rpx;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .qc-group {
@@ -1942,7 +1944,7 @@ onShow(reload)
 .qc-group-title {
   color: var(--theme-accent);
   font-size: 23rpx;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .qc-group-items {
@@ -1971,7 +1973,7 @@ onShow(reload)
   margin-bottom: 16rpx;
   color: var(--theme-text-primary);
   font-size: 26rpx;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .remove-btn {
@@ -1997,7 +1999,7 @@ onShow(reload)
 .quick-title {
   color: var(--theme-text-primary);
   font-size: 27rpx;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .quick-desc {
@@ -2025,7 +2027,7 @@ onShow(reload)
   background: var(--theme-surface);
   color: var(--theme-text-primary);
   font-size: 23rpx;
-  font-weight: 800;
+  font-weight: 600;
   transition: transform 0.12s ease, opacity 0.12s ease;
 }
 
@@ -2037,7 +2039,7 @@ onShow(reload)
 .quick-chip text:last-child {
   color: var(--theme-text-tertiary);
   font-size: 19rpx;
-  font-weight: 650;
+  font-weight: 500;
 }
 
 .quick-icon {
@@ -2048,11 +2050,7 @@ onShow(reload)
   justify-content: center;
   border-radius: 16rpx;
   background: var(--theme-accent-light);
-}
-
-.quick-icon image {
-  width: 30rpx;
-  height: 30rpx;
+  color: var(--theme-accent-dark);
 }
 
 .category-tabs {
@@ -2069,7 +2067,7 @@ onShow(reload)
   border-radius: var(--theme-radius-input);
   color: var(--theme-text-secondary);
   font-size: 25rpx;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 64rpx;
   text-align: center;
   transition: transform 0.12s ease, opacity 0.12s ease;
@@ -2119,7 +2117,7 @@ onShow(reload)
   display: block;
   color: var(--theme-text-primary);
   font-size: 34rpx;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .password-desc {
@@ -2155,7 +2153,7 @@ onShow(reload)
   margin: 0;
   border-radius: var(--theme-radius-input);
   font-size: 27rpx;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 76rpx;
 }
 
@@ -2178,10 +2176,6 @@ onShow(reload)
   border-radius: var(--theme-radius-lg);
   background: var(--theme-surface);
   box-shadow: 0 14rpx 38rpx var(--theme-shadow-sm);
-}
-
-.theme-action {
-  border-color: rgba(140, 100, 220, 0.18);
 }
 
 .theme-intro {
@@ -2261,7 +2255,7 @@ onShow(reload)
 .theme-name {
   color: var(--theme-text-primary);
   font-size: 26rpx;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .theme-desc {
@@ -2280,7 +2274,7 @@ onShow(reload)
   background: var(--theme-accent);
   color: var(--theme-accent-contrast);
   font-size: 19rpx;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 /* ── Alarm threshold field ── */
@@ -2297,7 +2291,7 @@ onShow(reload)
   margin-bottom: 10rpx;
   color: var(--theme-text-secondary);
   font-size: 23rpx;
-  font-weight: 750;
+  font-weight: 600;
 }
 
 .alarm-picker {
@@ -2312,10 +2306,6 @@ onShow(reload)
 }
 
 /* ── Debug panel ── */
-.debug-action {
-  border-color: rgba(200, 160, 40, 0.2);
-}
-
 .debug-intro {
   display: block;
   margin-bottom: 22rpx;
@@ -2348,7 +2338,7 @@ onShow(reload)
   display: block;
   color: var(--theme-text-primary);
   font-size: 27rpx;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .debug-id {
@@ -2367,7 +2357,7 @@ onShow(reload)
   background: var(--theme-input-bg);
   color: var(--theme-accent);
   font-size: 26rpx;
-  font-weight: 800;
+  font-weight: 600;
   text-align: center;
   box-sizing: border-box;
 }
@@ -2380,14 +2370,6 @@ onShow(reload)
 }
 
 /* ── Export / Import ── */
-.export-action {
-  border-color: rgba(43, 180, 120, 0.2);
-}
-
-.import-action {
-  border-color: rgba(60, 130, 220, 0.2);
-}
-
 .export-intro {
   display: block;
   margin-bottom: 18rpx;
@@ -2405,7 +2387,7 @@ onShow(reload)
 
 .textarea.import-textarea {
   min-height: 300rpx;
-  font-family: monospace;
+  font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
   font-size: 22rpx;
   line-height: 1.45;
   white-space: pre;
@@ -2539,7 +2521,7 @@ onShow(reload)
 .send-progress-title {
   color: var(--theme-text-primary);
   font-size: 25rpx;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .send-progress-desc {
@@ -2598,7 +2580,7 @@ onShow(reload)
   margin-bottom: 14rpx;
   color: var(--theme-text-primary);
   font-size: 27rpx;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .import-preview-card {
@@ -2625,14 +2607,14 @@ onShow(reload)
 .import-preview-label {
   color: var(--theme-text-secondary);
   font-size: 25rpx;
-  font-weight: 700;
+  font-weight: 500;
   flex-shrink: 0;
 }
 
 .import-preview-value {
   color: var(--theme-text-primary);
   font-size: 25rpx;
-  font-weight: 800;
+  font-weight: 600;
   text-align: right;
   word-break: break-all;
 }
@@ -2644,25 +2626,16 @@ onShow(reload)
 
 .import-warning {
   padding: 18rpx 20rpx;
-  border: 1rpx solid rgba(225, 29, 72, 0.2);
+  border: 1rpx solid var(--theme-danger-border);
   border-radius: var(--theme-radius-md);
   background: var(--theme-danger-bg);
   color: var(--theme-danger);
   font-size: 24rpx;
-  font-weight: 700;
+  font-weight: 600;
   text-align: center;
 }
 
 .import-confirm-btn {
   margin-top: 8rpx;
-}
-
-/* ── Reset to factory ── */
-.reset-action {
-  border-color: rgba(225, 29, 72, 0.2);
-}
-
-.danger-arrow {
-  background: var(--theme-danger) !important;
 }
 </style>

@@ -27,9 +27,9 @@
   ],
   "tabBar": {
     "custom": true,
-    "color": "#728091",
-    "selectedColor": "#0f6b67",
-    "backgroundColor": "#ffffff",
+    "color": "#8c7458",
+    "selectedColor": "#c8782b",
+    "backgroundColor": "#fffdf8",
     "borderStyle": "white",
     "list": [
       {
@@ -53,7 +53,7 @@
   "globalStyle": {
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "云平台数据通信",
-    "navigationBarBackgroundColor": "#ffffff",
-    "backgroundColor": "#edf2f6"
+    "navigationBarBackgroundColor": "#fffdf8",
+    "backgroundColor": "#faf6f0"
   }
 }

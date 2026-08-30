@@ -7,8 +7,14 @@
         <text class="desc">展示数据点的采样趋势和最近记录。</text>
       </view>
       <view class="actions">
-        <button class="ghost-btn" :loading="loading" @tap="sampleNow">采样</button>
-        <button class="ghost-btn danger" @tap="clearAll">清空</button>
+        <button class="ghost-btn" :disabled="loading" @tap="sampleNow">
+          <AppIcon name="pulse" :size="26" :class="{ spinning: loading }" />
+          <text>采样</text>
+        </button>
+        <button class="ghost-btn danger" @tap="clearAll">
+          <AppIcon name="trash-simple" :size="26" />
+          <text>清空</text>
+        </button>
       </view>
     </view>
 
@@ -16,9 +22,9 @@
       <view class="section-head">
         <view>
           <text class="section-title">数据曲线</text>
-          <text class="section-desc">最近 {{ Math.min(history.length, 20) }} 个采样点</text>
+          <text class="section-desc num">最近 {{ Math.min(history.length, 20) }} 个采样点</text>
         </view>
-        <text class="count-badge">{{ history.length }} 条</text>
+        <text class="count-badge num">{{ history.length }} 条</text>
       </view>
       <HistoryChart canvas-id="historyCanvasMain" :history="history" :points="config.displayPoints" :chartColors="chartColors" :chartBgColor="chartBgColor" :chartGridColor="chartGridColor" :chartLineWidth="chartLineWidth" :chartDotRadius="chartDotRadius" />
       <view v-if="config.displayPoints.length" class="legend">
@@ -36,22 +42,22 @@
     <view class="section-head list-head">
       <view>
         <text class="section-title">采样列表</text>
-        <text class="section-desc">最近 {{ Math.min(history.length, 20) }} 条记录</text>
+        <text class="section-desc num">最近 {{ Math.min(history.length, 20) }} 条记录</text>
       </view>
     </view>
 
-    <view v-if="history.length" class="record-list">
-      <view v-for="item in visibleHistory" :key="item.time" class="record-card">
-        <view class="record-time">{{ formatTime(item.time) }}</view>
-        <view class="record-values">
-          <view v-for="point in config.displayPoints" :key="point.identifier" class="record-value">
-            <text>{{ point.label || point.identifier }}</text>
-            <text>{{ formatValue(item.values?.[point.identifier], point.unit) }}</text>
+    <view v-if="history.length" class="record-card">
+      <view v-for="(item, rowIndex) in visibleHistory" :key="item.time" class="record-row" :class="{ first: rowIndex === 0 }">
+        <text class="record-time num">{{ formatTime(item.time) }}</text>
+        <view class="record-cells">
+          <view v-for="point in config.displayPoints" :key="point.identifier" class="record-cell">
+            <text class="record-cell-label">{{ point.label || point.identifier }}</text>
+            <text class="record-cell-value num">{{ formatValue(item.values?.[point.identifier], point.unit) }}</text>
           </view>
         </view>
       </view>
     </view>
-    <EmptyState v-else title="暂无历史采样" desc="点击采样或进入数据展示页刷新后会生成历史记录" />
+    <EmptyState v-else icon="chart-line-up" title="暂无历史采样" desc="点击采样或进入数据展示页刷新后会生成历史记录" />
 
     <AppTabBar current="history" />
   </view>
@@ -60,6 +66,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { onShow, onHide } from '@dcloudio/uni-app'
+import AppIcon from '../../components/AppIcon.vue'
 import AppTabBar from '../../components/AppTabBar.vue'
 import EmptyState from '../../components/EmptyState.vue'
 import HistoryChart from '../../components/HistoryChart.vue'
@@ -71,24 +78,24 @@ import { THEME_LIST } from '../../utils/themes'
 const config = ref(getConfig())
 const history = ref([])
 const loading = ref(false)
-// 仅在历史页 tab 处于前台时跟随全局 3s 轮询自动采样，避免后台页也写历史
+// 仅在历史页 tab 处于前台时跟随全局轮询自动采样，避免后台页也写历史
 const isActive = ref(false)
 
 const chartColors = computed(() => {
   const theme = THEME_LIST.find((t) => t.id === config.value.themeId)
-  if (!theme) return ['#0dc9b0', '#0df0d0', '#e0b040', '#f06070', '#60a0f0']
+  if (!theme) return ['#0891a0', '#14b8a6', '#d97706', '#e11d48', '#4f46e5']
   // Read individual --theme-chart-color-N variables (bug fix: was reading non-existent singular --theme-chart-color)
-  return [0, 1, 2, 3, 4].map((i) => theme.cssVars[`--theme-chart-color-${i}`] || '#0dc9b0')
+  return [0, 1, 2, 3, 4].map((i) => theme.cssVars[`--theme-chart-color-${i}`] || '#0891a0')
 })
 
 const chartBgColor = computed(() => {
   const theme = THEME_LIST.find((t) => t.id === config.value.themeId)
-  return theme ? theme.cssVars['--theme-chart-bg'] : '#16383a'
+  return theme ? theme.cssVars['--theme-chart-bg'] : '#ffffff'
 })
 
 const chartGridColor = computed(() => {
   const theme = THEME_LIST.find((t) => t.id === config.value.themeId)
-  return theme ? theme.cssVars['--theme-chart-grid'] : '#1a4840'
+  return theme ? theme.cssVars['--theme-chart-grid'] : '#d8e3e6'
 })
 
 const chartLineWidth = computed(() => {
@@ -136,7 +143,7 @@ function load() {
 async function sampleNow() {
   loading.value = true
   try {
-    // 全局 3s 轮询已经在跑，sampleNow 只是触发一次手动刷新
+    // 全局轮询已经在跑，sampleNow 只是触发一次手动刷新
     // 新的样本由下方 watch(lastSyncedAt) 监听到刷新完成后追加，避免双写
     const result = await dataStore.refresh()
     if (!result) {
@@ -152,7 +159,7 @@ async function sampleNow() {
 }
 
 /**
- * 全局 3s 轮询完成时，把当前的实时值追加到历史。
+ * 全局轮询完成时，把当前的实时值追加到历史。
  * 仅在历史页 tab 处于前台时执行；切到其他 tab 后暂停写入。
  */
 function autoSampleOnPoll() {
@@ -188,7 +195,7 @@ onHide(() => {
 <style scoped>
 .page {
   min-height: 100vh;
-  padding: 28rpx 28rpx 150rpx;
+  padding: 28rpx 28rpx 176rpx;
   box-sizing: border-box;
   background: linear-gradient(180deg, var(--theme-bg-gradient-settings-start) 0%, var(--theme-bg-gradient-settings-end) 45%, var(--theme-bg-gradient-settings-end) 100%);
 }
@@ -220,45 +227,68 @@ onHide(() => {
 
 .eyebrow {
   color: var(--theme-accent);
-  font-size: 23rpx;
-  font-weight: 800;
+  font-size: 22rpx;
+  font-weight: 600;
+  letter-spacing: 3rpx;
 }
 
 .title {
   margin-top: 8rpx;
   color: var(--theme-text-primary);
   font-size: 40rpx;
-  font-weight: 900;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .desc {
   margin-top: 10rpx;
   color: var(--theme-text-secondary);
-  font-size: 25rpx;
+  font-size: 24rpx;
+  font-weight: 500;
 }
 
 .actions {
   display: flex;
   gap: 10rpx;
+  flex: 0 0 auto;
 }
 
 .ghost-btn {
-  width: 108rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  width: auto;
   height: 64rpx;
   margin: 0;
+  padding: 0 20rpx;
   border: 1px solid var(--theme-btn-secondary-border);
   border-radius: var(--theme-btn-style);
   background: var(--theme-btn-secondary-bg);
   color: var(--theme-btn-secondary-text);
   font-size: 24rpx;
-  font-weight: 800;
-  line-height: 64rpx;
+  font-weight: 600;
+  line-height: 1;
 }
 
 .ghost-btn.danger {
   border-color: var(--theme-danger-border);
   background: var(--theme-danger-bg);
   color: var(--theme-danger);
+}
+
+.ghost-btn[disabled] {
+  opacity: 0.72;
+}
+
+.spinning {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .chart-card {
@@ -280,14 +310,15 @@ onHide(() => {
 
 .section-title {
   color: var(--theme-text-primary);
-  font-size: 31rpx;
-  font-weight: 900;
+  font-size: 30rpx;
+  font-weight: 700;
 }
 
 .section-desc {
   margin-top: 6rpx;
   color: var(--theme-text-secondary);
   font-size: 23rpx;
+  font-weight: 500;
 }
 
 .count-badge {
@@ -296,7 +327,7 @@ onHide(() => {
   background: var(--theme-badge-bg);
   color: var(--theme-badge-text);
   font-size: 23rpx;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .legend {
@@ -326,37 +357,60 @@ onHide(() => {
 .dot-3 { background: var(--theme-chart-color-3); }
 .dot-4 { background: var(--theme-chart-color-4); }
 
-.record-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--theme-layout-gap);
+/* 紧凑记录行：单卡片 + 分隔线，替代一卡一条的堆叠 */
+.record-card {
+  padding: 8rpx 24rpx;
 }
 
-.record-card {
-  padding: 22rpx;
+.record-row {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  padding: 20rpx 0;
+  border-bottom: 1px solid var(--theme-divider-light);
+}
+
+.record-row:last-child {
+  border-bottom: none;
 }
 
 .record-time {
+  width: 150rpx;
   color: var(--theme-text-secondary);
   font-size: 24rpx;
-  font-weight: 700;
+  font-weight: 500;
+  flex: 0 0 auto;
 }
 
-.record-values {
-  margin-top: 12rpx;
-}
-
-.record-value {
+.record-cells {
   display: flex;
-  justify-content: space-between;
-  padding: 10rpx 0;
+  flex: 1;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12rpx 28rpx;
+  min-width: 0;
+}
+
+.record-cell {
+  display: flex;
+  align-items: baseline;
+  gap: 8rpx;
+  min-width: 0;
+}
+
+.record-cell-label {
+  overflow: hidden;
+  color: var(--theme-text-tertiary);
+  font-size: 21rpx;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 160rpx;
+}
+
+.record-cell-value {
   color: var(--theme-text-primary);
   font-size: 26rpx;
-  font-weight: 700;
-}
-
-.record-value text:first-child {
-  color: var(--theme-text-secondary);
   font-weight: 600;
 }
 </style>

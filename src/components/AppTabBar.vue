@@ -5,10 +5,12 @@
       :key="item.key"
       class="tab-item"
       :class="{ active: current === item.key }"
+      :aria-label="item.text"
+      role="tab"
       @tap="switchPage(item)"
     >
       <view class="icon-wrap">
-        <image class="tab-icon" :src="current === item.key ? item.activeIcon : item.icon" mode="aspectFit" />
+        <AppIcon :name="item.icon" :size="40" />
       </view>
       <text class="tab-text">{{ item.text }}</text>
     </view>
@@ -16,7 +18,7 @@
 </template>
 
 <script setup>
-import { staticUrl } from '../utils/staticUrl'
+import AppIcon from './AppIcon.vue'
 
 const props = defineProps({
   current: {
@@ -25,34 +27,31 @@ const props = defineProps({
   }
 })
 
+// 图标用 currentColor 填充，active 态由 CSS 切到主题 accent，自动跟随四套主题
 const tabs = [
   {
     key: 'dashboard',
     text: '数据展示',
     url: '/pages/dashboard/dashboard',
-    icon: staticUrl('tab/dashboard.png'),
-    activeIcon: staticUrl('tab/dashboard-active.png')
+    icon: 'gauge'
   },
   {
     key: 'threshold',
     text: '阈值设置',
     url: '/pages/threshold/threshold',
-    icon: staticUrl('tab/threshold.png'),
-    activeIcon: staticUrl('tab/threshold-active.png')
+    icon: 'sliders-horizontal'
   },
   {
     key: 'history',
     text: '历史数据',
     url: '/pages/history/history',
-    icon: staticUrl('tab/history.png'),
-    activeIcon: staticUrl('tab/history-active.png')
+    icon: 'chart-line-up'
   },
   {
     key: 'settings',
     text: '后台配置',
     url: '/pages/settings/settings',
-    icon: staticUrl('tab/settings.png'),
-    activeIcon: staticUrl('tab/settings-active.png')
+    icon: 'gear-six'
   }
 ]
 
@@ -93,12 +92,12 @@ function switchPage(item) {
   gap: 8rpx;
   border-radius: calc(var(--theme-tab-border-radius) - 8rpx);
   color: var(--theme-tab-text);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: color 0.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.12s ease;
 }
 
 .tab-item:active {
   transform: scale(0.94);
-  opacity: 0.85;
 }
 
 .tab-item.active {
@@ -107,26 +106,28 @@ function switchPage(item) {
   box-shadow: inset 0 0 0 1px var(--theme-tab-shadow-inset);
 }
 
+/* 未选中项图标降一档透明度，强化当前页指向 */
+.tab-item:not(.active) .icon-wrap {
+  opacity: 0.62;
+}
+
 .icon-wrap {
   display: flex;
-  width: 42rpx;
-  height: 42rpx;
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
 }
 
-.tab-icon {
-  width: 38rpx;
-  height: 38rpx;
-}
-
 .tab-text {
   overflow: hidden;
   font-size: 23rpx;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.tab-item.active .tab-text {
+  font-weight: 700;
 }
 </style>

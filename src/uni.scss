@@ -1,6 +1,8 @@
-$primary: #0f6b67;
-$accent: #2b8aef;
-$warning: #d9822b;
-$danger: #c03546;
-$panel: #ffffff;
-$muted: #6b7684;
+/* 编译期 SCSS 变量（历史遗留入口，组件样式已迁移至主题 CSS 变量）。
+   与默认 amber 主题对齐，保持一致性；新样式请使用 --theme-* 变量。 */
+$primary: #c8782b;
+$accent: #5da870;
+$warning: #d9a040;
+$danger: #c04540;
+$panel: #fffdf8;
+$muted: #8c7458;

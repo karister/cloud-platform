@@ -521,7 +521,43 @@ page {
   background-size: cover;
   background-attachment: fixed;
   color: var(--theme-text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "HarmonyOS Sans SC", "MiSans", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── 数据排版工具 ──
+   .num  数值/时间/计数：等宽数字，仪表读数纵向对齐
+   .code 标识符：等宽字体 + 小字号， tertiary 色由使用处指定 */
+.num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.code {
+  font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 键盘可达性：可聚焦元素统一 focus 环 */
+button:focus-visible,
+input:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--theme-accent);
+  outline-offset: 2px;
+}
+
+/* 减少动态偏好：骨架 shimmer / 入场 stagger / 呼吸点全部静态化 */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-line,
+  [class*="entry"] {
+    animation: none !important;
+  }
+
+  .status-dot.is-online::after {
+    animation: none !important;
+  }
 }
 
 button::after {

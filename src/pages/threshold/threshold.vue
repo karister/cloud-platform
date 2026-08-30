@@ -9,12 +9,13 @@
             ? '当前为模拟数据模式，阈值仅本地生效。'
             : '已绑定云平台当前值；调整后会自动下发到下位机。' }}
         </text>
-        <text v-if="lastSyncedAt && !config.cloud.mockMode" class="sync-meta">
+        <text v-if="lastSyncedAt && !config.cloud.mockMode" class="sync-meta num">
           最近同步：{{ formatTime(lastSyncedAt) }}
         </text>
       </view>
-      <view class="summary-chip" @tap="loadFromCloud">
-        <text>{{ thresholds.length }}</text>
+      <view class="summary-chip" aria-label="刷新云端阈值" @tap="loadFromCloud">
+        <AppIcon name="sliders-horizontal" :size="34" />
+        <text class="summary-count num">{{ thresholds.length }}</text>
         <text>项</text>
       </view>
     </view>
@@ -24,10 +25,10 @@
         <view class="card-head">
           <view>
             <text class="point-label">{{ point.label || point.identifier }}</text>
-            <text class="point-id">{{ point.identifier }}</text>
+            <text class="point-id code">{{ point.identifier }}</text>
           </view>
           <view class="value-badge">
-            <text>{{ formatValue(point.value) }}</text>
+            <text class="num">{{ formatValue(point.value) }}</text>
             <text>{{ point.unit }}</text>
           </view>
         </view>
@@ -35,21 +36,20 @@
         <slider
           class="slider"
           :activeColor="themeAccent"
-          backgroundColor="var(--theme-divider-light)"
+          :backgroundColor="themeDividerLight"
           :block-color="themeAccent"
           :min="Number(point.min)"
           :max="Number(point.max)"
           :step="Number(point.step) || 1"
           :value="Number(point.value)"
-          :disabled="config.cloud.mockMode && false"
           @changing="onAdjust(point, $event.detail.value)"
           @change="onAdjust(point, $event.detail.value)"
         />
 
-        <view class="range-row">
+        <view class="range-row num">
           <text>{{ point.min }}{{ point.unit }}</text>
           <input
-            class="value-input"
+            class="value-input num"
             type="number"
             :value="String(point.value)"
             @input="onInputAdjust(point, $event.detail.value)"
@@ -63,7 +63,7 @@
       </view>
     </view>
 
-    <EmptyState v-else title="未配置阈值数据点" desc="请在后台配置中添加需要通过滑条下发的属性" />
+    <EmptyState v-else icon="sliders-horizontal" title="未配置阈值数据点" desc="请在后台配置中添加需要通过滑条下发的属性" />
 
     <AppTabBar current="threshold" />
   </view>
@@ -72,6 +72,7 @@
 <script setup>
 import { computed, reactive, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
+import AppIcon from '../../components/AppIcon.vue'
 import AppTabBar from '../../components/AppTabBar.vue'
 import EmptyState from '../../components/EmptyState.vue'
 import { dataStore } from '../../stores/dataStore'
@@ -95,6 +96,12 @@ const themeAccent = computed(() => {
   return theme ? theme.cssVars['--theme-accent'] : '#0f6b67'
 })
 
+// uni slider 的 backgroundColor 是原生属性，不认 CSS var，需传主题实际色值
+const themeDividerLight = computed(() => {
+  const theme = THEME_LIST.find((t) => t.id === config.value.themeId)
+  return theme ? theme.cssVars['--theme-divider-light'] : '#eaf1f3'
+})
+
 function formatTime(ts) {
   if (!ts) return '--'
   const d = new Date(ts)
@@ -112,11 +119,17 @@ function clamp(value, min, max) {
 
 function syncThresholds() {
   config.value = getConfig()
-  thresholds.value = config.value.thresholdPoints.map((point) => ({
-    ...point,
-    // 优先用 store 里的最新值（刚拉下来的云端值），没有则用本地持久化值
-    value: Number(currentValues[point.identifier] ?? point.value ?? point.min ?? 0)
-  }))
+  thresholds.value = config.value.thresholdPoints.map((point) => {
+    const step = Number(point.step) || 1
+    const raw = Number(currentValues[point.identifier] ?? point.value ?? point.min ?? 0)
+    // 云端实时值可能带小数，按滑条步进取整，保证徽标/输入框/滑条三者一致
+    const snapped = Number.isFinite(raw) ? Math.round(raw / step) * step : raw
+    return {
+      ...point,
+      // 优先用 store 里的最新值（刚拉下来的云端值），没有则用本地持久化值
+      value: snapped
+    }
+  })
   thresholds.value.forEach((p) => {
     sendStatus[p.identifier] = sendStatus[p.identifier] || 'idle'
   })
@@ -124,7 +137,7 @@ function syncThresholds() {
 
 /**
  * 用户主动触发的手动刷新：走全局 store 的 refresh()。
- * 3s 轮询已经在 App.vue 全局跑着，这里只是手动再拉一次（与定时器去重）。
+ * 轮询已经在 App.vue 全局跑着，这里只是手动再拉一次（与定时器去重）。
  */
 async function loadFromCloud() {
   await dataStore.refresh()
@@ -211,7 +224,7 @@ onShow(() => {
 <style scoped>
 .page {
   min-height: 100vh;
-  padding: 28rpx 28rpx 150rpx;
+  padding: 28rpx 28rpx 176rpx;
   box-sizing: border-box;
   background: linear-gradient(180deg, var(--theme-bg-gradient-settings-start) 0%, var(--theme-bg-gradient-settings-end) 45%, var(--theme-bg-gradient-settings-end) 100%);
 }
@@ -244,21 +257,24 @@ onShow(() => {
 
 .eyebrow {
   color: var(--theme-accent);
-  font-size: 23rpx;
-  font-weight: 800;
+  font-size: 22rpx;
+  font-weight: 600;
+  letter-spacing: 3rpx;
 }
 
 .title {
   margin-top: 8rpx;
   color: var(--theme-text-primary);
   font-size: 40rpx;
-  font-weight: 900;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .desc {
   margin-top: 10rpx;
   color: var(--theme-text-secondary);
-  font-size: 25rpx;
+  font-size: 24rpx;
+  font-weight: 500;
   line-height: 1.45;
 }
 
@@ -270,16 +286,17 @@ onShow(() => {
 
 .summary-chip {
   display: flex;
-  width: 108rpx;
-  height: 108rpx;
+  width: 112rpx;
+  height: 112rpx;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 4rpx;
   border-radius: 28rpx;
   background: var(--theme-summary-chip-bg);
   color: var(--theme-summary-chip-text);
-  font-size: 22rpx;
-  font-weight: 800;
+  font-size: 21rpx;
+  font-weight: 600;
   flex-shrink: 0;
   transition: transform 0.12s ease, opacity 0.12s ease;
 }
@@ -289,9 +306,9 @@ onShow(() => {
   opacity: 0.85;
 }
 
-.summary-chip text:first-child {
-  font-size: 38rpx;
-  font-weight: 900;
+.summary-count {
+  font-size: 36rpx;
+  font-weight: 700;
   line-height: 1;
 }
 
@@ -316,14 +333,14 @@ onShow(() => {
 
 .point-label {
   color: var(--theme-text-primary);
-  font-size: 30rpx;
-  font-weight: 850;
+  font-size: 28rpx;
+  font-weight: 600;
 }
 
 .point-id {
   margin-top: 8rpx;
   color: var(--theme-text-tertiary);
-  font-size: 22rpx;
+  font-size: 21rpx;
 }
 
 .value-badge {
@@ -338,7 +355,7 @@ onShow(() => {
 
 .value-badge text:first-child {
   font-size: 38rpx;
-  font-weight: 900;
+  font-weight: 700;
   line-height: 1;
 }
 
@@ -346,7 +363,7 @@ onShow(() => {
   margin-top: 4rpx;
   color: var(--theme-value-badge-unit);
   font-size: 20rpx;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .slider {
@@ -366,7 +383,7 @@ onShow(() => {
   background: var(--theme-input-bg);
   color: var(--theme-text-primary);
   font-size: 28rpx;
-  font-weight: 800;
+  font-weight: 600;
   text-align: center;
 }
 
@@ -375,8 +392,9 @@ onShow(() => {
   padding: 8rpx 14rpx;
   border-radius: var(--theme-radius-input);
   font-size: 22rpx;
-  font-weight: 700;
+  font-weight: 500;
   line-height: 1.4;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .status-row.is-idle {
@@ -390,13 +408,13 @@ onShow(() => {
 }
 
 .status-row.is-sending {
-  background: rgba(13, 201, 176, 0.12);
-  color: var(--theme-accent);
+  background: var(--theme-accent-light);
+  color: var(--theme-accent-dark);
 }
 
 .status-row.is-success {
-  background: rgba(13, 201, 176, 0.18);
-  color: var(--theme-accent);
+  background: var(--theme-accent-light);
+  color: var(--theme-accent-dark);
 }
 
 .status-row.is-error {

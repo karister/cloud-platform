@@ -32,6 +32,8 @@ const lastSyncedAt = ref(0)
 const refreshing = ref(false)
 const lastError = ref('')
 const recentPushAt = {}
+// mock 模式下被用户手动下发/调整过的点位：不再回灌模拟值
+const mockPinned = {}
 
 let pollTimer = null
 let inflightPromise = null  // 并发去重：避免同一时刻多次 fetchProperties
@@ -45,8 +47,16 @@ let inflightPromise = null  // 并发去重：避免同一时刻多次 fetchProp
 async function refresh({ silent = false } = {}) {
   const config = getConfig()
   if (config.cloud.mockMode) {
+    // mock 模式不发网络请求，由 fetchProperties 本地生成模拟值（支持调试值覆盖）；
+    // 用户手动设置过的点位保持不被覆盖
+    const values = await fetchProperties(config)
+    Object.entries(values).forEach(([k, v]) => {
+      if (v === undefined || v === null) return
+      if (mockPinned[k]) return
+      latestValues[k] = v
+    })
     lastSyncedAt.value = Date.now()
-    return {}
+    return latestValues
   }
 
   if (inflightPromise) return inflightPromise
@@ -96,6 +106,7 @@ async function refresh({ silent = false } = {}) {
 async function setDesired(identifier, value) {
   const config = getConfig()
   if (config.cloud.mockMode) {
+    mockPinned[identifier] = true
     latestValues[identifier] = value
     return
   }
