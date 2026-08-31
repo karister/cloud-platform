@@ -1245,9 +1245,12 @@ function closeExportModal() {
 function handleExportDownload() {
   const json = serializeConfig(config.value)
   const filename = getExportFilename()
-  downloadJsonFile(json, filename)
+  // WebView 走原生保存对话框，成功/取消由原生提示；桌面 H5 保持本地下载
+  const viaNativeBridge = downloadJsonFile(json, filename)
   closeExportModal()
-  uni.showToast({ title: '配置已导出', icon: 'success' })
+  if (!viaNativeBridge) {
+    uni.showToast({ title: '配置已导出', icon: 'success' })
+  }
 }
 
 async function handleExportEmail() {

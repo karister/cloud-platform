@@ -30,6 +30,7 @@ Write-Host "1/5 Build uni-app H5 assets..."
 Push-Location $ProjectRoot
 try {
   & npm.cmd run build:h5
+  if ($LASTEXITCODE -ne 0) { throw "H5 build failed with exit code $LASTEXITCODE" }
 } finally {
   Pop-Location
 }
@@ -56,6 +57,7 @@ $env:Path = [string]::Join(";", @($JavaBin, $PlatformTools, $BuildTools, $env:Pa
 Push-Location $AndroidProject
 try {
   & $GradleBat --no-daemon "assemble$Variant"
+  if ($LASTEXITCODE -ne 0) { throw "Gradle build failed with exit code $LASTEXITCODE" }
 } finally {
   Pop-Location
 }

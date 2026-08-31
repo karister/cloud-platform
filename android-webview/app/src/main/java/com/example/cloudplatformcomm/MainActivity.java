@@ -2,20 +2,33 @@ package com.example.cloudplatformcomm;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.ViewGroup;
+import android.webkit.JavascriptInterface;
+import android.webkit.ValueCallback;
+import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 public class MainActivity extends Activity {
     private static final String LOCAL_ASSET_HOST = "appassets.androidplatform.net";
+    private static final int FILE_CHOOSER_REQUEST = 1001;
+    private static final int SAVE_FILE_REQUEST = 1002;
     private WebView webView;
+    private ValueCallback<Uri[]> pendingFileChooser;
+    private String pendingSaveContent;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -28,6 +41,14 @@ public class MainActivity extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT
         ));
 
+        if (BuildConfig.DEBUG) {
+            // 真机调试：允许通过 chrome://inspect / CDP 检查与驱动 WebView
+            WebView.setWebContentsDebuggingEnabled(true);
+        }
+
+        // 前端导出配置走此桥接（blob: 下载在 WebView 中不生效）
+        webView.addJavascriptInterface(new FileBridge(), "AndroidBridge");
+
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
@@ -35,6 +56,33 @@ public class MainActivity extends Activity {
         settings.setAllowFileAccess(true);
         settings.setAllowContentAccess(true);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback,
+                    FileChooserParams params) {
+                android.util.Log.d("MainActivity", "onShowFileChooser accept="
+                        + java.util.Arrays.toString(params.getAcceptTypes()));
+                if (pendingFileChooser != null) {
+                    // WebView 同一时刻只允许一个待处理的选择器，先结束旧的
+                    pendingFileChooser.onReceiveValue(null);
+                }
+                pendingFileChooser = callback;
+                try {
+                    Intent intent = params.createIntent();
+                    // 部分文件管理器把 .json 标记为 application/octet-stream，
+                    // 按 accept 过滤会选不到文件，故放宽为任意文件，由前端校验 JSON
+                    intent.setType("*/*");
+                    intent.removeExtra(Intent.EXTRA_MIME_TYPES);
+                    startActivityForResult(intent, FILE_CHOOSER_REQUEST);
+                } catch (ActivityNotFoundException e) {
+                    pendingFileChooser = null;
+                    callback.onReceiveValue(null);
+                    return false;
+                }
+                return true;
+            }
+        });
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -80,6 +128,72 @@ public class MainActivity extends Activity {
         if (path.endsWith(".json")) return "application/json";
         if (path.endsWith(".woff2")) return "font/woff2";
         return "application/octet-stream";
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == SAVE_FILE_REQUEST) {
+            String content = pendingSaveContent;
+            pendingSaveContent = null;
+            if (resultCode != RESULT_OK || data == null || data.getData() == null
+                    || content == null) {
+                Toast.makeText(this, "已取消保存", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            try (OutputStream os = getContentResolver().openOutputStream(data.getData())) {
+                if (os == null) {
+                    throw new IOException("无法打开目标文件");
+                }
+                os.write(content.getBytes(StandardCharsets.UTF_8));
+                os.flush();
+                Toast.makeText(this, "配置已保存", Toast.LENGTH_SHORT).show();
+            } catch (IOException | SecurityException e) {
+                Toast.makeText(this, "保存失败：" + e.getMessage(), Toast.LENGTH_LONG).show();
+            }
+            return;
+        }
+        if (requestCode != FILE_CHOOSER_REQUEST) {
+            super.onActivityResult(requestCode, resultCode, data);
+            return;
+        }
+        if (pendingFileChooser == null) {
+            return;
+        }
+        Uri[] result = null;
+        if (resultCode == RESULT_OK && data != null && data.getData() != null) {
+            result = new Uri[]{ data.getData() };
+        }
+        // 取消也必须回调 null，否则 WebView 认为选择器仍在进行，后续点击不再响应
+        pendingFileChooser.onReceiveValue(result);
+        pendingFileChooser = null;
+    }
+
+    /**
+     * 暴露给页面的保存桥接：Android WebView 不支持 blob: URL 下载，
+     * 由原生弹出系统“另存为”（SAF）把内容写入用户选择的位置。
+     */
+    private class FileBridge {
+        @JavascriptInterface
+        public boolean saveJsonFile(final String filename, final String content) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        pendingSaveContent = content;
+                        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                        intent.addCategory(Intent.CATEGORY_OPENABLE);
+                        intent.setType("application/json");
+                        intent.putExtra(Intent.EXTRA_TITLE,
+                                filename != null && !filename.isEmpty() ? filename : "config.json");
+                        startActivityForResult(intent, SAVE_FILE_REQUEST);
+                    } catch (ActivityNotFoundException e) {
+                        pendingSaveContent = null;
+                        Toast.makeText(MainActivity.this, "无法打开保存窗口", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+            return true;
+        }
     }
 
     @Override

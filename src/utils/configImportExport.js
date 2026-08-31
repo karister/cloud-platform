@@ -201,15 +201,24 @@ export function getExportFilename() {
 }
 
 /**
- * Trigger a JSON file download in the browser (H5 only).
- * Falls back to uni.showToast on non-H5 platforms.
+ * Trigger a JSON file download.
+ * On Android WebView (APK) blob downloads silently do nothing, so the file is
+ * handed to the native save bridge (ACTION_CREATE_DOCUMENT) instead and the
+ * native side shows the success/failure toast once written.
  * @param {string} jsonStr — the JSON content
  * @param {string} filename — the download filename
+ * @returns {boolean} true when handed off to the native bridge
  */
 export function downloadJsonFile(jsonStr, filename) {
+  if (typeof window !== 'undefined' && window.AndroidBridge
+      && typeof window.AndroidBridge.saveJsonFile === 'function') {
+    window.AndroidBridge.saveJsonFile(filename, jsonStr)
+    return true
+  }
+
   if (typeof document === 'undefined' || !document.createElement) {
     uni.showToast({ title: '当前平台不支持文件下载', icon: 'none' })
-    return
+    return false
   }
 
   const blob = new Blob([jsonStr], { type: 'application/json' })
@@ -223,6 +232,7 @@ export function downloadJsonFile(jsonStr, filename) {
   // Cleanup
   document.body.removeChild(anchor)
   URL.revokeObjectURL(url)
+  return false
 }
 
 /**
