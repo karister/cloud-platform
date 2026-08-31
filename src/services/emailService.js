@@ -8,13 +8,33 @@
  *   1. User registers at https://dashboard.emailjs.com (free)
  *   2. Creates an Email Service (SMTP or built-in)
  *   3. Creates an Email Template with variables:
- *      - to_email, configJson, exportTime, appName, themeId
+ *      - to_email, configJson, exportTime, appName, themeId, importUrl
+ *      (importUrl points to the GitHub Pages copy page public/import.html
+ *      with the config embedded in the URL fragment, giving the recipient
+ *      a working one-tap "copy" button — email clients themselves strip
+ *      all JavaScript, so the copy action cannot live inside the email)
  *   4. Copies Service ID, Template ID, and Public Key
  *   5. Enters them in the app's "Configure Email" form
  *   6. Uses the "Send to Email" button on the export modal
  */
 
 const EMAIL_CONFIG_KEY = 'cloud_comm_email_config'
+
+// 一键复制中转页，随 H5 构建部署在 GitHub Pages（public/import.html）。
+// 邮件按钮跳转到该页完成复制——邮件客户端会剥离脚本，复制动作只能放在网页里。
+const IMPORT_PAGE_URL = 'https://karister.github.io/cloud-platform/import.html'
+
+/**
+ * Encode the config JSON as URL-safe base64 for the copy-page link fragment.
+ * Base64url avoids the ~9x percent-encoding bloat on CJK text and keeps the
+ * fragment free of characters that would break the href attribute.
+ */
+function encodeConfigForLink(json) {
+  return btoa(unescape(encodeURIComponent(json)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '')
+}
 
 // Hardcoded default EmailJS credentials (user configured)
 const DEFAULT_EMAIL_CONFIG = {
@@ -135,7 +155,8 @@ export async function sendConfigEmail(recipient, configJson, appName, themeId) {
       configJson: configJson,
       exportTime: new Date().toLocaleString('zh-CN', { hour12: false }),
       appName: appName || '云平台数据通信',
-      themeId: themeId || 'amber'
+      themeId: themeId || 'amber',
+      importUrl: IMPORT_PAGE_URL + '#j=' + encodeConfigForLink(configJson)
     }
 
     emailjs.init(publicKey)

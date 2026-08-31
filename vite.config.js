@@ -9,6 +9,9 @@ const base = process.env.GITHUB_ACTIONS === 'true' && repositoryName
 
 export default defineConfig({
   base,
+  // uni 插件默认把 publicDir 覆盖为 '__static__'，显式声明才能让 public/ 下的
+  // 静态文件（import.html 复制中转页）随构建拷贝到部署产物根目录
+  publicDir: 'public',
   plugins: [uni()],
   server: {
     host: '127.0.0.1',

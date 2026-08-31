@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>配置复制 · 云平台数据通信</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      background: #f0f4f8;
+      color: #1f2937;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 28px 16px 44px;
+      -webkit-text-size-adjust: 100%;
+    }
+    .card { width: 100%; max-width: 480px; }
+    .panel {
+      background: #fff;
+      border-radius: 16px;
+      padding: 26px 20px;
+      box-shadow: 0 4px 18px rgba(15, 23, 42, 0.08);
+      margin-bottom: 14px;
+    }
+    .head { text-align: center; margin-bottom: 20px; }
+    .head-icon {
+      width: 52px; height: 52px;
+      margin: 0 auto 12px;
+      background: #eff6ff;
+      border-radius: 14px;
+      font-size: 26px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .head h1 { font-size: 19px; color: #111827; }
+    .head p { font-size: 13px; color: #6b7280; margin-top: 6px; }
+    .status { font-size: 13px; border-radius: 10px; padding: 10px 12px; margin-bottom: 14px; line-height: 1.5; }
+    .status.ok { background: #f0fdf4; color: #15803d; }
+    .status.warn { background: #fef2f2; color: #b91c1c; }
+    .status.info { background: #eff6ff; color: #1d4ed8; }
+    .copy-btn {
+      display: block; width: 100%;
+      padding: 14px 16px;
+      background: #2563eb; color: #fff;
+      font-size: 16px; font-weight: 600;
+      font-family: inherit;
+      border: none; border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .copy-btn:active { background: #1d4ed8; }
+    .copy-btn.is-done { background: #16a34a; }
+    .copy-btn.is-fail { background: #b91c1c; }
+    .copy-tip { font-size: 13px; color: #15803d; text-align: center; margin-top: 10px; line-height: 1.6; }
+    details { margin-top: 14px; }
+    summary { font-size: 13px; color: #6b7280; cursor: pointer; padding: 6px 0; }
+    .preview {
+      width: 100%; height: 180px;
+      margin-top: 8px; padding: 12px;
+      background: #f8fafc; color: #334155;
+      border: 1px solid #e2e8f0; border-radius: 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px; line-height: 1.5;
+      white-space: pre; overflow: auto;
+      resize: vertical;
+    }
+    .fallback-note { font-size: 13px; color: #6b7280; margin-bottom: 10px; line-height: 1.6; }
+    .steps { padding-left: 0; list-style: none; }
+    .steps li { display: flex; gap: 10px; font-size: 13px; color: #374151; line-height: 1.6; padding: 5px 0; }
+    .steps .no {
+      flex: none; width: 20px; height: 20px; margin-top: 1px;
+      background: #eff6ff; color: #2563eb;
+      border-radius: 50%; font-size: 12px; font-weight: 600;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .privacy { font-size: 12px; color: #9ca3af; text-align: center; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="panel">
+      <div class="head">
+        <div class="head-icon">📋</div>
+        <h1>配置 JSON 一键复制</h1>
+        <p>从邮件打开 · 复制后到 App 中粘贴导入</p>
+      </div>
+
+      <section id="state-ok" hidden>
+        <div class="status ok">✓ 配置内容已载入（共 <span id="charCount">0</span> 字符）</div>
+        <button id="copyBtn" class="copy-btn" type="button">📋 复制配置 JSON</button>
+        <div id="copyTip" class="copy-tip" hidden>已复制！请打开 App，进入配置页的「配置导入」，粘贴后点「解析配置内容」。</div>
+        <details>
+          <summary>查看复制的内容</summary>
+          <textarea id="previewText" class="preview" readonly spellcheck="false"></textarea>
+        </details>
+      </section>
+
+      <section id="state-empty" hidden>
+        <div class="status info">未检测到配置内容。</div>
+        <p class="fallback-note">请回到邮箱，点击邮件中的「一键复制配置 JSON」按钮重新打开本页。</p>
+      </section>
+
+      <section id="state-error" hidden>
+        <div class="status warn">⚠ 配置内容加载失败，链接可能不完整或已被邮件客户端截断。</div>
+        <p class="fallback-note">也可以将邮件正文中的 JSON 内容粘贴到下面，再点击复制。</p>
+        <textarea id="fallbackInput" class="preview" placeholder="在此粘贴邮件正文中的 JSON 内容" spellcheck="false"></textarea>
+        <div style="height: 12px;"></div>
+        <button id="fallbackCopyBtn" class="copy-btn" type="button">📋 复制输入框内容</button>
+        <div id="fallbackTip" class="copy-tip" hidden>已复制！请打开 App，进入配置页的「配置导入」，粘贴后点「解析配置内容」。</div>
+      </section>
+    </div>
+
+    <div class="panel">
+      <ul class="steps">
+        <li><span class="no">1</span><span>在本页点击「复制配置 JSON」</span></li>
+        <li><span class="no">2</span><span>打开 App，进入配置页的「配置导入」</span></li>
+        <li><span class="no">3</span><span>粘贴内容，点「解析配置内容」并确认导入</span></li>
+      </ul>
+    </div>
+
+    <p class="privacy">本页面为纯静态页，不会上传任何数据；配置内容仅保留在当前浏览器中。</p>
+  </main>
+
+  <script>
+    (function () {
+      var stateOk = document.getElementById('state-ok')
+      var stateEmpty = document.getElementById('state-empty')
+      var stateError = document.getElementById('state-error')
+
+      /* 与 src/services/emailService.js 中 encodeConfigForLink 对称：
+         base64url(UTF-8 JSON)，避免百分号编码在 CJK 下膨胀约 9 倍 */
+      function decodeFromLink(s) {
+        var b64 = s.replace(/-/g, '+').replace(/_/g, '/')
+        while (b64.length % 4 !== 0) b64 += '='
+        return decodeURIComponent(escape(atob(b64)))
+      }
+
+      function isPlausibleConfig(text) {
+        try {
+          var value = JSON.parse(text)
+          return !!(value && typeof value === 'object')
+        } catch (e) {
+          return false
+        }
+      }
+
+      function legacyCopy(text) {
+        var ta = document.createElement('textarea')
+        ta.value = text
+        ta.setAttribute('readonly', '')
+        ta.style.position = 'fixed'
+        ta.style.top = '-9999px'
+        document.body.appendChild(ta)
+        ta.select()
+        ta.setSelectionRange(0, text.length)
+        var ok = false
+        try { ok = document.execCommand('copy') } catch (e) { ok = false }
+        document.body.removeChild(ta)
+        return ok
+      }
+
+      function bindCopy(btn, tip, getText) {
+        var original = btn.textContent
+        btn.addEventListener('click', function () {
+          var text = getText()
+          if (!text) return
+          function mark(ok) {
+            btn.textContent = ok ? '✓ 已复制' : '复制失败，请展开内容后手动长按复制'
+            btn.classList.add(ok ? 'is-done' : 'is-fail')
+            if (ok) tip.hidden = false
+            setTimeout(function () {
+              btn.textContent = original
+              btn.classList.remove('is-done', 'is-fail')
+            }, 2500)
+          }
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(
+              function () { mark(true) },
+              function () { mark(legacyCopy(text)) }
+            )
+          } else {
+            mark(legacyCopy(text))
+          }
+        })
+      }
+
+      function loadFromHash() {
+        var raw = location.hash.replace(/^#/, '')
+        stateOk.hidden = true
+        stateEmpty.hidden = true
+        stateError.hidden = true
+        copyTip.hidden = true
+        if (!raw) {
+          stateEmpty.hidden = false
+          return
+        }
+        if (/^j=/.test(raw)) {
+          try {
+            var text = decodeFromLink(raw.slice(2)).trim()
+            if (isPlausibleConfig(text)) {
+              document.getElementById('charCount').textContent = String(text.length)
+              document.getElementById('previewText').value = text
+              stateOk.hidden = false
+              return
+            }
+          } catch (e) { /* 落入错误状态 */ }
+        }
+        stateError.hidden = false
+      }
+
+      /* 同一标签页打开新链接时浏览器只改 hash 不重载页面，需监听变化重新解析 */
+      window.addEventListener('hashchange', loadFromHash)
+      loadFromHash()
+
+      bindCopy(
+        document.getElementById('copyBtn'),
+        document.getElementById('copyTip'),
+        function () { return document.getElementById('previewText').value }
+      )
+      bindCopy(
+        document.getElementById('fallbackCopyBtn'),
+        document.getElementById('fallbackTip'),
+        function () { return document.getElementById('fallbackInput').value.trim() }
+      )
+    })()
+  </script>
+</body>
+</html>
