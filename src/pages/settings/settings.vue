@@ -335,16 +335,16 @@
           </view>
 
           <view v-else-if="activeModal === 'camera'" class="form">
-            <text class="cam-hint">手机与 ESP32-CAM 连同一热点（ssid=esp8266）。APP 自动 UDP 发现，H5 / 小程序请手动输入。</text>
+            <text class="cam-hint">手机与 ESP32-CAM 连同一热点。Android APK 使用原生 UDP/当前 Wi-Fi 网段发现；H5 / 小程序保留手动输入。</text>
             <view class="cam-row">
               <text class="cam-label">发现状态：{{ camDiscoveryText }}</text>
               <button v-if="camScanning" class="secondary-btn cam-connect" @tap="stopCamHttpScan">停止</button>
-              <button v-else-if="!camDiscoverySupported" class="secondary-btn cam-connect" @tap="startCamHttpScan">重新扫描</button>
+              <button v-else class="secondary-btn cam-connect" @tap="restartCamDiscovery">重新扫描</button>
             </view>
             <view v-if="camDevices.length" class="cam-list">
-              <view v-for="dev in camDevices" :key="dev.MAC || dev.IP" class="cam-device" @tap="connectCamDevice(dev)">
+              <view v-for="dev in camDevices" :key="dev.MAC || dev.IP" class="cam-device" :class="{ offline: !dev.isOnline }" @tap="connectCamDevice(dev)">
                 <text class="cam-device-name">{{ dev.NAME || 'esp32cam' }}</text>
-                <text class="cam-device-ip">{{ dev.IP }} · {{ dev.MAC || '无MAC' }}</text>
+                <text class="cam-device-ip">{{ dev.IP }} · {{ dev.MAC || '无MAC' }} · {{ dev.isOnline ? '在线' : '离线' }}</text>
               </view>
             </view>
             <view class="cam-row">
@@ -353,7 +353,7 @@
             </view>
             <view v-if="camBase" class="cam-live">
               <text class="cam-label">直播（MJPEG）：{{ camBase }}</text>
-              <!-- H5 用 img 直出 MJPEG；APP 第二步再切 web-view/stream.html -->
+              <!-- Android 返回 appassets 同源代理地址；其他端保留直出降级。 -->
               <!-- #ifdef H5 -->
               <img v-if="camStreamUrl" class="cam-img" :src="camStreamUrl" @error="onCamStreamError" />
               <!-- #endif -->
@@ -362,27 +362,35 @@
               <!-- #endif -->
               <view v-if="camError" class="cloud-status error">{{ camError }}</view>
               <view class="cam-actions">
-                <button class="secondary-btn inline-btn" @tap="takeCamPhoto">拍照存相册</button>
-                <button class="secondary-btn inline-btn" @tap="refreshCamStatus">刷新状态</button>
+                <button class="secondary-btn inline-btn" :disabled="camTakingPhoto || !camStatusReady" @tap="takeCamPhoto">{{ camTakingPhoto ? '保存中…' : '拍照存相册' }}</button>
+                <button class="secondary-btn inline-btn" :disabled="camStatusLoading" @tap="refreshCamStatus">刷新状态</button>
               </view>
+              <!-- #ifdef H5 -->
+              <view v-if="camPhotoPreview" class="cam-photo-preview">
+                <img class="cam-img" :src="camPhotoPreview" alt="ESP32-CAM 拍照预览" />
+                <button class="secondary-btn inline-btn" @tap="openCamPhotoPreview">打开 / 保存照片</button>
+              </view>
+              <!-- #endif -->
               <text v-if="camStatusText" class="cam-status">{{ camStatusText }}</text>
-              <view class="cam-row">
+              <text v-if="!camStatusReady && camStatusLoading" class="cam-hint">正在读取摄像头状态，控制项将在确认后显示。</text>
+              <view v-if="camStatusReady" class="cam-row">
                 <text class="cam-label">分辨率</text>
                 <picker :range="camFramesizeLabels" :value="camFramesizeIndex" @change="onCamFramesizeChange($event.detail.value)">
-                  <view class="alarm-picker">{{ camFramesizeLabels[camFramesizeIndex] }}</view>
+                  <view class="alarm-picker">{{ camFramesizeKnown ? camFramesizeLabels[camFramesizeIndex] : `当前固件值 ${camFramesize}` }}</view>
                 </picker>
               </view>
-              <view class="cam-row">
-                <text class="cam-label">质量(10-63，越小越清晰)</text>
+              <view v-if="camStatusReady" class="cam-row">
+                <text class="cam-label">质量(4-63，越小越清晰)</text>
                 <input class="input cam-input" type="number" :value="camQuality" @input="camQuality = Number($event.detail.value)" />
-                <button class="secondary-btn cam-connect" @tap="applyCamQuality">应用</button>
+                <button class="secondary-btn cam-connect" :disabled="camControlBusy" @tap="applyCamQuality">应用</button>
               </view>
-              <view class="switch-field">
+              <view v-if="camStatusReady && camLedSupported" class="switch-field">
                 <view>
-                  <text class="field-title">闪光灯</text>
+                  <text class="field-title">补光强度 {{ camLedIntensity }}</text>
                 </view>
-                <switch :checked="camFlash" @change="onCamFlashChange($event.detail.value)" />
+                <slider :value="camLedIntensity" :min="camLedMin" :max="camLedMax" :disabled="camControlBusy" @change="onCamLedChange($event.detail.value)" />
               </view>
+              <text v-else-if="camStatusReady" class="cam-hint">补光灯：当前固件不支持</text>
               <text class="cam-hint">热点客户端隔离时收不到广播，请切 ESP32-AP 直连（192.168.4.1）。</text>
             </view>
           </view>
@@ -680,7 +688,7 @@
 
 <script setup>
 import { computed, reactive, ref } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { onHide, onShow, onUnload } from '@dcloudio/uni-app'
 import AppIcon from '../../components/AppIcon.vue'
 import AppTabBar from '../../components/AppTabBar.vue'
 import PointFields from '../../components/PointFields.vue'
@@ -696,7 +704,8 @@ import { dataStore } from '../../stores/dataStore'
 import { FRAMESIZE_MAP, buildStreamUrl, normalizeManualIp } from '../../utils/cameraProtocol'
 import { createDiscovery, scanSubnetForCameras } from '../../utils/cameraDiscovery'
 import { cameraStore } from '../../stores/cameraStore'
-import { capturePhoto, fetchCamStatus, sendCamControl } from '../../services/esp32cam'
+import { createCameraSession, hasNativeCameraBridge } from '../../services/cameraBridge'
+import { capturePhoto, fetchCamStatus, isCamQuality, openCamStream, sendCamControl } from '../../services/esp32cam'
 
 const config = ref(getConfig())
 const draft = ref(getConfig())
@@ -1545,15 +1554,29 @@ const camBase = ref('')
 const camStreamUrl = ref('')
 const camStatusText = ref('')
 const camError = ref('')
-const camFramesize = ref(8)
-const camQuality = ref(12)
-const camFlash = ref(false)
+const camFramesize = ref(null)
+const camFramesizeKnown = ref(false)
+const camQuality = ref(null)
+const camStatusReady = ref(false)
+const camStatusLoading = ref(false)
+const camControlBusy = ref(false)
+const camTakingPhoto = ref(false)
+const camPhotoPreview = ref('')
+const camLedSupported = ref(false)
+const camLedIntensity = ref(0)
+const camLedMin = ref(0)
+const camLedMax = ref(255)
 const camDiscoverySupported = ref(false)
 const camScanning = ref(false)
 const camScanProgress = ref({ checked: 0, total: 0 })
 let camDiscovery = null
 let camPruneTimer = null
-let camScanStop = false
+let camHealthTimer = null
+let camHealthInFlight = false
+let camScanTaskId = 0
+let camSessionSerial = 0
+let camSession = null
+let camControlQueue = Promise.resolve()
 
 const camDevices = computed(() => cameraStore.devices)
 const camFramesizeLabels = computed(() => FRAMESIZE_MAP.map((item) => item.label))
@@ -1563,16 +1586,20 @@ const camFramesizeIndex = computed(() => {
 })
 
 const camDiscoveryText = computed(() => {
-  if (camDiscoverySupported.value) return camDevices.value.length ? `UDP 已发现 ${camDevices.value.length} 台` : 'UDP 搜索中…'
   if (camScanning.value) {
     const p = camScanProgress.value
-    return p.total ? `HTTP 扫描中 ${p.checked}/${p.total}，已发现 ${camDevices.value.length} 台…` : 'HTTP 扫描准备中…'
+    return p.total ? `HTTP 扫描中 ${p.checked}/${p.total}，已发现 ${camDevices.value.length} 台…` : '正在初始化当前 Wi-Fi 发现…'
   }
-  return camDevices.value.length ? `HTTP 已发现 ${camDevices.value.length} 台` : 'UDP 不可用，已切 HTTP 扫描（未扫到请手动输入）'
+  if (camDiscoverySupported.value) return camDevices.value.length ? `已发现 ${camDevices.value.length} 台，持续监听中` : 'UDP 搜索中，3 秒后自动 HTTP 兜底…'
+  return camDevices.value.length ? `已发现 ${camDevices.value.length} 台` : '当前平台无法获取 Wi-Fi 网段，请手动输入摄像头 IP'
 })
 
-function stopCameraDiscovery() {
-  camScanStop = true
+function isCurrentCamSession(serial) {
+  return activeModal.value === 'camera' && serial === camSessionSerial && camSession && !camSession.cancelled
+}
+
+function stopCameraDiscovery({ keepModal = false } = {}) {
+  camScanTaskId += 1
   camScanning.value = false
   try {
     if (camDiscovery) camDiscovery.stop()
@@ -1580,61 +1607,132 @@ function stopCameraDiscovery() {
   camDiscovery = null
   if (camPruneTimer) clearInterval(camPruneTimer)
   camPruneTimer = null
+  if (camHealthTimer) clearInterval(camHealthTimer)
+  camHealthTimer = null
+  if (camSession) camSession.cancel()
+  camSession = null
+  camStreamUrl.value = ''
+  camStatusLoading.value = false
+  if (!keepModal) camStatusReady.value = false
 }
 
 async function startCamHttpScan() {
-  camScanStop = false
+  const serial = camSessionSerial
+  const scanId = ++camScanTaskId
   camScanning.value = true
   camScanProgress.value = { checked: 0, total: 0 }
   camError.value = ''
+  // Only Android has a trustworthy current Wi-Fi prefix; its native bridge owns
+  // the fallback scan. Web targets deliberately keep the manual-IP path.
+  if (!camDiscovery || camDiscovery.supported !== false) {
+    camScanning.value = false
+    return
+  }
   try {
     await scanSubnetForCameras({
-      onDevice: (dev) => cameraStore.upsertDevice(dev),
-      onProgress: (p) => {
-        camScanProgress.value = p
+      onDevice: (dev) => {
+        if (isCurrentCamSession(serial) && scanId === camScanTaskId) cameraStore.upsertDevice(dev)
       },
-      shouldStop: () => camScanStop
+      onProgress: (p) => {
+        if (isCurrentCamSession(serial) && scanId === camScanTaskId) camScanProgress.value = p
+      },
+      shouldStop: () => !isCurrentCamSession(serial) || scanId !== camScanTaskId
     })
   } catch (e) {
-    camError.value = e?.message || '扫描失败，请手动输入 IP'
+    if (isCurrentCamSession(serial) && scanId === camScanTaskId) camError.value = e?.message || '扫描失败，请手动输入 IP'
   } finally {
-    camScanning.value = false
+    if (isCurrentCamSession(serial) && scanId === camScanTaskId) camScanning.value = false
   }
 }
 
 function stopCamHttpScan() {
-  camScanStop = true
+  camScanTaskId += 1
   camScanning.value = false
+}
+
+function onNativeCameraEvent(serial, event) {
+  if (!isCurrentCamSession(serial)) return
+  if (event.event === 'device' && event.device) {
+    cameraStore.upsertDevice(event.device)
+    return
+  }
+  if (event.event === 'scanProgress') {
+    camScanning.value = Boolean(event.scanning)
+    camScanProgress.value = { checked: Number(event.checked) || 0, total: Number(event.total) || 0 }
+    return
+  }
+  if (event.event === 'networkChanged') restartCamDiscovery()
+}
+
+async function startNativeCamDiscovery(serial) {
+  if (!camSession?.supported) return
+  try {
+    await camSession.request('discover', {}, 6000)
+  } catch (error) {
+    if (isCurrentCamSession(serial)) camError.value = error?.message || '原生发现初始化失败，请手动输入 IP'
+  }
+}
+
+function createCamSession() {
+  const serial = ++camSessionSerial
+  const session = createCameraSession((event) => onNativeCameraEvent(serial, event))
+  // createCameraSession is intentionally opaque; marker avoids accepting stale UI work.
+  session.cancelled = false
+  const originalCancel = session.cancel
+  session.cancel = () => {
+    session.cancelled = true
+    originalCancel()
+  }
+  camSession = session
+  return { serial, session }
 }
 
 function openCamera() {
   activeModal.value = 'camera'
-  camError.value = ''
-  stopCameraDiscovery()
-  camScanStop = false
-  camDiscovery = createDiscovery({ onDevice: (dev) => cameraStore.upsertDevice(dev) })
-  camDiscoverySupported.value = Boolean(camDiscovery.supported)
-  camDiscovery.start()
-  camPruneTimer = setInterval(() => cameraStore.pruneOffline(), 2000)
-  // WebView/H5 无 UDPSocket：自动改走 HTTP 网段扫描兜底
-  if (!camDiscoverySupported.value) startCamHttpScan()
+  restartCamDiscovery()
 }
 
-function connectCamBase(base) {
+function restartCamDiscovery() {
+  stopCameraDiscovery()
+  const { serial, session } = createCamSession()
+  camError.value = ''
+  camStatusText.value = ''
+  camStatusReady.value = false
+  camPhotoPreview.value = ''
+  camDiscoverySupported.value = Boolean(session.supported || hasNativeCameraBridge())
+  if (session.supported) {
+    startNativeCamDiscovery(serial)
+  } else {
+    camDiscovery = createDiscovery({
+      onDevice: (dev) => {
+        if (isCurrentCamSession(serial)) cameraStore.upsertDevice(dev)
+      }
+    })
+    camDiscoverySupported.value = Boolean(camDiscovery.supported)
+    camDiscovery.start()
+    if (!camDiscoverySupported.value) startCamHttpScan()
+  }
+  camPruneTimer = setInterval(() => cameraStore.pruneOffline(), 2000)
+  camHealthTimer = setInterval(refreshCamHealth, 2000)
+}
+
+function connectCamBase(base, streamUrl = '') {
   const normalized = normalizeManualIp(base)
   if (!normalized) {
     uni.showToast({ title: '请输入正确的 IP', icon: 'none' })
     return
   }
   camBase.value = normalized
-  camStreamUrl.value = buildStreamUrl(normalized)
+  camStreamUrl.value = ''
+  camStatusReady.value = false
+  camStatusText.value = ''
   camError.value = ''
-  refreshCamStatus()
+  refreshCamStatus(streamUrl || buildStreamUrl(normalized))
 }
 
 function connectCamDevice(dev) {
   if (!dev || !dev.IP) return
-  connectCamBase(`http://${dev.IP}`)
+  connectCamBase(dev.BASE || `http://${dev.IP}`, dev.STREAM)
 }
 
 function connectManual() {
@@ -1642,49 +1740,113 @@ function connectManual() {
 }
 
 function onCamStreamError() {
-  camError.value = '直播流加载失败，请确认同热点且 IP 正确，隔离时切 AP 直连 192.168.4.1'
+  camError.value = '直播流加载失败，请确认摄像头仍在线；H5 的 HTTP 流被浏览器拦截时请使用 Android APK 或手动打开预览。'
 }
 
-async function refreshCamStatus() {
+function applyCamStatus(data) {
+  const status = data?.status && typeof data.status === 'object' ? data.status : data
+  if (!status || typeof status !== 'object') return false
+  const framesize = Number(status.framesize)
+  const quality = Number(status.quality)
+  if (!Number.isInteger(framesize) || !isCamQuality(quality)) return false
+  camFramesize.value = framesize
+  camFramesizeKnown.value = FRAMESIZE_MAP.some((item) => item.value === framesize)
+  camQuality.value = quality
+  const led = Number(status.led_intensity)
+  camLedSupported.value = Number.isFinite(led) && led >= 0
+  if (camLedSupported.value) camLedIntensity.value = led
+  camStatusReady.value = true
+  return true
+}
+
+async function refreshCamStatus(preferredStream = '') {
   if (!camBase.value) return
+  const serial = camSessionSerial
+  const base = camBase.value
+  const requestedStream = typeof preferredStream === 'string' ? preferredStream : ''
+  camStatusLoading.value = true
   try {
-    const data = await fetchCamStatus(camBase.value)
-    camStatusText.value = typeof data === 'string' ? data : JSON.stringify(data)
+    const data = await fetchCamStatus(base, camSession)
+    if (!isCurrentCamSession(serial) || base !== camBase.value) return false
+    if (!applyCamStatus(data)) throw new Error('设备返回的状态不包含摄像头字段')
+    camStatusText.value = JSON.stringify(data?.status || data)
+    const device = cameraStore.devices.find((item) => item.BASE === base || item.IP === new URL(base).hostname)
+    if (device) cameraStore.markSuccess(device)
+    camStreamUrl.value = await openCamStream(base, requestedStream || buildStreamUrl(base), camSession)
+    return true
   } catch (err) {
-    camError.value = err?.message || '状态读取失败'
+    if (isCurrentCamSession(serial) && base === camBase.value) {
+      camError.value = err?.message || '状态读取失败'
+      const device = cameraStore.devices.find((item) => item.BASE === base)
+      if (device) cameraStore.markFailure(device, camError.value)
+    }
+    return false
+  } finally {
+    if (isCurrentCamSession(serial) && base === camBase.value) camStatusLoading.value = false
   }
 }
 
-async function applyCamControl(variable, value, okTip) {
-  if (!camBase.value) return
-  try {
-    await sendCamControl(camBase.value, variable, value)
-    uni.showToast({ title: okTip || '已应用', icon: 'success' })
-  } catch (err) {
-    uni.showToast({ title: err?.message || '控制失败', icon: 'none' })
+function queueCamControl(variable, value, previousValue, okTip) {
+  if (!camBase.value || !camStatusReady.value) return Promise.resolve()
+  const serial = camSessionSerial
+  const base = camBase.value
+  const work = async () => {
+    if (!isCurrentCamSession(serial) || base !== camBase.value) return
+    camControlBusy.value = true
+    try {
+      await sendCamControl(base, variable, value, camSession)
+      if (!isCurrentCamSession(serial)) return
+      const confirmed = await refreshCamStatus()
+      if (!confirmed) throw new Error('控制后无法确认摄像头状态')
+      uni.showToast({ title: okTip || '已应用', icon: 'success' })
+    } catch (err) {
+      if (isCurrentCamSession(serial)) {
+        if (variable === 'framesize') camFramesize.value = previousValue
+        if (variable === 'quality') camQuality.value = previousValue
+        if (variable === 'led_intensity') camLedIntensity.value = previousValue
+        uni.showToast({ title: err?.message || '控制失败，已恢复原值', icon: 'none' })
+      }
+    } finally {
+      if (isCurrentCamSession(serial)) camControlBusy.value = false
+    }
   }
+  camControlQueue = camControlQueue.catch(() => {}).then(work)
+  return camControlQueue
 }
 
 function onCamFramesizeChange(pickerIndex) {
   const item = FRAMESIZE_MAP[Number(pickerIndex)]
   if (!item) return
+  const previous = camFramesize.value
   camFramesize.value = item.value
-  applyCamControl('framesize', item.value, '分辨率已切换')
+  queueCamControl('framesize', item.value, previous, '分辨率已切换')
 }
 
 function applyCamQuality() {
-  applyCamControl('quality', camQuality.value, '质量已应用')
+  if (!isCamQuality(camQuality.value)) {
+    uni.showToast({ title: '画质必须是 4–63 的整数', icon: 'none' })
+    return
+  }
+  const previous = Number(JSON.parse(camStatusText.value || '{}').quality)
+  queueCamControl('quality', Number(camQuality.value), Number.isFinite(previous) ? previous : camQuality.value, '质量已应用')
 }
 
-function onCamFlashChange(checked) {
-  camFlash.value = Boolean(checked)
-  applyCamControl('flash', camFlash.value ? 1 : 0, '闪光灯已切换')
+function onCamLedChange(value) {
+  const next = Math.max(camLedMin.value, Math.min(camLedMax.value, Number(value)))
+  const previous = camLedIntensity.value
+  camLedIntensity.value = next
+  queueCamControl('led_intensity', next, previous, '补光强度已调整')
 }
 
 async function takeCamPhoto() {
-  if (!camBase.value) return
+  if (!camBase.value || camTakingPhoto.value) return
+  camTakingPhoto.value = true
   try {
-    const res = await capturePhoto(camBase.value)
+    const res = await capturePhoto(camBase.value, camSession)
+    if (res?.uri) {
+      uni.showToast({ title: '已存相册', icon: 'success' })
+      return
+    }
     const doSave = () => {
       uni.saveImageToPhotosAlbum({
         filePath: res.tempFilePath,
@@ -1693,18 +1855,52 @@ async function takeCamPhoto() {
       })
     }
     // #ifdef H5
-    if (typeof window !== 'undefined' && window.open) {
-      window.open(res.tempFilePath, '_blank')
+    if (res?.tempFilePath) {
+      camPhotoPreview.value = res.tempFilePath
+      uni.showToast({ title: '请点击预览后保存照片', icon: 'none' })
       return
     }
     // #endif
     doSave()
   } catch (err) {
     uni.showToast({ title: err?.message || '拍照失败', icon: 'none' })
+  } finally {
+    camTakingPhoto.value = false
   }
 }
 
-onShow(reload)
+function openCamPhotoPreview() {
+  // This click is user initiated, unlike the old asynchronous window.open call.
+  if (typeof window !== 'undefined' && camPhotoPreview.value) window.open(camPhotoPreview.value, '_blank')
+}
+
+async function refreshCamHealth() {
+  if (camHealthInFlight || !camSession || !isCurrentCamSession(camSessionSerial)) return
+  const httpDevices = cameraStore.devices.filter((device) => device.source === 'http' && device.isOnline)
+  if (!httpDevices.length) return
+  camHealthInFlight = true
+  try {
+    await Promise.all(httpDevices.map(async (device) => {
+      try {
+        await fetchCamStatus(device.BASE, camSession)
+        if (isCurrentCamSession(camSessionSerial)) cameraStore.markSuccess(device)
+      } catch (error) {
+        if (isCurrentCamSession(camSessionSerial)) cameraStore.markFailure(device, error?.message)
+      }
+    }))
+  } finally {
+    camHealthInFlight = false
+  }
+}
+
+onShow(() => {
+  reload()
+  if (activeModal.value === 'camera' && !camSession) restartCamDiscovery()
+})
+onHide(() => {
+  if (activeModal.value === 'camera') stopCameraDiscovery({ keepModal: true })
+})
+onUnload(() => stopCameraDiscovery())
 </script>
 
 <style scoped>

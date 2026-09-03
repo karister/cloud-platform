@@ -29,6 +29,7 @@ public class MainActivity extends Activity {
     private WebView webView;
     private ValueCallback<Uri[]> pendingFileChooser;
     private String pendingSaveContent;
+    private CameraBridge cameraBridge;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -46,8 +47,9 @@ public class MainActivity extends Activity {
             WebView.setWebContentsDebuggingEnabled(true);
         }
 
-        // 前端导出配置走此桥接（blob: 下载在 WebView 中不生效）
+        // 前端导出配置和 ESP32-CAM 操作走同一受限桥接。
         webView.addJavascriptInterface(new FileBridge(), "AndroidBridge");
+        cameraBridge = new CameraBridge(this, webView);
 
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
@@ -90,6 +92,8 @@ public class MainActivity extends Activity {
                 if (!LOCAL_ASSET_HOST.equals(request.getUrl().getHost())) {
                     return null;
                 }
+                WebResourceResponse cameraStream = cameraBridge.interceptStream(request.getUrl().getPath());
+                if (cameraStream != null) return cameraStream;
                 return serveAsset(request.getUrl().getPath());
             }
         });
@@ -132,6 +136,9 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (cameraBridge != null && cameraBridge.onActivityResult(requestCode, resultCode, data)) {
+            return;
+        }
         if (requestCode == SAVE_FILE_REQUEST) {
             String content = pendingSaveContent;
             pendingSaveContent = null;
@@ -194,6 +201,33 @@ public class MainActivity extends Activity {
             });
             return true;
         }
+
+        @JavascriptInterface
+        public String cameraRequest(String payload) {
+            return cameraBridge == null ? "" : cameraBridge.request(payload);
+        }
+
+        @JavascriptInterface
+        public void cancelCameraSession(String sessionId) {
+            if (cameraBridge != null) cameraBridge.cancelSession(sessionId);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        if (cameraBridge != null) cameraBridge.onPause();
+        super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (cameraBridge != null) cameraBridge.close();
+        if (webView != null) {
+            webView.removeJavascriptInterface("AndroidBridge");
+            webView.destroy();
+            webView = null;
+        }
+        super.onDestroy();
     }
 
     @Override

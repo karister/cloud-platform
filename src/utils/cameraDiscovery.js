@@ -1,7 +1,8 @@
-import { DISCOVER_MSG, DISCOVER_PORT, buildCaptureUrl, guessBroadcastAddresses, parseEsp32CamMessage } from './cameraProtocol.js'
+import { DISCOVER_MSG, DISCOVER_PORT, buildBaseUrl, buildStatusUrl, guessBroadcastAddresses, parseEsp32CamMessage } from './cameraProtocol.js'
 
-// 热点手机开热点时常见网段：Android 热点默认 192.168.43.x，部分机型 192.168.223.x，ESP32 自身 AP 为 192.168.4.1
-export const DEFAULT_SCAN_SUBNETS = ['192.168.43', '192.168.223', '192.168.4.1']
+// A browser cannot reliably obtain the current Wi-Fi prefix. Android uses its native
+// adapter for this; callers on other targets may explicitly supply a /24 prefix.
+export const DEFAULT_SCAN_SUBNETS = []
 
 export function candidateIps(subnets = DEFAULT_SCAN_SUBNETS) {
   const out = []
@@ -13,56 +14,59 @@ export function candidateIps(subnets = DEFAULT_SCAN_SUBNETS) {
       return
     }
     if (!/^\d+\.\d+\.\d+$/.test(base)) return
-    for (let i = 2; i <= 254; i += 1) out.push(`${base}.${i}`)
+    for (let i = 1; i <= 254; i += 1) out.push(`${base}.${i}`)
   })
   return [...new Set(out)]
 }
 
-// 用 <img> 加载 /capture 探测：能解码出图片即判定存活。
-// 刻意不用 XHR/fetch，避免 ESP32 固件无 CORS 头导致浏览器拦截误判。
-function probeCapture(ip, timeoutMs) {
+export function isCameraStatus(status) {
+  let value = status
+  if (typeof value === 'string') {
+    try {
+      value = JSON.parse(value)
+    } catch (err) {
+      return false
+    }
+  }
+  return Boolean(value && typeof value === 'object'
+    && Object.prototype.hasOwnProperty.call(value, 'framesize')
+    && Object.prototype.hasOwnProperty.call(value, 'quality'))
+}
+
+function statusRequest(ip, timeoutMs) {
+  const url = buildStatusUrl(buildBaseUrl(ip))
   return new Promise((resolve) => {
-    if (typeof Image === 'undefined') {
-      resolve(false)
+    if (typeof uni === 'undefined' || typeof uni.request !== 'function') {
+      resolve({ alive: false, error: '当前平台无法发起局域网 HTTP 探测' })
       return
     }
-    let done = false
-    const img = new Image()
-    const timer = setTimeout(() => {
-      if (done) return
-      done = true
-      try {
-        img.src = ''
-      } catch (err) {}
-      resolve(false)
-    }, timeoutMs)
-    img.onload = () => {
-      if (done) return
-      done = true
-      clearTimeout(timer)
-      resolve(true)
-    }
-    img.onerror = () => {
-      if (done) return
-      done = true
-      clearTimeout(timer)
-      resolve(false)
-    }
-    img.src = `${buildCaptureUrl(ip)}?_t=${Date.now()}`
+    uni.request({
+      url,
+      method: 'GET',
+      timeout: timeoutMs,
+      success: (res) => resolve({
+        alive: res.statusCode >= 200 && res.statusCode < 300 && isCameraStatus(res.data),
+        status: res.data,
+        statusCode: res.statusCode
+      }),
+      fail: (error) => resolve({ alive: false, error: error?.errMsg || '请求失败' })
+    })
   })
 }
 
-export async function scanSubnetForCameras({ subnets, onDevice, onProgress, timeoutMs = 1500, batchSize = 40, shouldStop } = {}) {
+export async function scanSubnetForCameras({ subnets, onDevice, onProgress, timeoutMs = 1500, batchSize = 16, shouldStop } = {}) {
   const ips = candidateIps(subnets)
   let checked = 0
   for (let i = 0; i < ips.length; i += batchSize) {
     if (shouldStop && shouldStop()) break
     const batch = ips.slice(i, i + batchSize)
-    const results = await Promise.all(batch.map(async (ip) => ({ ip, alive: await probeCapture(ip, timeoutMs) })))
-    results.forEach(({ ip, alive }) => {
+    const results = await Promise.all(batch.map(async (ip) => ({ ip, ...(await statusRequest(ip, timeoutMs)) })))
+    if (shouldStop && shouldStop()) break
+    results.forEach(({ ip, alive, status }) => {
       checked += 1
       if (alive && onDevice) {
-        onDevice({ IP: ip, STREAM: `http://${ip}:81/stream`, CAPTURE: `http://${ip}/capture`, MAC: '', NAME: 'esp32cam' })
+        const base = buildBaseUrl(ip)
+        onDevice({ IP: ip, BASE: base, STREAM: `${base}:81/stream`, CAPTURE: `${base}/capture`, MAC: '', NAME: 'esp32cam', source: 'http', status })
       }
     })
     if (onProgress) onProgress({ checked, total: ips.length })
@@ -75,7 +79,9 @@ export function createDiscovery({ onDevice } = {}) {
   if (!hasUdp) return { supported: false, start() {}, stop() {} }
   let socket = null
   let timer = null
+  let started = false
   function sendOnce() {
+    if (!socket) return
     guessBroadcastAddresses().forEach((address) => {
       try {
         socket.send({ address, port: DISCOVER_PORT, message: DISCOVER_MSG })
@@ -85,11 +91,12 @@ export function createDiscovery({ onDevice } = {}) {
   return {
     supported: true,
     start() {
+      if (started) return
+      started = true
       socket = uni.createUDPSocket()
       socket.onMessage((res) => {
-        const text = res && res.message ? String(res.message) : ''
-        const dev = parseEsp32CamMessage(text)
-        if (dev && onDevice) onDevice(dev)
+        const dev = parseEsp32CamMessage(res?.message)
+        if (dev && onDevice) onDevice({ ...dev, source: 'udp' })
       })
       try {
         socket.bind(DISCOVER_PORT)
@@ -98,6 +105,7 @@ export function createDiscovery({ onDevice } = {}) {
       timer = setInterval(sendOnce, 2000)
     },
     stop() {
+      started = false
       if (timer) clearInterval(timer)
       timer = null
       try {
