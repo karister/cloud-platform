@@ -337,7 +337,9 @@
           <view v-else-if="activeModal === 'camera'" class="form">
             <text class="cam-hint">手机与 ESP32-CAM 连同一热点（ssid=esp8266）。APP 自动 UDP 发现，H5 / 小程序请手动输入。</text>
             <view class="cam-row">
-              <text class="cam-label">发现状态：{{ camDiscoverySupported ? (camDevices.length ? `已发现 ${camDevices.length} 台` : '搜索中…') : '当前平台不支持自动发现，请手动输入' }}</text>
+              <text class="cam-label">发现状态：{{ camDiscoveryText }}</text>
+              <button v-if="camScanning" class="secondary-btn cam-connect" @tap="stopCamHttpScan">停止</button>
+              <button v-else-if="!camDiscoverySupported" class="secondary-btn cam-connect" @tap="startCamHttpScan">重新扫描</button>
             </view>
             <view v-if="camDevices.length" class="cam-list">
               <view v-for="dev in camDevices" :key="dev.MAC || dev.IP" class="cam-device" @tap="connectCamDevice(dev)">
@@ -692,7 +694,7 @@ import { sendConfigEmail, isEmailConfigured } from '../../services/emailService'
 import { fetchProperties } from '../../services/onenet'
 import { dataStore } from '../../stores/dataStore'
 import { FRAMESIZE_MAP, buildStreamUrl, normalizeManualIp } from '../../utils/cameraProtocol'
-import { createDiscovery } from '../../utils/cameraDiscovery'
+import { createDiscovery, scanSubnetForCameras } from '../../utils/cameraDiscovery'
 import { cameraStore } from '../../stores/cameraStore'
 import { capturePhoto, fetchCamStatus, sendCamControl } from '../../services/esp32cam'
 
@@ -1547,8 +1549,11 @@ const camFramesize = ref(8)
 const camQuality = ref(12)
 const camFlash = ref(false)
 const camDiscoverySupported = ref(false)
+const camScanning = ref(false)
+const camScanProgress = ref({ checked: 0, total: 0 })
 let camDiscovery = null
 let camPruneTimer = null
+let camScanStop = false
 
 const camDevices = computed(() => cameraStore.devices)
 const camFramesizeLabels = computed(() => FRAMESIZE_MAP.map((item) => item.label))
@@ -1557,7 +1562,18 @@ const camFramesizeIndex = computed(() => {
   return idx >= 0 ? idx : 0
 })
 
+const camDiscoveryText = computed(() => {
+  if (camDiscoverySupported.value) return camDevices.value.length ? `UDP 已发现 ${camDevices.value.length} 台` : 'UDP 搜索中…'
+  if (camScanning.value) {
+    const p = camScanProgress.value
+    return p.total ? `HTTP 扫描中 ${p.checked}/${p.total}，已发现 ${camDevices.value.length} 台…` : 'HTTP 扫描准备中…'
+  }
+  return camDevices.value.length ? `HTTP 已发现 ${camDevices.value.length} 台` : 'UDP 不可用，已切 HTTP 扫描（未扫到请手动输入）'
+})
+
 function stopCameraDiscovery() {
+  camScanStop = true
+  camScanning.value = false
   try {
     if (camDiscovery) camDiscovery.stop()
   } catch (e) {}
@@ -1566,14 +1582,42 @@ function stopCameraDiscovery() {
   camPruneTimer = null
 }
 
+async function startCamHttpScan() {
+  camScanStop = false
+  camScanning.value = true
+  camScanProgress.value = { checked: 0, total: 0 }
+  camError.value = ''
+  try {
+    await scanSubnetForCameras({
+      onDevice: (dev) => cameraStore.upsertDevice(dev),
+      onProgress: (p) => {
+        camScanProgress.value = p
+      },
+      shouldStop: () => camScanStop
+    })
+  } catch (e) {
+    camError.value = e?.message || '扫描失败，请手动输入 IP'
+  } finally {
+    camScanning.value = false
+  }
+}
+
+function stopCamHttpScan() {
+  camScanStop = true
+  camScanning.value = false
+}
+
 function openCamera() {
   activeModal.value = 'camera'
   camError.value = ''
   stopCameraDiscovery()
+  camScanStop = false
   camDiscovery = createDiscovery({ onDevice: (dev) => cameraStore.upsertDevice(dev) })
   camDiscoverySupported.value = Boolean(camDiscovery.supported)
   camDiscovery.start()
   camPruneTimer = setInterval(() => cameraStore.pruneOffline(), 2000)
+  // WebView/H5 无 UDPSocket：自动改走 HTTP 网段扫描兜底
+  if (!camDiscoverySupported.value) startCamHttpScan()
 }
 
 function connectCamBase(base) {
