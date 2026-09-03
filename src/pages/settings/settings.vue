@@ -79,6 +79,16 @@
           </view>
           <text class="menu-arrow">调试</text>
         </view>
+        <view class="menu-card camera-action" @tap="openCamera">
+          <view class="menu-icon-wrap">
+            <AppIcon name="pulse" :size="34" />
+          </view>
+          <view class="menu-copy">
+            <text class="menu-title">摄像头测试</text>
+            <text class="menu-desc">ESP32-CAM 发现 / 直播 / 拍照</text>
+          </view>
+          <text class="menu-arrow">测试</text>
+        </view>
         <view class="menu-card export-action" @tap.stop="openExportModal">
           <view class="menu-icon-wrap">
             <AppIcon name="download-simple" :size="34" />
@@ -322,6 +332,57 @@
             </view>
             <view v-if="!hasDebugPoints" class="debug-empty">请先在后台配置中添加数据点。</view>
             <button class="secondary-btn" style="margin-top: 20rpx" @tap="clearDebugValues">清空调试值</button>
+          </view>
+
+          <view v-else-if="activeModal === 'camera'" class="form">
+            <text class="cam-hint">手机与 ESP32-CAM 连同一热点（ssid=esp8266）。APP 自动 UDP 发现，H5 / 小程序请手动输入。</text>
+            <view class="cam-row">
+              <text class="cam-label">发现状态：{{ camDiscoverySupported ? (camDevices.length ? `已发现 ${camDevices.length} 台` : '搜索中…') : '当前平台不支持自动发现，请手动输入' }}</text>
+            </view>
+            <view v-if="camDevices.length" class="cam-list">
+              <view v-for="dev in camDevices" :key="dev.MAC || dev.IP" class="cam-device" @tap="connectCamDevice(dev)">
+                <text class="cam-device-name">{{ dev.NAME || 'esp32cam' }}</text>
+                <text class="cam-device-ip">{{ dev.IP }} · {{ dev.MAC || '无MAC' }}</text>
+              </view>
+            </view>
+            <view class="cam-row">
+              <input class="input cam-input" :value="camManualIp" placeholder="手动输入：192.168.4.1" @input="camManualIp = $event.detail.value" />
+              <button class="secondary-btn cam-connect" @tap="connectManual">连接</button>
+            </view>
+            <view v-if="camBase" class="cam-live">
+              <text class="cam-label">直播（MJPEG）：{{ camBase }}</text>
+              <!-- H5 用 img 直出 MJPEG；APP 第二步再切 web-view/stream.html -->
+              <!-- #ifdef H5 -->
+              <img v-if="camStreamUrl" class="cam-img" :src="camStreamUrl" @error="onCamStreamError" />
+              <!-- #endif -->
+              <!-- #ifndef H5 -->
+              <image v-if="camStreamUrl" class="cam-img" :src="camStreamUrl" mode="widthFix" @error="onCamStreamError" />
+              <!-- #endif -->
+              <view v-if="camError" class="cloud-status error">{{ camError }}</view>
+              <view class="cam-actions">
+                <button class="secondary-btn inline-btn" @tap="takeCamPhoto">拍照存相册</button>
+                <button class="secondary-btn inline-btn" @tap="refreshCamStatus">刷新状态</button>
+              </view>
+              <text v-if="camStatusText" class="cam-status">{{ camStatusText }}</text>
+              <view class="cam-row">
+                <text class="cam-label">分辨率</text>
+                <picker :range="camFramesizeLabels" :value="camFramesizeIndex" @change="onCamFramesizeChange($event.detail.value)">
+                  <view class="alarm-picker">{{ camFramesizeLabels[camFramesizeIndex] }}</view>
+                </picker>
+              </view>
+              <view class="cam-row">
+                <text class="cam-label">质量(10-63，越小越清晰)</text>
+                <input class="input cam-input" type="number" :value="camQuality" @input="camQuality = Number($event.detail.value)" />
+                <button class="secondary-btn cam-connect" @tap="applyCamQuality">应用</button>
+              </view>
+              <view class="switch-field">
+                <view>
+                  <text class="field-title">闪光灯</text>
+                </view>
+                <switch :checked="camFlash" @change="onCamFlashChange($event.detail.value)" />
+              </view>
+              <text class="cam-hint">热点客户端隔离时收不到广播，请切 ESP32-AP 直连（192.168.4.1）。</text>
+            </view>
           </view>
 
           <view v-else-if="activeModal === 'points'" class="form">
@@ -630,6 +691,10 @@ import { serializeConfig, downloadJsonFile, deserializeConfig, getExportFilename
 import { sendConfigEmail, isEmailConfigured } from '../../services/emailService'
 import { fetchProperties } from '../../services/onenet'
 import { dataStore } from '../../stores/dataStore'
+import { FRAMESIZE_MAP, buildStreamUrl, normalizeManualIp } from '../../utils/cameraProtocol'
+import { createDiscovery } from '../../utils/cameraDiscovery'
+import { cameraStore } from '../../stores/cameraStore'
+import { capturePhoto, fetchCamStatus, sendCamControl } from '../../services/esp32cam'
 
 const config = ref(getConfig())
 const draft = ref(getConfig())
@@ -816,7 +881,8 @@ const modalTitle = computed(() => {
   const titles = {
     cloud: '云平台连接配置',
     recommendations: '推荐数据点配置',
-    debug: '数据调试'
+    debug: '数据调试',
+    camera: '摄像头测试'
   }
   return titles[activeModal.value] || ''
 })
@@ -1051,6 +1117,7 @@ function themePreviewRadius(id) {
 }
 
 function closeModal() {
+  if (activeModal.value === 'camera') stopCameraDiscovery()
   activeModal.value = ''
 }
 
@@ -1468,6 +1535,129 @@ function resetToFactory() {
       }
     }
   })
+}
+
+// ── ESP32-CAM 摄像头测试（settings 内嵌） ──
+const camManualIp = ref('')
+const camBase = ref('')
+const camStreamUrl = ref('')
+const camStatusText = ref('')
+const camError = ref('')
+const camFramesize = ref(8)
+const camQuality = ref(12)
+const camFlash = ref(false)
+const camDiscoverySupported = ref(false)
+let camDiscovery = null
+let camPruneTimer = null
+
+const camDevices = computed(() => cameraStore.devices)
+const camFramesizeLabels = computed(() => FRAMESIZE_MAP.map((item) => item.label))
+const camFramesizeIndex = computed(() => {
+  const idx = FRAMESIZE_MAP.findIndex((item) => item.value === camFramesize.value)
+  return idx >= 0 ? idx : 0
+})
+
+function stopCameraDiscovery() {
+  try {
+    if (camDiscovery) camDiscovery.stop()
+  } catch (e) {}
+  camDiscovery = null
+  if (camPruneTimer) clearInterval(camPruneTimer)
+  camPruneTimer = null
+}
+
+function openCamera() {
+  activeModal.value = 'camera'
+  camError.value = ''
+  stopCameraDiscovery()
+  camDiscovery = createDiscovery({ onDevice: (dev) => cameraStore.upsertDevice(dev) })
+  camDiscoverySupported.value = Boolean(camDiscovery.supported)
+  camDiscovery.start()
+  camPruneTimer = setInterval(() => cameraStore.pruneOffline(), 2000)
+}
+
+function connectCamBase(base) {
+  const normalized = normalizeManualIp(base)
+  if (!normalized) {
+    uni.showToast({ title: '请输入正确的 IP', icon: 'none' })
+    return
+  }
+  camBase.value = normalized
+  camStreamUrl.value = buildStreamUrl(normalized)
+  camError.value = ''
+  refreshCamStatus()
+}
+
+function connectCamDevice(dev) {
+  if (!dev || !dev.IP) return
+  connectCamBase(`http://${dev.IP}`)
+}
+
+function connectManual() {
+  connectCamBase(camManualIp.value)
+}
+
+function onCamStreamError() {
+  camError.value = '直播流加载失败，请确认同热点且 IP 正确，隔离时切 AP 直连 192.168.4.1'
+}
+
+async function refreshCamStatus() {
+  if (!camBase.value) return
+  try {
+    const data = await fetchCamStatus(camBase.value)
+    camStatusText.value = typeof data === 'string' ? data : JSON.stringify(data)
+  } catch (err) {
+    camError.value = err?.message || '状态读取失败'
+  }
+}
+
+async function applyCamControl(variable, value, okTip) {
+  if (!camBase.value) return
+  try {
+    await sendCamControl(camBase.value, variable, value)
+    uni.showToast({ title: okTip || '已应用', icon: 'success' })
+  } catch (err) {
+    uni.showToast({ title: err?.message || '控制失败', icon: 'none' })
+  }
+}
+
+function onCamFramesizeChange(pickerIndex) {
+  const item = FRAMESIZE_MAP[Number(pickerIndex)]
+  if (!item) return
+  camFramesize.value = item.value
+  applyCamControl('framesize', item.value, '分辨率已切换')
+}
+
+function applyCamQuality() {
+  applyCamControl('quality', camQuality.value, '质量已应用')
+}
+
+function onCamFlashChange(checked) {
+  camFlash.value = Boolean(checked)
+  applyCamControl('flash', camFlash.value ? 1 : 0, '闪光灯已切换')
+}
+
+async function takeCamPhoto() {
+  if (!camBase.value) return
+  try {
+    const res = await capturePhoto(camBase.value)
+    const doSave = () => {
+      uni.saveImageToPhotosAlbum({
+        filePath: res.tempFilePath,
+        success: () => uni.showToast({ title: '已存相册', icon: 'success' }),
+        fail: () => uni.showToast({ title: '保存相册失败', icon: 'none' })
+      })
+    }
+    // #ifdef H5
+    if (typeof window !== 'undefined' && window.open) {
+      window.open(res.tempFilePath, '_blank')
+      return
+    }
+    // #endif
+    doSave()
+  } catch (err) {
+    uni.showToast({ title: err?.message || '拍照失败', icon: 'none' })
+  }
 }
 
 onShow(reload)
@@ -2640,5 +2830,92 @@ onShow(reload)
 
 .import-confirm-btn {
   margin-top: 8rpx;
+}
+
+/* ── ESP32-CAM 摄像头测试 ── */
+.cam-hint {
+  display: block;
+  color: var(--theme-text-secondary);
+  font-size: 23rpx;
+  line-height: 1.5;
+}
+
+.cam-row {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+}
+
+.cam-label {
+  display: block;
+  color: var(--theme-text-secondary);
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+.cam-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.cam-device {
+  padding: 16rpx 18rpx;
+  border: 1rpx solid var(--theme-divider-light);
+  border-radius: 16rpx;
+  background: var(--theme-surface-alt);
+}
+
+.cam-device-name {
+  display: block;
+  color: var(--theme-text-primary);
+  font-size: 27rpx;
+  font-weight: 700;
+}
+
+.cam-device-ip {
+  display: block;
+  margin-top: 6rpx;
+  color: var(--theme-text-tertiary);
+  font-size: 22rpx;
+}
+
+.cam-input {
+  flex: 1;
+}
+
+.cam-connect {
+  flex-shrink: 0;
+  width: 150rpx;
+}
+
+.cam-live {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.cam-img {
+  width: 100%;
+  min-height: 380rpx;
+  border-radius: 16rpx;
+  background: #000;
+}
+
+.cam-actions {
+  display: flex;
+  gap: 12rpx;
+}
+
+.cam-actions .inline-btn {
+  flex: 1;
+  margin: 0;
+}
+
+.cam-status {
+  display: block;
+  color: var(--theme-text-tertiary);
+  font-size: 22rpx;
+  word-break: break-all;
 }
 </style>
