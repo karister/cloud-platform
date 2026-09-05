@@ -349,10 +349,11 @@
             </view>
             <view class="cam-row">
               <input class="input cam-input" :value="camManualIp" placeholder="手动输入：192.168.4.1" @input="camManualIp = $event.detail.value" />
-              <button class="secondary-btn cam-connect" @tap="connectManual">连接</button>
+              <button class="secondary-btn cam-connect" :disabled="camConnectionBusy" @tap="toggleManualCamConnection">{{ camConnectionButtonText }}</button>
             </view>
+            <text class="cam-connection-state">视频流状态：{{ camConnectionText }}</text>
+            <view v-if="camError" class="cloud-status error">{{ camError }}</view>
             <view v-if="camBase" class="cam-live">
-              <text class="cam-label">直播（MJPEG）：{{ camBase }}</text>
               <!-- Android 返回 appassets 同源代理地址；其他端保留直出降级。 -->
               <!-- #ifdef H5 -->
               <img v-if="camStreamUrl" class="cam-img" :src="camStreamUrl" @error="onCamStreamError" />
@@ -360,8 +361,8 @@
               <!-- #ifndef H5 -->
               <image v-if="camStreamUrl" class="cam-img" :src="camStreamUrl" mode="widthFix" @error="onCamStreamError" />
               <!-- #endif -->
-              <view v-if="camError" class="cloud-status error">{{ camError }}</view>
               <view class="cam-actions">
+                <button class="secondary-btn inline-btn" :disabled="!camStatusReady || camControlBusy" @tap="toggleCamVflip">{{ camVflip ? '恢复镜头' : '镜头翻转 180°' }}</button>
                 <button class="secondary-btn inline-btn" :disabled="camTakingPhoto || !camStatusReady" @tap="takeCamPhoto">{{ camTakingPhoto ? '保存中…' : '拍照存相册' }}</button>
                 <button class="secondary-btn inline-btn" :disabled="camStatusLoading" @tap="refreshCamStatus">刷新状态</button>
               </view>
@@ -371,7 +372,6 @@
                 <button class="secondary-btn inline-btn" @tap="openCamPhotoPreview">打开 / 保存照片</button>
               </view>
               <!-- #endif -->
-              <text v-if="camStatusText" class="cam-status">{{ camStatusText }}</text>
               <text v-if="!camStatusReady && camStatusLoading" class="cam-hint">正在读取摄像头状态，控制项将在确认后显示。</text>
               <view v-if="camStatusReady" class="cam-row">
                 <text class="cam-label">分辨率</text>
@@ -705,7 +705,7 @@ import { FRAMESIZE_MAP, buildStreamUrl, normalizeManualIp } from '../../utils/ca
 import { createDiscovery, scanSubnetForCameras } from '../../utils/cameraDiscovery'
 import { cameraStore } from '../../stores/cameraStore'
 import { createCameraSession, hasNativeCameraBridge } from '../../services/cameraBridge'
-import { capturePhoto, fetchCamStatus, isCamQuality, openCamStream, sendCamControl } from '../../services/esp32cam'
+import { capturePhoto, closeCamStream, fetchCamStatus, isCamQuality, openCamStream, sendCamControl } from '../../services/esp32cam'
 
 const config = ref(getConfig())
 const draft = ref(getConfig())
@@ -1552,8 +1552,9 @@ function resetToFactory() {
 const camManualIp = ref('')
 const camBase = ref('')
 const camStreamUrl = ref('')
-const camStatusText = ref('')
 const camError = ref('')
+const camConnectionState = ref('disconnected')
+const camVflip = ref(false)
 const camFramesize = ref(null)
 const camFramesizeKnown = ref(false)
 const camQuality = ref(null)
@@ -1584,6 +1585,19 @@ const camFramesizeIndex = computed(() => {
   const idx = FRAMESIZE_MAP.findIndex((item) => item.value === camFramesize.value)
   return idx >= 0 ? idx : 0
 })
+const camConnectionBusy = computed(() => camConnectionState.value === 'connecting' || camConnectionState.value === 'closing')
+const camConnectionButtonText = computed(() => {
+  if (camConnectionState.value === 'connected') return '关闭'
+  if (camConnectionState.value === 'connecting') return '连接中…'
+  if (camConnectionState.value === 'closing') return '关闭中…'
+  return '连接'
+})
+const camConnectionText = computed(() => {
+  if (camConnectionState.value === 'connected') return '已连接'
+  if (camConnectionState.value === 'connecting') return '连接中'
+  if (camConnectionState.value === 'closing') return '关闭中'
+  return '未连接'
+})
 
 const camDiscoveryText = computed(() => {
   if (camScanning.value) {
@@ -1612,8 +1626,11 @@ function stopCameraDiscovery({ keepModal = false } = {}) {
   if (camSession) camSession.cancel()
   camSession = null
   camStreamUrl.value = ''
+  camBase.value = ''
+  camConnectionState.value = 'disconnected'
+  camVflip.value = false
   camStatusLoading.value = false
-  if (!keepModal) camStatusReady.value = false
+  camStatusReady.value = false
 }
 
 async function startCamHttpScan() {
@@ -1696,7 +1713,6 @@ function restartCamDiscovery() {
   stopCameraDiscovery()
   const { serial, session } = createCamSession()
   camError.value = ''
-  camStatusText.value = ''
   camStatusReady.value = false
   camPhotoPreview.value = ''
   camDiscoverySupported.value = Boolean(session.supported || hasNativeCameraBridge())
@@ -1716,18 +1732,25 @@ function restartCamDiscovery() {
   camHealthTimer = setInterval(refreshCamHealth, 2000)
 }
 
-function connectCamBase(base, streamUrl = '') {
+async function connectCamBase(base, streamUrl = '') {
   const normalized = normalizeManualIp(base)
   if (!normalized) {
     uni.showToast({ title: '请输入正确的 IP', icon: 'none' })
-    return
+    return false
   }
+  if (camConnectionBusy.value) return false
+  if (camBase.value) await closeCamConnection()
   camBase.value = normalized
   camStreamUrl.value = ''
   camStatusReady.value = false
-  camStatusText.value = ''
   camError.value = ''
-  refreshCamStatus(streamUrl || buildStreamUrl(normalized))
+  camConnectionState.value = 'connecting'
+  const connected = await refreshCamStatus(streamUrl || buildStreamUrl(normalized))
+  if (isCurrentCamSession(camSessionSerial) && camBase.value === normalized) {
+    camConnectionState.value = connected ? 'connected' : 'disconnected'
+    if (!connected) camBase.value = ''
+  }
+  return connected
 }
 
 function connectCamDevice(dev) {
@@ -1736,11 +1759,51 @@ function connectCamDevice(dev) {
 }
 
 function connectManual() {
-  connectCamBase(camManualIp.value)
+  return connectCamBase(camManualIp.value)
+}
+
+function toggleManualCamConnection() {
+  if (camConnectionState.value === 'connected') return closeCamConnection()
+  return connectManual()
+}
+
+async function closeCamConnection() {
+  if (camConnectionState.value === 'closing') return
+  const base = camBase.value
+  camConnectionState.value = 'closing'
+  camStreamUrl.value = ''
+  camPhotoPreview.value = ''
+  try {
+    if (base) await closeCamStream(base, camSession)
+  } catch (error) {
+    // The preview has already been removed, so a native close failure cannot
+    // keep the user-facing stream alive. Leave discovery available for retry.
+  } finally {
+    if (base === camBase.value) {
+      camBase.value = ''
+      camStatusReady.value = false
+      camStatusLoading.value = false
+      camConnectionState.value = 'disconnected'
+      camVflip.value = false
+      camError.value = ''
+    }
+  }
+}
+
+function toggleCamVflip() {
+  const previous = camVflip.value
+  camVflip.value = !previous
+  queueCamControl('vflip', camVflip.value ? 1 : 0, previous ? 1 : 0, camVflip.value ? '镜头已翻转' : '镜头已恢复')
 }
 
 function onCamStreamError() {
+  const base = camBase.value
   camError.value = '直播流加载失败，请确认摄像头仍在线；H5 的 HTTP 流被浏览器拦截时请使用 Android APK 或手动打开预览。'
+  camStreamUrl.value = ''
+  camBase.value = ''
+  camStatusReady.value = false
+  camConnectionState.value = 'disconnected'
+  if (base) closeCamStream(base, camSession).catch(() => {})
 }
 
 function applyCamStatus(data) {
@@ -1755,11 +1818,13 @@ function applyCamStatus(data) {
   const led = Number(status.led_intensity)
   camLedSupported.value = Number.isFinite(led) && led >= 0
   if (camLedSupported.value) camLedIntensity.value = led
+  const vflip = Number(status.vflip)
+  if (vflip === 0 || vflip === 1) camVflip.value = vflip === 1
   camStatusReady.value = true
   return true
 }
 
-async function refreshCamStatus(preferredStream = '') {
+async function refreshCamStatus(preferredStream = '', { openStream = true } = {}) {
   if (!camBase.value) return
   const serial = camSessionSerial
   const base = camBase.value
@@ -1769,10 +1834,17 @@ async function refreshCamStatus(preferredStream = '') {
     const data = await fetchCamStatus(base, camSession)
     if (!isCurrentCamSession(serial) || base !== camBase.value) return false
     if (!applyCamStatus(data)) throw new Error('设备返回的状态不包含摄像头字段')
-    camStatusText.value = JSON.stringify(data?.status || data)
     const device = cameraStore.devices.find((item) => item.BASE === base || item.IP === new URL(base).hostname)
     if (device) cameraStore.markSuccess(device)
-    camStreamUrl.value = await openCamStream(base, requestedStream || buildStreamUrl(base), camSession)
+    if (openStream) {
+      const streamUrl = await openCamStream(base, requestedStream || buildStreamUrl(base), camSession)
+      if (!isCurrentCamSession(serial) || base !== camBase.value) return false
+      if (camConnectionState.value !== 'connecting' && camConnectionState.value !== 'connected') {
+        await closeCamStream(base, camSession).catch(() => {})
+        return false
+      }
+      camStreamUrl.value = streamUrl
+    }
     return true
   } catch (err) {
     if (isCurrentCamSession(serial) && base === camBase.value) {
@@ -1787,15 +1859,15 @@ async function refreshCamStatus(preferredStream = '') {
 }
 
 function queueCamControl(variable, value, previousValue, okTip) {
-  if (!camBase.value || !camStatusReady.value) return Promise.resolve()
+  if (!camBase.value || !camStatusReady.value || camConnectionState.value !== 'connected') return Promise.resolve()
   const serial = camSessionSerial
   const base = camBase.value
   const work = async () => {
-    if (!isCurrentCamSession(serial) || base !== camBase.value) return
+    if (!isCurrentCamSession(serial) || base !== camBase.value || camConnectionState.value !== 'connected') return
     camControlBusy.value = true
     try {
       await sendCamControl(base, variable, value, camSession)
-      if (!isCurrentCamSession(serial)) return
+      if (!isCurrentCamSession(serial) || camConnectionState.value !== 'connected') return
       const confirmed = await refreshCamStatus()
       if (!confirmed) throw new Error('控制后无法确认摄像头状态')
       uni.showToast({ title: okTip || '已应用', icon: 'success' })
@@ -1804,6 +1876,7 @@ function queueCamControl(variable, value, previousValue, okTip) {
         if (variable === 'framesize') camFramesize.value = previousValue
         if (variable === 'quality') camQuality.value = previousValue
         if (variable === 'led_intensity') camLedIntensity.value = previousValue
+        if (variable === 'vflip') camVflip.value = previousValue === 1
         uni.showToast({ title: err?.message || '控制失败，已恢复原值', icon: 'none' })
       }
     } finally {
@@ -1827,8 +1900,8 @@ function applyCamQuality() {
     uni.showToast({ title: '画质必须是 4–63 的整数', icon: 'none' })
     return
   }
-  const previous = Number(JSON.parse(camStatusText.value || '{}').quality)
-  queueCamControl('quality', Number(camQuality.value), Number.isFinite(previous) ? previous : camQuality.value, '质量已应用')
+  const previous = camQuality.value
+  queueCamControl('quality', Number(camQuality.value), previous, '质量已应用')
 }
 
 function onCamLedChange(value) {
@@ -3129,6 +3202,12 @@ onUnload(() => stopCameraDiscovery())
   width: 150rpx;
 }
 
+.cam-connection-state {
+  display: block;
+  color: var(--theme-text-secondary);
+  font-size: 23rpx;
+}
+
 .cam-live {
   display: flex;
   flex-direction: column;
@@ -3152,10 +3231,4 @@ onUnload(() => stopCameraDiscovery())
   margin: 0;
 }
 
-.cam-status {
-  display: block;
-  color: var(--theme-text-tertiary);
-  font-size: 22rpx;
-  word-break: break-all;
-}
 </style>

@@ -5,6 +5,7 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.LinkAddress;
+import android.net.LinkProperties;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.Uri;
@@ -28,6 +29,9 @@ import java.net.HttpURLConnection;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.InterfaceAddress;
+import java.net.NetworkInterface;
+import java.net.Proxy;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -38,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -75,6 +80,7 @@ final class CameraBridge {
         final String id;
         final Set<String> verifiedBases = ConcurrentHashMap.newKeySet();
         final Set<HttpURLConnection> connections = ConcurrentHashMap.newKeySet();
+        final Set<HttpURLConnection> streamConnections = ConcurrentHashMap.newKeySet();
         final Set<Future<?>> tasks = ConcurrentHashMap.newKeySet();
         volatile boolean cancelled;
         volatile DiscoveryWorker discovery;
@@ -175,6 +181,7 @@ final class CameraBridge {
         for (Future<?> task : session.tasks) task.cancel(true);
         for (HttpURLConnection connection : session.connections) connection.disconnect();
         session.connections.clear();
+        session.streamConnections.clear();
     }
 
     void cancelAll() {
@@ -218,10 +225,15 @@ final class CameraBridge {
         String[] pieces = path == null ? new String[0] : path.split("/");
         if (pieces.length != 4 || !"camera".equals(pieces[1]) || !"stream".equals(pieces[3])) return null;
         CameraSession session = sessions.get(pieces[2]);
-        if (session == null || session.cancelled || session.streamUrl == null) return errorResponse(404, "Camera stream is unavailable");
+        if (session == null) return errorResponse(404, "Camera stream is unavailable");
+        String streamUrl;
+        synchronized (session) {
+            if (session.cancelled || session.streamUrl == null) return errorResponse(404, "Camera stream is unavailable");
+            streamUrl = session.streamUrl;
+        }
         try {
-            URL url = new URL(session.streamUrl);
-            HttpURLConnection connection = openConnection(session, url, 0);
+            URL url = new URL(streamUrl);
+            HttpURLConnection connection = openConnection(session, url, REQUEST_TIMEOUT_MS);
             connection.setRequestProperty("Accept", "multipart/x-mixed-replace");
             connection.setReadTimeout(0);
             int status = connection.getResponseCode();
@@ -229,7 +241,14 @@ final class CameraBridge {
                 connection.disconnect();
                 return errorResponse(status, "Camera stream returned HTTP " + status);
             }
-            session.connections.add(connection);
+            synchronized (session) {
+                if (session.cancelled || session.streamUrl == null) {
+                    connection.disconnect();
+                    return errorResponse(404, "Camera stream is unavailable");
+                }
+                session.connections.add(connection);
+                session.streamConnections.add(connection);
+            }
             String contentType = connection.getContentType();
             InputStream stream = new DisconnectingInputStream(connection.getInputStream(), session, connection);
             // WebView otherwise infers Content-Length: 0 from a live network
@@ -266,6 +285,9 @@ final class CameraBridge {
                 case "stream":
                     handleStream(session, requestId, input);
                     break;
+                case "closeStream":
+                    handleCloseStream(session, requestId);
+                    break;
                 default:
                     sendResult(session.id, requestId, false, null, error("UNSUPPORTED", "不支持的摄像头操作", 0));
             }
@@ -291,7 +313,7 @@ final class CameraBridge {
         Target target = verifiedTarget(session, input.optString("base"));
         String variable = input.optString("variable");
         int value = input.optInt("value", Integer.MIN_VALUE);
-        if (!("framesize".equals(variable) || "quality".equals(variable) || "led_intensity".equals(variable))) {
+        if (!("framesize".equals(variable) || "quality".equals(variable) || "led_intensity".equals(variable) || "vflip".equals(variable))) {
             throw new CameraException("UNSUPPORTED", "不支持的摄像头控制项", 0);
         }
         if ("quality".equals(variable) && (value < 4 || value > 63)) {
@@ -302,6 +324,9 @@ final class CameraBridge {
         }
         if ("led_intensity".equals(variable) && (value < 0 || value > 255)) {
             throw new CameraException("INVALID_ARGUMENT", "补光强度必须是 0–255", 0);
+        }
+        if ("vflip".equals(variable) && value != 0 && value != 1) {
+            throw new CameraException("INVALID_ARGUMENT", "镜头翻转值必须是 0 或 1", 0);
         }
         getWithRetry(session, target.url("/control?var=" + Uri.encode(variable) + "&val=" + value), REQUEST_TIMEOUT_MS, 64 * 1024);
         JSONObject output = new JSONObject();
@@ -326,18 +351,42 @@ final class CameraBridge {
         Target target = verifiedTarget(session, input.optString("base"));
         String requested = input.optString("streamUrl");
         URL streamUrl = requested.isEmpty() ? new URL("http://" + target.host + ":81/stream") : validDeviceUrl(requested, target.host);
-        session.streamUrl = streamUrl.toString();
+        synchronized (session) {
+            session.streamUrl = streamUrl.toString();
+        }
         JSONObject output = new JSONObject();
         output.put("streamUrl", "https://" + ASSET_HOST + "/camera/" + session.id + "/stream");
         sendResult(session.id, requestId, true, output, null);
     }
 
+    private void handleCloseStream(CameraSession session, String requestId) throws JSONException {
+        synchronized (session) {
+            session.streamUrl = null;
+            for (HttpURLConnection connection : session.streamConnections) {
+                session.connections.remove(connection);
+                connection.disconnect();
+            }
+            session.streamConnections.clear();
+        }
+        JSONObject output = new JSONObject();
+        output.put("closed", true);
+        sendResult(session.id, requestId, true, output, null);
+    }
+
     private void startDiscovery(CameraSession session) throws CameraException {
-        Network network = wifiNetwork();
-        Inet4Address address = wifiAddress(network);
-        if (network == null || address == null) throw new CameraException("NO_WIFI", "未连接可用的 Wi-Fi 网络", 0);
+        List<CameraNetworkRoute<Network>> routes = cameraRoutes();
+        if (routes.isEmpty()) throw new CameraException("NO_WIFI", "未找到可用的 Wi-Fi 或本机热点，请手动输入摄像头 IP", 0);
+        // Hotspot downstream interfaces are absent from ConnectivityManager's
+        // upstream Networks. Prefer one for discovery when Wi-Fi sharing is on.
+        CameraNetworkRoute<Network> route = routes.get(0);
+        for (CameraNetworkRoute<Network> candidate : routes) {
+            if (candidate.network == null) {
+                route = candidate;
+                break;
+            }
+        }
         if (session.discovery != null) session.discovery.stop();
-        DiscoveryWorker worker = new DiscoveryWorker(session, network, address);
+        DiscoveryWorker worker = new DiscoveryWorker(session, route.network, route.address);
         session.discovery = worker;
         submit(session, worker);
     }
@@ -415,9 +464,14 @@ final class CameraBridge {
     }
 
     private HttpURLConnection openConnection(CameraSession session, URL url, int timeoutMs) throws IOException {
-        Network network = wifiNetwork();
-        HttpURLConnection connection = (HttpURLConnection) (network == null ? url.openConnection() : network.openConnection(url));
+        Inet4Address target = (Inet4Address) InetAddress.getByName(url.getHost());
+        Network network = CameraNetworkRoute.networkFor(target, cameraRoutes());
+        // Bind only to the Wi-Fi subnet that actually contains this camera.
+        // Local hotspot clients need system routing, without the upstream proxy.
+        HttpURLConnection connection = (HttpURLConnection) (network == null
+                ? url.openConnection(Proxy.NO_PROXY) : network.openConnection(url, Proxy.NO_PROXY));
         connection.setRequestMethod("GET");
+        connection.setInstanceFollowRedirects(false);
         connection.setConnectTimeout(timeoutMs);
         connection.setReadTimeout(timeoutMs);
         connection.setUseCaches(false);
@@ -460,21 +514,41 @@ final class CameraBridge {
         }
     }
 
-    private Network wifiNetwork() {
-        if (connectivityManager == null) return null;
-        Network network = connectivityManager.getActiveNetwork();
-        NetworkCapabilities capabilities = network == null ? null : connectivityManager.getNetworkCapabilities(network);
-        return capabilities != null && capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ? network : null;
-    }
-
-    private Inet4Address wifiAddress(Network network) {
-        if (network == null || connectivityManager == null || connectivityManager.getLinkProperties(network) == null) return null;
-        for (LinkAddress linkAddress : connectivityManager.getLinkProperties(network).getLinkAddresses()) {
-            if (linkAddress.getAddress() instanceof Inet4Address && !linkAddress.getAddress().isLoopbackAddress()) {
-                return (Inet4Address) linkAddress.getAddress();
+    private List<CameraNetworkRoute<Network>> cameraRoutes() {
+        List<CameraNetworkRoute<Network>> routes = new ArrayList<>();
+        Set<String> upstreamInterfaces = new HashSet<>();
+        if (connectivityManager != null) {
+            for (Network network : connectivityManager.getAllNetworks()) {
+                LinkProperties properties = connectivityManager.getLinkProperties(network);
+                NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(network);
+                if (properties == null) continue;
+                upstreamInterfaces.add(properties.getInterfaceName());
+                if (capabilities == null || !capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+                        || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) continue;
+                for (LinkAddress address : properties.getLinkAddresses()) {
+                    if (address.getAddress() instanceof Inet4Address && !address.getAddress().isLoopbackAddress()) {
+                        routes.add(new CameraNetworkRoute<>((Inet4Address) address.getAddress(), address.getPrefixLength(), network));
+                    }
+                }
             }
         }
-        return null;
+        try {
+            java.util.Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+            if (interfaces == null) return routes;
+            for (NetworkInterface adapter : Collections.list(interfaces)) {
+                if (upstreamInterfaces.contains(adapter.getName()) || !adapter.isUp()
+                        || adapter.isLoopback() || adapter.isPointToPoint()) continue;
+                for (InterfaceAddress address : adapter.getInterfaceAddresses()) {
+                    if (address.getAddress() instanceof Inet4Address && address.getBroadcast() != null
+                            && address.getAddress().isSiteLocalAddress()) {
+                        routes.add(new CameraNetworkRoute<>((Inet4Address) address.getAddress(), address.getNetworkPrefixLength(), null));
+                    }
+                }
+            }
+        } catch (IOException | SecurityException ignored) {
+            // Some Android builds hide interfaces; manual IP can still use system routing.
+        }
+        return routes;
     }
 
     private void submit(CameraSession session, Runnable work) {
@@ -554,7 +628,7 @@ final class CameraBridge {
 
     private static boolean isOperation(String operation) {
         return "discover".equals(operation) || "status".equals(operation) || "control".equals(operation)
-                || "capture".equals(operation) || "stream".equals(operation);
+                || "capture".equals(operation) || "stream".equals(operation) || "closeStream".equals(operation);
     }
 
     private static boolean isSafeId(String id) {
@@ -629,7 +703,7 @@ final class CameraBridge {
                 datagramSocket.setReuseAddress(true);
                 datagramSocket.setBroadcast(true);
                 datagramSocket.bind(new InetSocketAddress(DISCOVERY_PORT));
-                network.bindSocket(datagramSocket);
+                if (network != null) network.bindSocket(datagramSocket);
                 datagramSocket.setSoTimeout(250);
                 byte[] buffer = new byte[1024];
                 while (!stopped && !session.cancelled) {
@@ -778,6 +852,7 @@ final class CameraBridge {
         @Override public void close() throws IOException {
             try { delegate.close(); } finally {
                 session.connections.remove(connection);
+                session.streamConnections.remove(connection);
                 connection.disconnect();
             }
         }

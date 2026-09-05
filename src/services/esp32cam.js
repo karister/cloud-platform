@@ -45,9 +45,13 @@ async function withRetry(fn) {
   throw error
 }
 
-async function nativeRequest(bridge, operation, base, extra = {}) {
+// Android retries twice, each with a 5 s connect timeout and a 5 s read timeout.
+// Leave time for the native error/result to reach the WebView after both attempts.
+const NATIVE_REQUEST_TIMEOUT_MS = 22000
+
+async function nativeRequest(bridge, operation, base, extra = {}, timeoutMs = NATIVE_REQUEST_TIMEOUT_MS) {
   if (!bridge?.supported) return null
-  return bridge.request(operation, { base, ...extra })
+  return bridge.request(operation, { base, ...extra }, timeoutMs)
 }
 
 export async function fetchCamStatus(base, bridge) {
@@ -80,7 +84,7 @@ export async function sendCamControl(base, variable, value, bridge) {
 }
 
 export async function capturePhoto(base, bridge) {
-  if (bridge?.supported) return nativeRequest(bridge, 'capture', base, {}, 12000)
+  if (bridge?.supported) return nativeRequest(bridge, 'capture', base, {}, 60000)
   return withRetry(() => new Promise((resolve, reject) => {
     if (typeof uni === 'undefined' || typeof uni.downloadFile !== 'function') {
       reject(cameraError('当前平台不支持拍照下载', { code: 'UNSUPPORTED' }))
@@ -104,4 +108,13 @@ export async function openCamStream(base, streamUrl, bridge) {
     return data.streamUrl || ''
   }
   return streamUrl
+}
+
+/**
+ * Release a live MJPEG stream without ending the discovery session. On web
+ * targets, removing the preview element closes the browser request; Android
+ * also needs to release its native proxy connection explicitly.
+ */
+export async function closeCamStream(base, bridge) {
+  if (bridge?.supported) await nativeRequest(bridge, 'closeStream', base)
 }
