@@ -361,7 +361,7 @@
               <image v-if="camStreamUrl" class="cam-img" :src="camStreamUrl" mode="widthFix" @error="onCamStreamError" />
               <!-- #endif -->
               <view class="cam-actions">
-                <button class="secondary-btn inline-btn" :disabled="!camStatusReady || camControlBusy" @tap="toggleCamVflip">{{ camVflip ? '恢复镜头' : '镜头翻转 180°' }}</button>
+                <button class="secondary-btn inline-btn" :disabled="!camStatusReady || camControlBusy" @tap="toggleCamVflip">镜头翻转 180°</button>
                 <button class="secondary-btn inline-btn" :disabled="camTakingPhoto || !camStatusReady" @tap="takeCamPhoto">{{ camTakingPhoto ? '保存中…' : '拍照存相册' }}</button>
                 <button class="secondary-btn inline-btn" :disabled="camStatusLoading" @tap="refreshCamStatus">刷新状态</button>
               </view>
@@ -1748,6 +1748,7 @@ async function connectCamBase(base, streamUrl = '') {
   if (isCurrentCamSession(camSessionSerial) && camBase.value === normalized) {
     camConnectionState.value = connected ? 'connected' : 'disconnected'
     if (!connected) camBase.value = ''
+    else toggleCamVflip()
   }
   return connected
 }
@@ -1792,7 +1793,7 @@ async function closeCamConnection() {
 function toggleCamVflip() {
   const previous = camVflip.value
   camVflip.value = !previous
-  queueCamControl('vflip', camVflip.value ? 1 : 0, previous ? 1 : 0, camVflip.value ? '镜头已翻转' : '镜头已恢复')
+  queueCamControl('vflip', camVflip.value ? 1 : 0, previous ? 1 : 0, '镜头已翻转')
 }
 
 function onCamStreamError() {
