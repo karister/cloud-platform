@@ -335,7 +335,6 @@
           </view>
 
           <view v-else-if="activeModal === 'camera'" class="form">
-            <text class="cam-hint">手机与 ESP32-CAM 连同一热点。Android APK 使用原生 UDP/当前 Wi-Fi 网段发现；H5 / 小程序保留手动输入。</text>
             <view class="cam-row">
               <text class="cam-label">发现状态：{{ camDiscoveryText }}</text>
               <button v-if="camScanning" class="secondary-btn cam-connect" @tap="stopCamHttpScan">停止</button>

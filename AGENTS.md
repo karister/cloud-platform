@@ -28,14 +28,7 @@ Follow existing two-space indentation, single-quoted JavaScript strings, ES modu
 
 ## Testing Guidelines
 
-Tests use `node:test` and `node:assert/strict`, with descriptive cases in colocated `*.test.mjs` files. Run all suites from the repository root in PowerShell:
-
-```powershell
-$testFiles = Get-ChildItem src,scripts -Recurse -Filter *.test.mjs
-node --test $testFiles.FullName
-```
-
-No coverage threshold is configured. Add regression cases for changed logic; check affected UI flows in mock mode and validate relevant platform builds.
+当前项目以实操验收为主，不强制要求单元测试。仅在涉及具体且相对复杂的业务逻辑时才考虑新增测试用例。所有功能修改或开发均通过浏览器测试或真机调试进行验收。
 
 ## Commit & Pull Request Guidelines
 
@@ -44,3 +37,5 @@ Recent commits use `feat:`, `fix:`, `docs:`, and `refactor:` with concise Chines
 ## Security & Agent Instructions
 
 Copy `.env.example` to `.env` for release configuration. Keep credentials, device tokens, and sensitive exported configurations out of commits. Only package APKs when explicitly requested. Release scripts upload artifacts and send email; run them only when authorized.
+
+Before finishing any task, clean up the temporary files produced while working on it — scratch images, screenshots, helper scripts, and anything else that was only useful for that specific task — so that only the intended code changes remain in the workspace.
