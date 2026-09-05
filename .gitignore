@@ -23,9 +23,7 @@ android-webview/local.properties
 android-webview/app/src/main/assets/www/
 
 # Android SDK / build tools
-work/android-build-tools/
-work/*.keystore
-work/*.jks
+work/
 
 # IDE
 .idea/
